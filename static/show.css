@@ -1,0 +1,12 @@
+@font-face{font-family:Preahvihear;src:url(Preahvihear.woff2)}
+@font-face{font-family:JB;src:url(JetBrainsMono.woff2)}
+@font-face{font-family:DMSans;src:url(DMSans.woff2)}
+:root{--ink:#18100a;--cream:#fff8e6;--org:#c4531e;--org2:#e07a3f;--muted:#6b5d52;--card:#fffdf6;--ok:#2f7d3a;
+ --host:#e07a3f;--p1:#45a35a;--p2:#3d8bd9}
+*{box-sizing:border-box}
+html,body{margin:0}
+[data-c=host]{--m:var(--host)}[data-c=p1]{--m:var(--p1)}[data-c=p2]{--m:var(--p2)}
+.av{display:inline-flex;flex:none;align-items:center;justify-content:center}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.05);opacity:1}100%{transform:scale(1)}}
+@keyframes blink{50%{opacity:.25}}
+@keyframes hop{50%{transform:translateY(-6px)}}

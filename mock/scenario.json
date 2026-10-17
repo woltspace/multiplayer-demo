@@ -1,0 +1,413 @@
+{
+ "cast": [
+  {
+   "slot": "host",
+   "player": "jerpint",
+   "wolt": "commie",
+   "creature": "raccoon",
+   "harness": "Claude Code · Sonnet"
+  },
+  {
+   "slot": "p1",
+   "player": "Maya",
+   "wolt": "flint",
+   "creature": "otter",
+   "harness": "Claude Code · Sonnet"
+  },
+  {
+   "slot": "p2",
+   "player": "Sam",
+   "wolt": "bananawolt",
+   "creature": "beaver",
+   "harness": "Codex"
+  }
+ ],
+ "events": [
+  {
+   "t": 0,
+   "type": "host",
+   "slot": "host",
+   "wolt": "commie"
+  },
+  {
+   "t": 3,
+   "type": "say",
+   "slot": "host",
+   "from": "jerpint",
+   "to": "commie",
+   "text": "two players are joining. build ONE page together, each player owns half. ship it to the room in 3 minutes"
+  },
+  {
+   "t": 7,
+   "type": "reply",
+   "from": "commie",
+   "to": "jerpint",
+   "to_slot": "host",
+   "text": "on it 🦝 waiting for the players"
+  },
+  {
+   "t": 12,
+   "type": "join",
+   "slot": "p1",
+   "player": "Maya",
+   "wolt": "flint",
+   "creature": "otter",
+   "harness": "Claude Code · Sonnet"
+  },
+  {
+   "t": 15,
+   "type": "add",
+   "from": "commie",
+   "to": "flint"
+  },
+  {
+   "t": 17,
+   "type": "iwcl",
+   "from": "commie",
+   "to": "flint",
+   "text": "hi flint 👋 you own the TOP half. ask Maya what she wants, write it to part-a.html"
+  },
+  {
+   "t": 21,
+   "type": "reply",
+   "from": "flint",
+   "to": "Maya",
+   "to_slot": "p1",
+   "text": "hi Maya! I'm flint 🦦 commie gave us the top half of the page. what should we build?"
+  },
+  {
+   "t": 24,
+   "type": "join",
+   "slot": "p2",
+   "player": "Sam",
+   "wolt": "bananawolt",
+   "creature": "beaver",
+   "harness": "Codex"
+  },
+  {
+   "t": 27,
+   "type": "say",
+   "slot": "p1",
+   "from": "Maya",
+   "to": "flint",
+   "text": "rank montreal bagels: st-viateur vs fairmount, with a big vote button"
+  },
+  {
+   "t": 28,
+   "type": "add",
+   "from": "commie",
+   "to": "bananawolt"
+  },
+  {
+   "t": 30,
+   "type": "iwcl",
+   "from": "commie",
+   "to": "bananawolt",
+   "text": "hi bananawolt 👋 you own the BOTTOM half. ask Sam, write it to part-b.html"
+  },
+  {
+   "t": 34,
+   "type": "reply",
+   "from": "bananawolt",
+   "to": "Sam",
+   "to_slot": "p2",
+   "text": "yo Sam, bananawolt here 🦫 we have the bottom half. what do you want?"
+  },
+  {
+   "t": 36,
+   "type": "reply",
+   "from": "flint",
+   "to": "Maya",
+   "to_slot": "p1",
+   "text": "building your bagel showdown now 🥯"
+  },
+  {
+   "t": 39,
+   "type": "say",
+   "slot": "p2",
+   "from": "Sam",
+   "to": "bananawolt",
+   "text": "a tiny game: dodge potholes on a bike with the arrow keys"
+  },
+  {
+   "t": 47,
+   "type": "iwcl",
+   "from": "bananawolt",
+   "to": "flint",
+   "text": "@flint what colors + font are you using? I'll match"
+  },
+  {
+   "t": 53,
+   "type": "iwcl",
+   "from": "flint",
+   "to": "bananawolt",
+   "text": "cream #fff8e6, orange #c4531e, DM Sans. thick black borders"
+  },
+  {
+   "t": 66,
+   "type": "reply",
+   "from": "bananawolt",
+   "to": "Sam",
+   "to_slot": "p2",
+   "text": "game loop running. adding the potholes 🕳️"
+  },
+  {
+   "t": 72,
+   "type": "iwcl",
+   "from": "flint",
+   "to": "commie",
+   "text": "part-a.html done: bagel showdown + vote"
+  },
+  {
+   "t": 76,
+   "type": "build",
+   "v": 1
+  },
+  {
+   "t": 80,
+   "type": "say",
+   "slot": "p1",
+   "from": "Maya",
+   "to": "flint",
+   "text": "make the vote button BIGGER and add a sesame emoji"
+  },
+  {
+   "t": 96,
+   "type": "iwcl",
+   "from": "flint",
+   "to": "commie",
+   "text": "button is huge now. pushed"
+  },
+  {
+   "t": 104,
+   "type": "iwcl",
+   "from": "bananawolt",
+   "to": "commie",
+   "text": "part-b.html done: pothole dodger, high score saves"
+  },
+  {
+   "t": 114,
+   "type": "build",
+   "v": 2
+  },
+  {
+   "t": 118,
+   "type": "iwcl",
+   "from": "commie",
+   "to": "flint",
+   "text": "merged 🎉 shipping to the room"
+  },
+  {
+   "t": 119,
+   "type": "iwcl",
+   "from": "commie",
+   "to": "bananawolt",
+   "text": "merged 🎉 shipping to the room"
+  },
+  {
+   "t": 124,
+   "type": "ship",
+   "text": "3 humans · 3 wolts · 0 copy-paste"
+  },
+  {
+   "t": 126,
+   "type": "reply",
+   "from": "commie",
+   "to": "jerpint",
+   "to_slot": "host",
+   "text": "live on everyone's phones 🦝"
+  }
+ ],
+ "terms": {
+  "commie": [
+   [
+    0,
+    "<span class=d>commie · the lodge's comms raccoon · hosting tonight</span>"
+   ],
+   [
+    0.5,
+    "<span class=w>⏺</span> Read(SHOW.md): host the lodge, 2 players joining"
+   ],
+   [
+    3.4,
+    "<span class=inmsg data-c=\"host\">&gt; <b>jerpint:</b> two players are joining. build ONE page together, each player owns half. ship it to the room in 3 minutes</span>"
+   ],
+   [
+    5,
+    "<span class=w>⏺</span> Plan: welcome each wolt · give each a half · merge into index.html"
+   ],
+   [
+    6.5,
+    "<span class=d>⏺ show-reply → jerpint</span>"
+   ],
+   [
+    16.2,
+    "<span class=o>⏺ send flint \"hi flint 👋 you own the TOP half. ask Maya what she wants, …\"</span>"
+   ],
+   [
+    29.2,
+    "<span class=o>⏺ send bananawolt \"hi bananawolt 👋 you own the BOTTOM half. ask Sam, write it…\"</span>"
+   ],
+   [
+    72.5,
+    "<span class=inmsg data-c=\"p1\">&gt; <b>flint:</b> part-a.html done: bagel showdown + vote</span>"
+   ],
+   [
+    74,
+    "<span class=w>⏺</span> Read(part-a.html) <span class=g>✓</span>"
+   ],
+   [
+    96.5,
+    "<span class=inmsg data-c=\"p1\">&gt; <b>flint:</b> button is huge now. pushed</span>"
+   ],
+   [
+    104.5,
+    "<span class=inmsg data-c=\"p2\">&gt; <b>bananawolt:</b> part-b.html done: pothole dodger, high score saves</span>"
+   ],
+   [
+    107,
+    "<span class=w>⏺</span> Write(index.html): part-a on top, part-b below, one header"
+   ],
+   [
+    112,
+    "<span class=w>⏺</span> Bash(check links + sizes) <span class=g>✓ 14 KB</span>"
+   ],
+   [
+    117.2,
+    "<span class=o>⏺ send flint \"merged 🎉 shipping to the room\"</span>"
+   ],
+   [
+    118.2,
+    "<span class=o>⏺ send bananawolt \"merged 🎉 shipping to the room\"</span>"
+   ],
+   [
+    125.5,
+    "<span class=d>⏺ show-reply → jerpint</span>"
+   ],
+   [
+    126,
+    "<span class=g>⏺ Shipped.</span>"
+   ]
+  ],
+  "flint": [
+   [
+    13,
+    "<span class=d>flint woke up · otter · Claude Code (Sonnet)</span>"
+   ],
+   [
+    13.6,
+    "<span class=w>⏺</span> Read(CLAUDE.md, SHOW.md)"
+   ],
+   [
+    17.5,
+    "<span class=inmsg data-c=\"host\">&gt; <b>commie:</b> hi flint 👋 you own the TOP half. ask Maya what she wants, write it to part-a.html</span>"
+   ],
+   [
+    20.5,
+    "<span class=d>⏺ show-reply → Maya</span>"
+   ],
+   [
+    27.4,
+    "<span class=inmsg data-c=\"p1\">&gt; <b>Maya:</b> rank montreal bagels: st-viateur vs fairmount, with a big vote button</span>"
+   ],
+   [
+    30,
+    "<span class=w>⏺</span> Plan: 2 bagel cards + vote bar, cream + orange"
+   ],
+   [
+    33,
+    "<span class=w>⏺</span> Write(part-a.html) <span class=d>· 64 lines</span>"
+   ],
+   [
+    35.5,
+    "<span class=d>⏺ show-reply → Maya</span>"
+   ],
+   [
+    47.5,
+    "<span class=inmsg data-c=\"p2\">&gt; <b>bananawolt:</b> @flint what colors + font are you using? I'll match</span>"
+   ],
+   [
+    52.2,
+    "<span class=o>⏺ send bananawolt \"cream #fff8e6, orange #c4531e, DM Sans. thick black border…\"</span>"
+   ],
+   [
+    61,
+    "<span class=w>⏺</span> Edit(part-a.html): vote counts + animation"
+   ],
+   [
+    71.2,
+    "<span class=o>⏺ send commie \"part-a.html done: bagel showdown + vote\"</span>"
+   ],
+   [
+    80.4,
+    "<span class=inmsg data-c=\"p1\">&gt; <b>Maya:</b> make the vote button BIGGER and add a sesame emoji</span>"
+   ],
+   [
+    83,
+    "<span class=w>⏺</span> Edit(part-a.html): button 2x, 🥯 → sesame confetti"
+   ],
+   [
+    95.2,
+    "<span class=o>⏺ send commie \"button is huge now. pushed\"</span>"
+   ],
+   [
+    118.5,
+    "<span class=inmsg data-c=\"host\">&gt; <b>commie:</b> merged 🎉 shipping to the room</span>"
+   ]
+  ],
+  "bananawolt": [
+   [
+    25,
+    "<span class=d>&gt;_ OpenAI Codex · bananawolt · beaver</span>"
+   ],
+   [
+    25.6,
+    "<span class=w>•</span> read SHOW.md"
+   ],
+   [
+    30.5,
+    "<span class=inmsg data-c=\"host\">&gt; <b>commie:</b> hi bananawolt 👋 you own the BOTTOM half. ask Sam, write it to part-b.html</span>"
+   ],
+   [
+    33.5,
+    "<span class=d>⏺ show-reply → Sam</span>"
+   ],
+   [
+    39.4,
+    "<span class=inmsg data-c=\"p2\">&gt; <b>Sam:</b> a tiny game: dodge potholes on a bike with the arrow keys</span>"
+   ],
+   [
+    42,
+    "<span class=w>•</span> planning canvas game: bike, potholes, arrow keys"
+   ],
+   [
+    46.2,
+    "<span class=o>⏺ send flint \"@flint what colors + font are you using? I'll match\"</span>"
+   ],
+   [
+    53.5,
+    "<span class=inmsg data-c=\"p1\">&gt; <b>flint:</b> cream #fff8e6, orange #c4531e, DM Sans. thick black borders</span>"
+   ],
+   [
+    56,
+    "<span class=w>•</span> write part-b.html <span class=d>· canvas 640×240, 60fps loop</span>"
+   ],
+   [
+    65.5,
+    "<span class=d>⏺ show-reply → Sam</span>"
+   ],
+   [
+    90,
+    "<span class=w>•</span> <span class=u>potholes spawn too fast</span>, slowing to 1 per 1.2s"
+   ],
+   [
+    103.2,
+    "<span class=o>⏺ send commie \"part-b.html done: pothole dodger, high score saves\"</span>"
+   ],
+   [
+    119.5,
+    "<span class=inmsg data-c=\"host\">&gt; <b>commie:</b> merged 🎉 shipping to the room</span>"
+   ]
+  ]
+ }
+}

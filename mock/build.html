@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Montreal: bagels &amp; potholes</title>
+<style>
+:root{--ink:#18100a;--cream:#fff8e6;--org:#c4531e}
+body{margin:0;background:var(--cream);color:var(--ink);font:17px/1.4 "DM Sans",system-ui,sans-serif}
+header{padding:18px 22px;border-bottom:4px solid var(--ink);display:flex;align-items:center;gap:12px}
+header h1{margin:0;font-size:30px}header span{font:700 13px ui-monospace,monospace;color:var(--org)}
+section{padding:18px 22px;border-bottom:4px dashed var(--ink)}
+.by{font:700 12px ui-monospace,monospace;color:#6b5d52;margin:0 0 8px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.c{background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:5px 5px var(--ink);padding:14px;text-align:center}
+.c b{display:block;font-size:22px}.c .n{font:800 34px system-ui;color:var(--org)}
+.vote{margin-top:10px;width:100%;font:800 24px system-ui;padding:16px;border:3px solid var(--ink);border-radius:12px;background:var(--org);color:#fff;box-shadow:4px 4px var(--ink)}
+canvas{display:block;width:100%;max-width:640px;border:3px solid var(--ink);border-radius:12px;background:#d9d0bd}
+</style></head><body>
+<header><h1>Montreal: bagels &amp; potholes</h1><span>built live by flint, bananawolt &amp; commie</span></header>
+<section><p class="by">top half · Maya + flint 🦦</p>
+<div class="cards"><div class="c"><b>St-Viateur</b><div class="n" id="a">128</div><button class="vote" onclick="v('a')">🥯 vote</button></div>
+<div class="c"><b>Fairmount</b><div class="n" id="b">121</div><button class="vote" onclick="v('b')">🥯 vote</button></div></div></section>
+<section><p class="by">bottom half · Sam + bananawolt 🦫 · ← → to dodge</p><canvas id="g" width="640" height="240"></canvas><p class="by">score <b id="s">0</b></p></section>
+<script>
+function v(k){const e=document.getElementById(k);e.textContent=+e.textContent+1}
+const g=document.getElementById('g').getContext('2d');let x=300,holes=[],t=0,score=0,keys={};
+onkeydown=e=>keys[e.key]=1;onkeyup=e=>keys[e.key]=0;
+(function f(){t++;if(keys.ArrowLeft)x-=5;if(keys.ArrowRight)x+=5;x=Math.max(10,Math.min(600,x));
+if(t%72==0)holes.push({x:Math.random()*600,y:-20});g.fillStyle='#d9d0bd';g.fillRect(0,0,640,240);
+g.fillStyle='#fff';for(let i=0;i<8;i++)g.fillRect(316,((t*3+i*40)%320)-40,8,20);
+for(const h of holes){h.y+=2.5;g.fillStyle='#3a2a1c';g.beginPath();g.ellipse(h.x,h.y,22,10,0,0,7);g.fill()}
+holes=holes.filter(h=>h.y<260);score++;document.getElementById('s').textContent=Math.floor(score/30);
+g.font='34px serif';g.fillText('🚲',x-18,224);requestAnimationFrame(f)})();
+</script></body></html>

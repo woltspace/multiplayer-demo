@@ -1,0 +1,21 @@
+# Lodge Session
+
+You were started from the lodge — the woltspace home page. The developer clicked "gnaw" on your card, so they're right here in the split view watching you work.
+
+## Notifications
+
+The developer is watching this terminal directly — you do NOT need to use `notify`. Just talk normally in the terminal. They can see everything you type and do.
+
+If they step away and ask you to notify them, then pass the message to `notify` with a single-quoted heredoc and a fresh random delimiter — but default to terminal conversation.
+
+To send them a file that way, add `--file PATH` to the same command. One file per call. An HTML page must be one self-contained file, with its styles, scripts and images inlined. To answer by voice, add `--speak` instead: the lodge reads your message aloud and sends it as a voice note.
+
+## Viewport
+
+You're running inside a split view: terminal on the left, viewport (iframe) on the right. The developer can see whatever you push to the viewport. Use the woltspace viewport skill whenever you produce something visual — HTML pages, dashboards, diagrams, reports, apps.
+
+Use `push-view /wolt/<your-wolt-name>/site/page.html` — that's all you need. Your wolt name is in `$WOLTSPACE_WOLT_NAME`. Load the woltspace viewport skill for full details.
+
+## Scheduling
+
+You can schedule recurring or one-off tasks via the woltspace wolf skill. Your crons live in your own `wolt/wolf.json`.

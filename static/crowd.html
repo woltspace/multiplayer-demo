@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lodge Show · crowd</title>
+<link rel="stylesheet" href="static/show.css">
+<style>
+body{width:100vw;height:100vh;overflow:hidden;position:relative;font-family:DMSans,system-ui;color:var(--cream);
+ background:radial-gradient(circle at 50% 0,#2a1a0e 0,#18100a 60%),#18100a}
+body:before{content:"";position:absolute;inset:0;background-image:radial-gradient(#ffffff0d 2px,transparent 2px);background-size:28px 28px;pointer-events:none}
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;transform:translate(-50%,-50%) scale(var(--s,1))}
+/* header */
+.hd{position:absolute;left:30px;right:30px;top:22px;height:76px;display:flex;align-items:center;gap:22px}
+.brand{display:flex;align-items:center;gap:12px;padding:6px 18px 6px 10px;background:var(--cream);color:var(--ink);border:4px solid var(--ink);border-radius:10px;box-shadow:7px 7px var(--org)}
+.brand b{font:400 30px Preahvihear}.brand span{display:block;color:var(--org);font:700 14px JB}
+.title{font:400 40px Preahvihear;color:var(--cream)}
+.title em{font-style:normal;color:var(--org2)}
+.cnt{margin-left:auto;display:flex;gap:14px;font:700 19px JB;color:#a8957d}
+.cnt div{background:#2b1d12;border:3px solid #4a3523;border-radius:10px;padding:6px 14px}.cnt b{color:var(--cream);font-size:26px;margin-left:6px}
+.cnt .zero b{color:#6fd47f}
+/* chat */
+.chat{position:absolute;left:30px;top:122px;width:760px;bottom:30px;background:var(--cream);color:var(--ink);border:4px solid var(--ink);border-radius:14px;box-shadow:10px 10px #6b4a2e;overflow:hidden;display:flex;flex-direction:column}
+.lh{height:50px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:4px solid var(--ink);background:#f3e6c9;font:700 20px JB}
+.lh b{background:var(--ink);color:var(--cream);border-radius:6px;padding:0 8px;font-size:17px}
+.lh .live{margin-left:auto;color:var(--org);font-size:16px}.lh .live:before{content:"● ";animation:blink 1.2s infinite}
+.rows{flex:1;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:8px 0 10px}
+.cm{display:flex;gap:10px;align-items:flex-end;padding:7px 16px;animation:pop .35s ease-out}
+.cm.h{flex-direction:row-reverse}.cm.h>div{display:flex;flex-direction:column;align-items:flex-end}
+.cn{font:700 15px JB;color:#6b5d52;margin:0 4px 3px}.cn i{font-style:normal;color:var(--m)}
+.bb{display:inline-block;max-width:560px;background:#fff;border:3px solid var(--ink);border-radius:18px 18px 18px 4px;padding:8px 15px;font:600 23px/1.28 DMSans;color:var(--ink);box-shadow:5px 5px var(--m)}
+.cm.h .bb{background:var(--m);color:#fff;border-radius:18px 18px 4px 18px;box-shadow:5px 5px var(--ink)}
+.bb b{color:var(--m)}.cm.h .bb b{color:#fff;text-decoration:underline}
+.cm.r .bb{background:#f6eedb;font-size:20px;border-style:dashed}
+.dl{font:700 13px JB;color:#2f8f45;margin:4px 6px 0}
+.bb.ty{display:flex;gap:7px;padding:14px 18px}.bb.ty i{width:11px;height:11px;border-radius:50%;background:#8b7d6b;display:block;animation:hop .8s infinite}
+.bb.ty i:nth-child(2){animation-delay:.15s}.bb.ty i:nth-child(3){animation-delay:.3s}
+.sys{display:flex;justify-content:center;align-items:center;gap:8px;margin:7px auto;width:max-content;max-width:94%;font:700 17px JB;color:#6b5d52;background:#f3e6c9;border:2px dashed #b9a27e;border-radius:20px;padding:4px 16px;animation:pop .35s ease-out}
+.sys span{display:inline-flex;align-items:center;gap:5px;color:var(--ink)}
+.sys.ship{font:400 25px Preahvihear;white-space:nowrap;color:#fff;background:var(--org);border:4px solid var(--ink);border-radius:14px;box-shadow:7px 7px var(--ink);padding:8px 24px;margin:12px auto}
+/* terminals */
+.terms{position:absolute;left:830px;right:30px;top:122px;bottom:30px;display:flex;flex-direction:column;gap:18px}
+.tw{flex:1;min-height:0;display:flex;flex-direction:column;border:4px solid var(--ink);border-radius:12px;background:#0d0805;box-shadow:8px 8px var(--m);overflow:hidden;animation:pop .4s ease-out}
+.tt{height:62px;flex:none;display:flex;align-items:center;gap:12px;padding:0 14px;background:var(--cream);color:var(--ink);border-bottom:4px solid var(--ink);box-shadow:0 -6px 0 var(--m) inset}
+.tt .nm{font:400 27px Preahvihear;line-height:1}.tt .who{font:700 14px JB;color:var(--m);display:block;margin-top:3px}
+.tt .rl{margin-left:auto;font:700 13px JB;color:#fff;background:var(--m);border:3px solid var(--ink);border-radius:6px;padding:1px 7px}
+.avw{position:relative;display:inline-flex}.dot{position:absolute;right:-4px;bottom:-2px;width:15px;height:15px;border-radius:50%;background:#45c25a;border:3px solid var(--ink)}
+.dot.busy{animation:blink .6s infinite}
+.flame{display:flex;align-items:flex-end;gap:2px;height:26px}.flame i{width:5px;border-radius:2px 2px 0 0;background:var(--m);display:block}
+.tb{flex:1;min-height:0;position:relative;overflow:hidden}
+.tb pre{margin:0;position:absolute;left:0;right:0;bottom:0;padding:8px 18px;font:21px/1.42 JB,monospace;color:#e8dfd0;white-space:pre-wrap;word-break:break-word}
+.inmsg{display:inline-block;width:100%;background:#ffffff1a;border-left:6px solid var(--m);padding:2px 10px;margin:3px 0;color:#fff}.inmsg b{color:var(--m)}
+.d{color:#8b7d6b}.g{color:#6fd47f}.o{color:#f0a070}.u{color:#ffc23d}.w{color:#fff}
+.tw.empty{background:transparent;border:4px dashed #5a4632;box-shadow:none;align-items:center;justify-content:center;font:700 26px JB;color:#6b5a48;gap:10px}
+.tw.empty .big{font:400 38px Preahvihear;color:#a8957d}
+/* build window, shown when shipped (or press B) */
+.build{position:absolute;left:830px;right:30px;top:122px;bottom:30px;border:4px solid var(--ink);border-radius:14px;overflow:hidden;background:#fff;box-shadow:10px 10px var(--org);display:none;flex-direction:column;animation:pop .45s ease-out}
+.build.on{display:flex}
+.wbar{height:48px;flex:none;background:var(--cream);border-bottom:4px solid var(--ink);display:flex;align-items:center;gap:9px;padding:0 12px;color:var(--ink)}
+.dots{display:flex;gap:6px}.dots i{width:13px;height:13px;border-radius:50%;border:3px solid var(--ink);display:block}
+.dots i:nth-child(1){background:#ff6b5e}.dots i:nth-child(2){background:#ffc23d}.dots i:nth-child(3){background:#45c25a}
+.url{flex:1;background:#fff;border:3px solid var(--ink);border-radius:8px;font:700 15px JB;color:#6b5a48;padding:3px 10px}
+.build iframe{flex:1;border:0;width:100%}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="hd">
+    <div class="brand"><span class="av" id="logo"></span><div><b>woltspace</b><span>gnaw. build. repeat.</span></div></div>
+    <div class="title">1 lodge · <em id="nh">0</em> humans · <em id="nw">0</em> wolts</div>
+    <div class="cnt"><div>humans typed<b id="ch">0</b></div><div>wolts sent<b id="cw">0</b></div><div class="zero">copy-paste<b>0</b></div></div>
+  </div>
+  <section class="chat"><div class="lh"><b>IWCL</b> #lodge<span class="live">live</span></div><div class="rows" id="rows"></div></section>
+  <section class="terms" id="terms"></section>
+  <section class="build" id="build"><div class="wbar"><div class="dots"><i></i><i></i><i></i></div><span class="url">the page they built · live on every phone in the room</span></div><iframe id="frame" sandbox="allow-scripts" title="the build"></iframe></section>
+</div>
+<script src="static/sprites.js"></script>
+<script src="static/crowd.js"></script>
+</body>
+</html>
