@@ -5,3 +5,4 @@ __pycache__/
 .env
 lodge/*
 !lodge/start.sh
+runs/

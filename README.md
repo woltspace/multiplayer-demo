@@ -47,7 +47,7 @@ the host reads both and writes the merged `index.html` into `SHOW_LIVE`, which t
 WOLTSPACE_BIN=/path/to/woltspace lodge/start.sh   # throwaway lodge, clean env, no tunnel, no bots
 ./reset-test.sh                                    # wipe it, recreate the host
 ./run-test.sh                                      # the app in lodge mode (the lodge's Start button runs this too)
-uv run --with playwright python test_run.py shots-real 240   # two test players, crowd screenshots every 10 s
+./dry-run.sh scenarios/bagels.json                 # a whole show, no humans: see below
 ```
 
 The throwaway lodge must start from a clean environment (`lodge/start.sh` does it): a lodge started from a
@@ -63,6 +63,15 @@ SHOW_HARNESS_P1=codex
 SHOW_HARNESS_P2=opencode
 SHOW_MODEL_P2=openrouter/z-ai/glm-5.2
 ```
+
+## Dry runs
+
+`./dry-run.sh [scenario]` plays a whole show with real wolts and scripted test players. It resets the show with
+the scenario's tester in the host slot (never jerpint's name), presses Start, types on the real phone pages on the
+scenario's clock and watches the live page. Output in `runs/<time>-<name>/`: `report.md` (first save and saves per
+box, ship time, every reply and wolt-to-wolt message, the timeline), crowd screenshots every 10 s, the phones at
+the end. A scenario is a small JSON file: see `scenarios/bagels.json`. Afterwards, a plain Reset in backstage
+gives the host slot back to `SHOW_HOST_PLAYER`.
 
 ## Settings
 

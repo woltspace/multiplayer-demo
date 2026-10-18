@@ -57,7 +57,11 @@ def engine_for(sid: str) -> tuple[str, str]:
     model = os.environ.get(f"SHOW_MODEL_{k}") or (MODEL if harness == HARNESS else "")
     return harness, model
 HOST = os.environ.get("SHOW_HOST_WOLT", "commie")
-HOST_PLAYER = os.environ.get("SHOW_HOST_PLAYER", "jerpint")  # tests use an honest tester name, never jerpint's
+HOST_PLAYER_DEFAULT = os.environ.get("SHOW_HOST_PLAYER", "jerpint")
+# Who plays the host slot. Dry runs reset the show with an honest tester name (never jerpint's); a plain Reset goes back
+# to the default. Kept in data/ so an app restart doesn't rename the host mid-show.
+_host_file = DATA / "host_player.txt"
+HOST_PLAYER = _host_file.read_text().strip() if _host_file.exists() else HOST_PLAYER_DEFAULT
 REPLY_CMD = os.environ.get("SHOW_REPLY_CMD", "show-reply")
 SAY_MAX = 280
 COOLDOWN = 3.0  # seconds between messages per player
@@ -599,11 +603,15 @@ def change_phase(p: str, request: Request):
 
 
 @app.post("/api/admin/reset-all")
-def reset_all(request: Request):
+def reset_all(request: Request, host_player: str = ""):
     """Reset the whole show: every session stopped, the players' wolts deleted, the chat and the page cleared, new
-    QR codes, a fresh host. Only on a throwaway lodge (lodge/start.sh marks it), never on a real one."""
-    global feed
+    QR codes, a fresh host. Only on a throwaway lodge (lodge/start.sh marks it), never on a real one.
+    ?host_player=... names the host slot for a dry run (a tester, never jerpint); without it, the default."""
+    global feed, HOST_PLAYER
     admin(request)
+    host_player = " ".join(host_player.split())[:40]
+    if host_player.lower() == "jerpint":
+        raise HTTPException(400, "dry runs use a tester name, never jerpint's")
     wolts = Path(_wolts_dir).resolve()
     if MODE == "lodge":
         if not (wolts.parent / ".lodge-show-throwaway").exists() or wolts == (Path.home() / ".woltspace" / "wolts").resolve():
@@ -620,6 +628,8 @@ def reset_all(request: Request):
             if child.name != ".space":
                 shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
         IWCL_LOG.unlink(missing_ok=True)
+    HOST_PLAYER = host_player or HOST_PLAYER_DEFAULT
+    _host_file.write_text(HOST_PLAYER)
     with lock:
         LOG.write_text("")
         events.clear()

@@ -1,0 +1,15 @@
+{
+  "name": "bagels",
+  "about": "The rehearsal show: a bagel vote and a pothole game. Honest test names only, never a real person's.",
+  "host": "tester (commie)",
+  "duration": 240,
+  "steps": [
+    {"t": 2, "slot": "host", "say": "test run: two players are joining. each builds their own box. ship when both say they're in good shape"},
+    {"t": 8, "slot": "p1", "create": {"player": "Tester A", "wolt": "pebble", "creature": "otter"}},
+    {"t": 18, "slot": "p2", "create": {"player": "Tester B", "wolt": "bolt", "creature": "beaver"}},
+    {"t": 30, "slot": "p1", "say": "rank montreal bagels: st-viateur vs fairmount, with a big vote button"},
+    {"t": 40, "slot": "p2", "say": "a tiny game: dodge potholes on a bike with the arrow keys"},
+    {"t": 100, "slot": "p1", "say": "make the vote buttons BIGGER and add a sesame emoji"},
+    {"t": 180, "slot": "host", "say": "ship it"}
+  ]
+}
