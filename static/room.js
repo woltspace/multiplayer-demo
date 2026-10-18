@@ -51,12 +51,16 @@ function render() {
   pb.textContent = ph === "paused" ? "⏸ The show is paused. Back in a moment." : "The show starts soon. Keep this page open, it updates by itself.";
   put("rows", evs.length ? evs.map(bubble).join("") : `<div class=empty>${av("beaver", 48)}<br>The show starts in a moment…</div>`);
   put("cast", cast());
-  if (state.build && state.build !== build) {
+  // Live from the first save (the stage updates itself); the toast is for the ship moment.
+  const mock = state.mode === "mock", url = mock ? "live/?v=" + state.build : "stage";
+  if (state.build && (mock ? state.build !== build : !build)) {
     build = state.build;
-    document.getElementById("frame").src = "live/?v=" + build;
-    document.getElementById("full").href = "live/?v=" + build;
-    const b = document.getElementById("t-build"); b.disabled = false;
-    if (!shipped) { shipped = true; if (tab !== "build") { b.innerHTML = 'the build<span class=new>new</span>'; document.getElementById("toast").hidden = false; } }
+    document.getElementById("frame").src = url; document.getElementById("full").href = url;
+    document.getElementById("t-build").disabled = false;
+  }
+  if (!shipped && evs.some((e) => e.type === "ship")) {
+    shipped = true;
+    if (tab !== "build") { document.getElementById("t-build").innerHTML = 'the build<span class=new>new</span>'; document.getElementById("toast").hidden = false; }
   }
   if (tab === "chat" && nearBottom) scrollTo(0, document.body.scrollHeight);
 }

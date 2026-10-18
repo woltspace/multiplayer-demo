@@ -43,6 +43,13 @@ HARNESS = os.environ.get("SHOW_HARNESS", "claude")
 MODEL = os.environ.get("SHOW_MODEL", "sonnet")
 
 
+# The live page is a staged shell (static/stage.html) with one box per wolt. Each player's wolt owns one file in its
+# own folder; the host owns the header. Writing the header is the ship moment.
+PART_OF = {"p1": "part-a.html", "p2": "part-b.html", "host": "header.html"}
+SIDE_OF = {"p1": "left", "p2": "right", "host": "top"}
+PART_MAX = 200_000
+
+
 def engine_for(sid: str) -> tuple[str, str]:
     """Each player slot can race on its own harness: SHOW_HARNESS_P1=codex, SHOW_MODEL_P2=openrouter/z-ai/glm-5.2..."""
     k = sid.upper()
@@ -167,11 +174,13 @@ class LodgeDriver:
         with urllib.request.urlopen(req, timeout=60) as r:
             return json.loads(r.read() or b"{}")
 
-    def create(self, name: str, creature: str, player: str, harness: str, model: str) -> dict:
+    def create(self, name: str, creature: str, player: str, harness: str, model: str, sid: str) -> dict:
         """Pre-baked: write the curated wolt folder first, then boot its first session on it."""
         from show_scaffold import scaffold, slug
         scaffold(Path(_wolts_dir), name, creature, harness, model, "player",
-                 {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir})
+                 {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir,
+                  "PART": PART_OF[sid], "SIDE": SIDE_OF[sid], "BOX": PART_OF[sid].removesuffix(".html"),
+                  "BOXJS": "partA" if sid == "p1" else "partB"})
         return self.post("/sessions/new/lodge", {"wolt": slug(name), "creature": creature})
 
     def deliver(self, session: str, text: str) -> dict:
@@ -272,6 +281,8 @@ async def headers(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
+    if request.url.path.startswith("/static/"):  # the stage runs in a sandboxed iframe (no origin): fonts need this
+        response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
 
@@ -358,7 +369,7 @@ def create_wolt(token: str, c: Create, request: Request):
     harness, model = engine_for(sid)
     if MODE == "lodge":
         try:
-            res = driver.create(name, c.creature, player, harness, model)
+            res = driver.create(name, c.creature, player, harness, model, sid)
         except FileExistsError as e:
             raise HTTPException(409, str(e))
         except Exception as e:  # the lodge says why (engine missing...)
@@ -373,8 +384,8 @@ def create_wolt(token: str, c: Create, request: Request):
     host = slots["host"]["wolt"]
     if MODE == "lodge" and host.get("session"):
         # An automatic note from the show app (not a human): the host welcomes the new wolt itself.
-        note = (f"[lodge-show app, automatic] {player} just created {name} ({c.creature}, session {session}). "
-                f"Welcome it over IWCL and give it its part (see SHOW.md).")
+        note = (f"[lodge-show app, automatic] {player} just created {name} ({c.creature}, {harness}, session {session}). "
+                f"It owns {PART_OF[sid]}, the {SIDE_OF[sid]} box of the live page (it already knows). Welcome it over IWCL (see SHOW.md).")
         threading.Thread(target=driver.deliver, args=(host["session"], note), daemon=True).start()
     return {"ok": True}
 
@@ -423,18 +434,67 @@ def reply(r: Reply, request: Request):
     return {"ok": True}
 
 
+def part_path(sid: str) -> Path | None:
+    s = slots.get(sid)
+    if sid == "host":
+        return LIVE / PART_OF["host"]
+    if not s or not s["wolt"]:
+        return None
+    from show_scaffold import slug
+    return Path(_wolts_dir) / slug(s["wolt"]["name"]) / "wolt" / "site" / PART_OF[sid]
+
+
+def read_parts() -> dict:
+    """Each box of the live page: who owns it, its HTML and its version (the file's mtime, 0 = not written yet)."""
+    out = {}
+    for sid in ("host", "p1", "p2"):
+        s, path, html, v = slots.get(sid) or {}, part_path(sid), "", 0
+        if path and path.is_file():
+            try:
+                st = path.stat()
+                v = st.st_mtime_ns // 1_000_000
+                html = path.read_bytes()[:PART_MAX].decode("utf-8", "replace")
+            except OSError:
+                pass
+        w = (s or {}).get("wolt") or {}
+        out[sid] = {"file": PART_OF[sid], "wolt": w.get("name"), "creature": w.get("creature"), "harness": w.get("harness"),
+                    "model": w.get("model", ""), "player": (s or {}).get("player"), "html": html, "v": v}
+    return out
+
+
 ship_lock = threading.Lock()
 
 
-def check_ship() -> int:
-    """The build's version (0: nothing yet). The host writing the page is the ship moment."""
-    build = (LIVE / "index.html").stat().st_mtime_ns // 1_000_000 if (LIVE / "index.html").exists() else 0
+def check_ship(parts: dict | None = None) -> int:
+    """The build's version (0: nothing written yet). The host writing the header is the ship moment."""
+    if MODE == "mock":
+        return 0
+    parts = parts or read_parts()
+    build = max(p["v"] for p in parts.values())
     with ship_lock:  # the crowd screen and the room both ask: one ship event only
-        if not build or any(e["type"] == "ship" for e in events):
+        if not parts["host"]["v"] or any(e["type"] == "ship" for e in events):
             return build
         humans = 1 + sum(1 for x in slots.values() if x["wolt"] and x is not slots["host"])
         record({"type": "ship", "text": f"{humans} humans · {humans} wolts · 0 copy-paste"})
     return build
+
+
+_parts = {"at": 0.0, "body": None}
+
+
+@app.get("/api/parts")
+def parts_api():
+    """Public, like the page itself: the stage polls it. Read from disk at most once a second for everyone."""
+    if _parts["body"] is None or time.time() - _parts["at"] >= 1.0:
+        parts = read_parts()
+        check_ship(parts)
+        _parts.update(at=time.time(), body={"parts": parts, "phase": phase})
+    return JSONResponse(_parts["body"], headers={"Cache-Control": "no-store", "Access-Control-Allow-Origin": "*"})
+
+
+@app.get("/stage")
+def stage_page():
+    return FileResponse(HERE / "static" / "stage.html")
 
 
 @app.get("/api/crowd")

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Lodge Show · the page they're building</title>
+<link rel="stylesheet" href="static/show.css">
+<style>
+/* The staged shell: prebuilt. The wolts only fill their own box; the host writes the header at the end. */
+body{background:var(--cream);color:var(--ink);font:17px/1.45 DMSans,system-ui;min-height:100vh}
+.top{position:relative;padding:16px 24px;background:var(--org);color:#fff;border-bottom:5px solid var(--ink)}
+.top h1{font:400 38px/1.05 Preahvihear;margin:0}.top small,.top p{font:700 14px JB;opacity:.92;margin:4px 0 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px 24px}
+section[data-part]{position:relative;background:#fff;border:4px solid var(--ink);border-radius:16px;box-shadow:8px 8px 0 var(--m);min-height:60vh;min-width:0}
+.owner{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:3px solid var(--ink);background:#f3e6c9;font:700 13px JB;border-radius:12px 12px 0 0;flex-wrap:wrap}
+.owner b{color:var(--m)}.owner .file{margin-left:auto;color:var(--muted);font-weight:400}
+.owner .dot{width:10px;height:10px;border-radius:50%;background:var(--m);display:inline-block}
+[data-editing] .owner .dot{animation:blink .6s infinite}
+.part-body{padding:16px 18px;overflow:hidden}
+.waiting{color:var(--muted);font:700 15px JB;text-align:center;padding:18vh 10px}
+.presence{position:absolute;pointer-events:none;border:3px solid var(--m);border-radius:10px;background:color-mix(in srgb,var(--m) 12%,transparent);transition:opacity .8s;z-index:30}
+.presence.out{opacity:0}
+.presence .who{position:absolute;left:-3px;top:-26px;background:var(--m);color:#fff;font:700 13px JB;padding:3px 9px;border-radius:7px 7px 7px 0;white-space:nowrap}
+.presence .caret{position:absolute;right:6px;bottom:6px;width:3px;height:20px;background:var(--m);animation:blink .5s infinite}
+.top .presence .who{background:var(--ink)}
+@media (max-width:760px){.grid{grid-template-columns:1fr;padding:14px 12px}.top{padding:14px 16px}.top h1{font-size:28px}section[data-part]{min-height:auto}}
+</style>
+</head>
+<body>
+<header class="top" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
+<div class="grid">
+  <section id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
+  <section id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
+</div>
+<script src="static/presence.js"></script>
+<script>
+// Polls the parts once a second; a box changes only when its file's version does. Presence outlines the edit.
+const seen = {};
+const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", opencode: "OpenCode"}[h] || h || ""; const s = String(m || "").split("/").pop(); return s && h !== "claude" ? `${n} · ${s}` : n; };
+async function poll() {
+  let d; try { const r = await fetch("api/parts", {cache: "no-store"}); if (!r.ok) return; d = await r.json(); } catch { return; }
+  for (const [sid, p] of Object.entries(d.parts)) {
+    const el = document.querySelector(`[data-part="${sid}"]`); if (!el) continue;
+    if (sid !== "host" && p.wolt) {
+      const nm = el.querySelector(".nm"), label = `${p.wolt} · ${p.player}'s wolt · ${engine(p.harness, p.model)}`;
+      if (nm.textContent !== label) { nm.innerHTML = ""; const b = document.createElement("b"); b.textContent = p.wolt; nm.append(b, ` · ${p.player}'s wolt · ${engine(p.harness, p.model)}`); }
+    }
+    if (!p.v || seen[sid] === p.v) continue;
+    seen[sid] = p.v;
+    Presence.apply(el, p.html, {name: p.wolt || "commie", slot: sid});
+    clearTimeout(el._t); el._t = setTimeout(() => delete el.dataset.editing, 1500);
+  }
+}
+poll(); setInterval(poll, 1000);
+</script>
+</body>
+</html>

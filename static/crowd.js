@@ -119,8 +119,10 @@ function render() {
   document.getElementById("ch").textContent = evs.filter((e) => e.type === "say").length;
   document.getElementById("cw").textContent = evs.filter((e) => e.type === "iwcl").length;
   const shipped = evs.some((e) => e.type === "ship");
-  if (state.build && state.build !== lastBuild) { lastBuild = state.build; document.getElementById("frame").src = "live/?v=" + state.build; }
-  buildOn = forced !== null ? forced : shipped;
+  // The page is live from the first save: the stage polls its parts itself, so it loads once.
+  if (state.build && !lastBuild) { lastBuild = state.build; document.getElementById("frame").src = state.mode === "mock" ? "live/?v=" + state.build : "stage"; }
+  else if (state.mode === "mock" && state.build && state.build !== lastBuild) { lastBuild = state.build; document.getElementById("frame").src = "live/?v=" + state.build; }
+  buildOn = forced !== null ? forced : (state.mode === "mock" ? shipped : !!state.build);
   document.getElementById("build").classList.toggle("on", buildOn);
   document.getElementById("terms").style.visibility = buildOn ? "hidden" : "visible";
 }
