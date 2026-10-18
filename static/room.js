@@ -42,12 +42,15 @@ function show(which) {
   if (which === "build") document.getElementById("toast").hidden = true;
 }
 
+const put = (id, html) => { const el = document.getElementById(id); if (el._html !== html) { el._html = html; el.innerHTML = html; } };
+
 function render() {
   const nearBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
-  const evs = state.events;
-  document.getElementById("rows").innerHTML = evs.length ? evs.map(bubble).join("")
-    : `<div class=empty>${av("beaver", 48)}<br>The show starts in a moment…</div>`;
-  document.getElementById("cast").innerHTML = cast();
+  const evs = state.events, ph = state.phase || "live", pb = document.getElementById("phase");
+  pb.hidden = ph === "live"; pb.className = "phase " + ph;
+  pb.textContent = ph === "paused" ? "⏸ The show is paused. Back in a moment." : "The show starts soon. Keep this page open, it updates by itself.";
+  put("rows", evs.length ? evs.map(bubble).join("") : `<div class=empty>${av("beaver", 48)}<br>The show starts in a moment…</div>`);
+  put("cast", cast());
   if (state.build && state.build !== build) {
     build = state.build;
     document.getElementById("frame").src = "live/?v=" + build;

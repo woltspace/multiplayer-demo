@@ -5,10 +5,13 @@
 # WOLTSPACE_BIN: the woltspace CLI to run (default: woltspace on PATH).
 # SHOW_KEYS_FROM: a .env to take the ONE model key OpenCode needs from (default: the main lodge's). Nothing else is copied.
 cd "$(dirname "$0")"
+[ -f ../.env ] && { set -a; . ../.env; set +a; }  # WOLTSPACE_BIN can live in the app's .env
 mkdir -p wolts && touch .lodge-show-throwaway
+# Harness CLIs outside the default PATH (opencode under nvm, for example): keep their folders, nothing else.
+EXTRA=""; for c in claude codex opencode; do d=$(dirname "$(command -v $c 2>/dev/null)" 2>/dev/null); [ -n "$d" ] && [ "$d" != "." ] && EXTRA="$EXTRA:$d"; done
 KEYS="${SHOW_KEYS_FROM:-$HOME/.woltspace/wolts/.env}"
 OR_KEY=$( [ -f "$KEYS" ] && sed -n 's/^OPENROUTER_API_KEY=//p' "$KEYS" | tail -1 | tr -d "\"'" )
-exec env -i HOME="$HOME" USER="$USER" PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin" \
+exec env -i HOME="$HOME" USER="$USER" PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:$HOME/.local/bin$EXTRA" \
   TERM=xterm-256color LANG=en_US.UTF-8 SHELL=/bin/zsh \
   ${OR_KEY:+OPENROUTER_API_KEY="$OR_KEY"} \
   WOLTSPACE_WOLTS_DIR="$PWD/wolts" WOLTSPACE_PUBLIC_TUNNEL=false ENABLE_TELEGRAM_BOT=false ENABLE_SLACK_BOT=false \

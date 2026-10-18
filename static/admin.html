@@ -18,6 +18,12 @@ h1{font:400 32px Preahvihear;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 2
 .url{font:12px JB;color:var(--muted);word-break:break-all;text-align:center}
 button{font:600 15px DMSans;background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);padding:8px 14px;cursor:pointer}
 .lbl{font:400 24px Preahvihear;margin:30px 0 12px}
+.show{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:2px solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink);padding:14px;margin:0 0 18px}
+.ph{font:700 14px JB;border:2px solid var(--ink);border-radius:8px;padding:4px 10px;background:#f3e6c9}
+.ph.live{background:var(--ok);color:#fff}.ph.paused{background:#ffc23d}
+button:disabled{opacity:.4;cursor:default}
+button.go{background:var(--ok);color:#fff}button.danger{background:#fff;color:#b3261e;border-color:#b3261e;box-shadow:3px 3px 0 #b3261e}
+.msg{font:700 13px JB;color:var(--muted)}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
 a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);padding:8px 14px;text-decoration:none}
 @media print{.row,button,.sub{display:none}.slot{box-shadow:none;break-inside:avoid}}
@@ -27,6 +33,9 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
 <main>
   <h1>Lodge Show · backstage</h1>
   <p class="sub">Print the two player QRs (or show one on your laptop). Each QR works for the first phone only. Reset = a new QR, the old one stops working.</p>
+  <div class="show card-ish"><span class="ph" id="ph">…</span>
+    <button class="go" id="start">▶ Start the show</button><button id="stop">⏸ Stop (pause screen)</button><button class="danger" id="resetall">↺ Reset everything</button>
+    <span class="msg" id="msg" role="status"></span></div>
   <div class="row"><a class="b" id="crowd" href="#">Open the crowd screen ↗</a><button onclick="print()">Print QRs</button><button id="mock" hidden>Restart mock show</button></div>
   <div class="grid" id="grid"></div>
   <h2 class="lbl">Everyone in the room</h2>
@@ -37,9 +46,11 @@ const KEY = new URLSearchParams(location.search).get("k") || "", H = {"X-Admin-K
 document.getElementById("crowd").href = "crowd?k=" + encodeURIComponent(KEY);
 async function load() {
   const d = await (await fetch("api/admin", {headers: H, cache: "no-store"})).json();
+  phase(d.phase);
   const m = document.getElementById("mock"); m.hidden = d.mode !== "mock";
   m.onclick = async () => { await fetch("api/mock/start", {method: "POST", headers: H}); };
-  const grid = document.getElementById("grid"); grid.innerHTML = "";
+  const grid = document.getElementById("grid"), key = JSON.stringify(d.slots);
+  if (grid._key === key) return; grid._key = key; grid.innerHTML = "";  // redraw the QRs only when a slot changed
   for (const s of d.slots) {
     const url = new URL("p/" + s.token, location.href).href;
     const el = document.createElement("div"); el.className = "slot"; el.dataset.c = s.slot;
@@ -51,7 +62,27 @@ async function load() {
     grid.append(el);
   }
 }
-load();
+const PH = {ready: "not started · the big screen shows “starting soon”", live: "● live", paused: "⏸ paused · pause screen is up"};
+function phase(p) {
+  const el = document.getElementById("ph"); el.textContent = PH[p] || p; el.className = "ph " + p;
+  document.getElementById("start").textContent = p === "paused" ? "▶ Resume the show" : "▶ Start the show";
+  document.getElementById("start").disabled = p === "live"; document.getElementById("stop").disabled = p !== "live";
+}
+async function act(path, msg) {
+  const m = document.getElementById("msg"); m.textContent = msg;
+  const r = await fetch(path, {method: "POST", headers: H});
+  const d = await r.json().catch(() => ({}));
+  m.textContent = r.ok ? "" : (d.detail || "that didn't work");
+  load();
+}
+document.getElementById("start").onclick = () => act("api/admin/phase/live", "starting…");
+document.getElementById("stop").onclick = () => act("api/admin/phase/paused", "pausing…");
+document.getElementById("resetall").onclick = () => {
+  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh commie.")) return;
+  if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;
+  act("api/admin/reset-all", "resetting… (commie takes a few seconds to wake up)");
+};
+load(); setInterval(load, 3000);
 const room = new URL(".", location.href).href;
 document.getElementById("room-url").textContent = room; document.getElementById("room-open").href = room;
 new QRCode(document.getElementById("room-qr"), {text: room, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});

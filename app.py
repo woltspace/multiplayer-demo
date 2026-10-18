@@ -92,6 +92,24 @@ def default_slots() -> dict:
 slots = json.loads(SLOTS.read_text()) if SLOTS.exists() else default_slots()
 
 
+# The show's phase, set from backstage: ready (before Start: the "starting soon" card), live, paused (the pause
+# screen; players can't send, the wolts keep running). The host slot can always type, to brief its wolt.
+PHASE_FILE = DATA / "phase.txt"
+PHASES = ("ready", "live", "paused")
+phase = PHASE_FILE.read_text().strip() if PHASE_FILE.exists() else "ready"
+
+
+def set_phase(p: str) -> None:
+    global phase
+    phase = p
+    PHASE_FILE.write_text(p)
+
+
+def open_for(sid: str) -> None:
+    if sid != "host" and phase != "live":
+        raise HTTPException(423, "the show starts in a moment" if phase == "ready" else "the show is paused, back in a moment")
+
+
 def save_slots() -> None:
     tmp = SLOTS.with_suffix(".tmp")
     tmp.write_text(json.dumps(slots, indent=2))
@@ -314,9 +332,9 @@ def player_state(token: str, request: Request):
         if sid == "host" and MODE == "mock":
             wolt = {"name": HOST, "creature": "raccoon", "harness": "Claude Code · Sonnet"}
         player = s["player"] or (joined and joined[0]["player"]) or None
-        return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+        return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "phase": phase, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
     mine = [e for e in events if e.get("slot") == sid or e.get("to_slot") == sid]
-    return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+    return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
 
 
 class Create(BaseModel):
@@ -328,6 +346,7 @@ class Create(BaseModel):
 @app.post("/api/p/{token}/create")
 def create_wolt(token: str, c: Create, request: Request):
     sid, s = owner(request, token)
+    open_for(sid)
     if s["wolt"]:
         raise HTTPException(409, "you already have a wolt")
     if c.creature not in ("beaver", "otter", "raccoon"):
@@ -367,6 +386,7 @@ class Say(BaseModel):
 @app.post("/api/p/{token}/say")
 def say(token: str, m: Say, request: Request):
     sid, s = owner(request, token)
+    open_for(sid)
     if not s["wolt"]:
         raise HTTPException(400, "create your wolt first")
     text = " ".join(m.text.split())[:SAY_MAX]
@@ -439,9 +459,9 @@ def crowd(request: Request, after: int = 0):
                     typing.append(s["wolt"]["name"])
         cast = public_slots()
         return JSONResponse({"events": evs, "terms": terms, "typing": [], "busy": typing,
-                             "build": build, "cast": cast, "mode": MODE}, headers={"Cache-Control": "no-store"})
+                             "build": build, "cast": cast, "mode": MODE, "phase": phase}, headers={"Cache-Control": "no-store"})
     return JSONResponse({"events": [e for e in evs if e["seq"] > after], "terms": terms, "typing": typing,
-                         "build": build, "cast": cast, "mode": MODE}, headers={"Cache-Control": "no-store"})
+                         "build": build, "cast": cast, "mode": MODE, "phase": phase}, headers={"Cache-Control": "no-store"})
 
 
 # The room: the public page everyone in the audience opens (short link on the big screen). The chat and
@@ -470,7 +490,7 @@ def room(request: Request):
         busy_now = []
     body = {"events": [{k: e.get(k) for k in ("seq", "type", "slot", "from", "to", "player", "wolt", "creature", "text")}
                        for e in evs if e.get("type") in ROOM_TYPES][-80:],
-            "cast": cast, "busy": busy_now, "build": build, "mode": MODE}
+            "cast": cast, "busy": busy_now, "build": build, "mode": MODE, "phase": phase}
     if t is None:
         _room.update(at=time.time(), body=body)
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
@@ -486,7 +506,7 @@ def admin_state(request: Request):
     admin(request)
     return {"slots": [{"slot": sid, "label": s["label"], "token": s["token"], "claimed": bool(s["claimed"]),
                        "player": s["player"], "wolt": s["wolt"] and s["wolt"]["name"]} for sid, s in slots.items()],
-            "mode": MODE}
+            "mode": MODE, "phase": phase}
 
 
 @app.post("/api/admin/reset/{sid}")
@@ -502,6 +522,72 @@ def reset_slot(sid: str, request: Request):
             s["player"], s["wolt"] = None, None
         save_slots()
     record({"type": "reset", "slot": sid})
+    return {"ok": True}
+
+
+@app.post("/api/admin/phase/{p}")
+def change_phase(p: str, request: Request):
+    """Start (live) and Stop (paused) from backstage."""
+    admin(request)
+    if p not in ("live", "paused"):
+        raise HTTPException(400, "live or paused")
+    if MODE == "mock" and p == "live" and phase == "ready":
+        driver.t0 = time.time()  # the recorded show starts from the top
+    set_phase(p)
+    _room["body"] = None
+    return {"ok": True, "phase": phase}
+
+
+@app.post("/api/admin/reset-all")
+def reset_all(request: Request):
+    """Reset the whole show: every session stopped, the players' wolts deleted, the chat and the page cleared, new
+    QR codes, a fresh host. Only on a throwaway lodge (lodge/start.sh marks it), never on a real one."""
+    global feed
+    admin(request)
+    wolts = Path(_wolts_dir).resolve()
+    if MODE == "lodge":
+        if not (wolts.parent / ".lodge-show-throwaway").exists() or wolts == (Path.home() / ".woltspace" / "wolts").resolve():
+            raise HTTPException(409, f"{wolts} is not a throwaway lodge, reset refused")
+        with urllib.request.urlopen(LODGE + "/sessions", timeout=10) as r:
+            running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running"]
+        for name in running:
+            try:
+                driver.post(f"/sessions/{name}/stop", {})
+            except Exception as e:
+                print(f"stop {name}: {e}")
+        import shutil
+        for child in wolts.iterdir():
+            if child.name != ".space":
+                shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
+        IWCL_LOG.unlink(missing_ok=True)
+    with lock:
+        LOG.write_text("")
+        events.clear()
+        last_say.clear()
+        _screens.clear()
+        slots.clear()
+        slots.update(default_slots())
+        save_slots()
+    _room["body"] = None
+    if LIVE.exists() and MODE == "lodge":
+        import shutil
+        shutil.rmtree(LIVE, ignore_errors=True)
+    set_phase("ready")
+    if MODE == "lodge":
+        feed = Feed(IWCL_LOG)
+        feed.since = time.time()
+        env = dict(os.environ, SHOW_LIVE=str(LIVE), SHOW_REPLY_CMD=REPLY_CMD, SHOW_HOST_PLAYER=HOST_PLAYER)
+        out = subprocess.run([sys.executable, str(HERE / "setup_host.py"), "--lodge", LODGE, "--wolts", str(wolts),
+                              "--name", HOST, "--model", MODEL], env=env, capture_output=True, text=True, timeout=180)
+        if out.returncode != 0:
+            raise HTTPException(502, f"the host didn't start: {(out.stderr or out.stdout).strip()[-300:]}")
+        LIVE.mkdir(parents=True, exist_ok=True)
+        host = slots["host"]["wolt"]
+        host["session"] = driver.running_session(HOST)
+        save_slots()
+        record({"type": "host", "slot": "host", "wolt": HOST})
+    else:
+        driver.t0 = time.time()
     return {"ok": True}
 
 

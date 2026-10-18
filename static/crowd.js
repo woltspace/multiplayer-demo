@@ -11,6 +11,9 @@ document.getElementById("logo").innerHTML = woltSpriteAvatar("beaver", 52);
 const ROOM = new URL(".", location.href);
 document.getElementById("jurl").textContent = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
 if (window.QRCode) new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});
+document.getElementById("clogo").innerHTML = woltSpriteAvatar("beaver", 120);
+document.getElementById("curl").textContent = document.getElementById("jurl").textContent;
+if (window.QRCode) new QRCode(document.getElementById("cqr"), {text: ROOM.href, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M});
 
 let state = null, seen = new Set(), buildOn = false, lastBuild = 0, forced = null;
 const castBy = () => Object.fromEntries((state.cast || []).filter((c) => c.wolt).map((c) => [c.wolt.name || c.wolt, c]));
@@ -102,10 +105,15 @@ function terminals() {
   }).join("");
 }
 
+// Only touch the DOM when something changed: rebuilding it every poll made the screen flash.
+const put = (id, html) => { const el = document.getElementById(id); if (el._html !== html) { el._html = html; el.innerHTML = html; } };
+
 function render() {
-  const evs = state.events;
-  document.getElementById("rows").innerHTML = evs.filter((e) => e.type !== "build" && e.type !== "claim" && e.type !== "reset").slice(-11).map(bubble).join("") + state.typing.map(typingBubble).join("");
-  document.getElementById("terms").innerHTML = terminals();
+  const evs = state.events, ph = state.phase || "live";
+  document.getElementById("curtain").hidden = ph === "live";
+  document.getElementById("ctext").textContent = ph === "paused" ? "⏸ back in a moment" : "starting soon";
+  put("rows", evs.filter((e) => e.type !== "build" && e.type !== "claim" && e.type !== "reset").slice(-11).map(bubble).join("") + state.typing.map(typingBubble).join(""));
+  put("terms", terminals());
   document.getElementById("nh").textContent = new Set(evs.filter((e) => e.type === "join").map((e) => e.player)).size + (evs.some((e) => e.type === "host") ? 1 : 0);
   document.getElementById("nw").textContent = evs.filter((e) => e.type === "join" || e.type === "host").length;
   document.getElementById("ch").textContent = evs.filter((e) => e.type === "say").length;

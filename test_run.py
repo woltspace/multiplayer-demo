@@ -22,7 +22,11 @@ with sync_playwright() as p:
     def create(sid, player, wolt, creature):
         ph = phones[sid]; ph.fill("#pn", player); ph.fill("#wn", wolt); ph.click(f".pick button[data-k={creature}]"); ph.click("#go")
         ph.wait_for_selector(".me", timeout=90000); mark(f"{sid} created {wolt}")
-    say("host", "test run: two players are joining. build ONE page together, each player owns half. ship it in 3 minutes")
+    # The host slot is a real person's during rehearsals: a script never types under jerpint's name.
+    if slots["host"].get("player") != "jerpint":
+        say("host", "test run: two players are joining. build ONE page together, each player owns half. ship it in 3 minutes")
+    else:
+        mark("host slot is jerpint's: no host message from the script")
     script = [(8, lambda: create("p1", "Tester A", "pebble", "otter")),
               (18, lambda: create("p2", "Tester B", "bolt", "beaver")),
               (30, lambda: say("p1", "rank montreal bagels: st-viateur vs fairmount, with a big vote button")),
