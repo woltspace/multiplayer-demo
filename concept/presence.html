@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lodge Show · presence concept</title>
+<link rel="stylesheet" href="../static/show.css">
+<style>
+/* The staged shell: prebuilt, the wolts only fill the parts. */
+body{background:var(--cream);color:var(--ink);font:18px/1.45 DMSans,system-ui;min-height:100vh}
+.top{display:flex;align-items:center;gap:16px;padding:18px 28px;background:var(--org);color:#fff;border-bottom:5px solid var(--ink);position:relative}
+.top h1{font:400 40px/1 Preahvihear;margin:0}.top small{font:700 14px JB;opacity:.9}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;padding:22px 28px}
+section[data-part]{position:relative;background:#fff;border:4px solid var(--ink);border-radius:16px;box-shadow:8px 8px 0 var(--m);min-height:400px;padding:0;overflow:visible}
+.owner{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:3px solid var(--ink);background:#f3e6c9;font:700 14px JB;border-radius:12px 12px 0 0}
+.owner b{color:var(--m)}.owner .file{margin-left:auto;color:var(--muted);font-weight:400}
+.owner .dot{width:10px;height:10px;border-radius:50%;background:var(--m);display:inline-block}
+[data-editing] .owner .dot{animation:blink .6s infinite}
+.part-body{padding:18px 20px}
+.empty-part{color:var(--muted);font:700 15px JB;text-align:center;padding:120px 0}
+/* presence: who is editing what */
+.presence{position:absolute;pointer-events:none;border:3px solid var(--m);border-radius:10px;background:color-mix(in srgb,var(--m) 12%,transparent);transition:opacity .8s;z-index:3}
+.presence.out{opacity:0}
+.presence .who{position:absolute;left:-3px;top:-26px;background:var(--m);color:#fff;font:700 13px JB;padding:3px 9px;border-radius:7px 7px 7px 0;white-space:nowrap}
+.presence .caret{position:absolute;right:6px;bottom:6px;width:3px;height:22px;background:var(--m);animation:blink .5s infinite}
+.top .presence .who{background:var(--ink)}
+/* what the wolts "write" in the demo */
+.p-h{font:400 30px/1.1 Preahvihear;margin:0 0 6px}.p-sub{color:var(--muted);margin:0 0 14px}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.side{border:3px solid var(--ink);border-radius:12px;padding:12px;text-align:center;box-shadow:4px 4px 0 var(--org)}
+.side h3{margin:0 0 4px;font-size:20px}.n{font:700 46px JB;color:var(--org)}
+.vote{display:block;width:100%;border:3px solid var(--ink);border-radius:10px;background:var(--org);color:#fff;font:700 18px DMSans;padding:10px;margin-top:6px}
+.vote.big{font-size:24px;padding:18px}
+.lead{margin-top:12px;font:700 16px JB;text-align:center}
+.road{position:relative;height:200px;background:#3a3a3a;border:3px solid var(--ink);border-radius:12px;overflow:hidden}
+.road:before{content:"";position:absolute;left:50%;top:-40px;bottom:-40px;border-left:5px dashed #ddd;animation:roll .6s linear infinite}
+@keyframes roll{to{transform:translateY(40px)}}
+.bike{position:absolute;bottom:18px;left:46%;font-size:44px;transition:left .3s}
+.hole{position:absolute;width:46px;height:22px;background:#111;border-radius:50%;animation:fall 2.4s linear infinite}
+@keyframes fall{from{top:-30px}to{top:230px}}
+.score{font:700 16px JB;margin-top:10px}
+.foot{padding:0 28px 20px;font:700 14px JB;color:var(--muted)}
+.ticker{position:fixed;right:20px;bottom:18px;background:var(--ink);color:var(--cream);font:700 14px JB;padding:8px 14px;border-radius:10px;max-width:640px}
+</style>
+</head>
+<body>
+<header class="top" data-part="header" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts</small></div></header>
+<div class="grid">
+  <section data-part="a" data-c="p1"><div class="owner"><span class="dot"></span><b>pebble</b> · Maya's wolt · Codex<span class="file">part-a.html</span></div><div class="part-body"><div class="empty-part">pebble's half · waiting…</div></div></section>
+  <section data-part="b" data-c="p2"><div class="owner"><span class="dot"></span><b>bolt</b> · Sam's wolt · OpenCode · GLM<span class="file">part-b.html</span></div><div class="part-body"><div class="empty-part">bolt's half · waiting…</div></div></section>
+</div>
+<p class="foot">the staged shell: header, layout, colors and fonts are prebuilt · each wolt only writes its own file</p>
+<div class="ticker" id="ticker">concept · scripted edits, real presence code (static/presence.js)</div>
+<script src="../static/presence.js"></script>
+<script>
+// A scripted show: successive saves of each part file, as the wolts would write them (small edits, saved often).
+const W = {a: {name: "pebble", slot: "p1"}, b: {name: "bolt", slot: "p2"}, header: {name: "commie", slot: "host"}};
+const A = [
+  `<h2 class=p-h>Bagel Showdown</h2>`,
+  `<h2 class=p-h>Montreal Bagel Showdown</h2><p class=p-sub>St-Viateur vs Fairmount. Pick a side!</p>`,
+  `<h2 class=p-h>Montreal Bagel Showdown</h2><p class=p-sub>St-Viateur vs Fairmount. Pick a side!</p><div class=vs><div class=side><h3>St-Viateur</h3><div class=n>0</div></div><div class=side><h3>Fairmount</h3><div class=n>0</div></div></div>`,
+  `<h2 class=p-h>Montreal Bagel Showdown</h2><p class=p-sub>St-Viateur vs Fairmount. Pick a side!</p><div class=vs><div class=side><h3>St-Viateur</h3><div class=n>0</div><button class=vote>vote</button></div><div class=side><h3>Fairmount</h3><div class=n>0</div><button class=vote>vote</button></div></div>`,
+  `<h2 class=p-h>🥯 Montreal Bagel Showdown</h2><p class=p-sub>St-Viateur vs Fairmount. Pick a side!</p><div class=vs><div class=side><h3>St-Viateur</h3><div class=n>12</div><button class=vote>vote</button></div><div class=side><h3>Fairmount</h3><div class=n>9</div><button class=vote>vote</button></div></div><p class=lead>St-Viateur leads by 3</p>`,
+  `<h2 class=p-h>🥯 Montreal Bagel Showdown</h2><p class=p-sub>St-Viateur vs Fairmount. Pick a side!</p><div class=vs><div class=side><h3>St-Viateur</h3><div class=n>12</div><button class="vote big">🥯 VOTE</button></div><div class=side><h3>Fairmount</h3><div class=n>9</div><button class="vote big">🥯 VOTE</button></div></div><p class=lead>St-Viateur leads by 3</p>`,
+];
+const B = [
+  `<h2 class=p-h>Pothole Dodge</h2>`,
+  `<h2 class=p-h>🚲 Pothole Dodge</h2><p class=p-sub>← → to steer</p><div class=road></div>`,
+  `<h2 class=p-h>🚲 Pothole Dodge</h2><p class=p-sub>← → to steer</p><div class=road><div class=bike>🚲</div></div>`,
+  `<h2 class=p-h>🚲 Pothole Dodge</h2><p class=p-sub>← → to steer</p><div class=road><div class=bike>🚲</div><div class=hole style="left:20%"></div><div class=hole style="left:64%;animation-delay:1.1s"></div></div>`,
+  `<h2 class=p-h>🚲 Pothole Dodge</h2><p class=p-sub>← → to steer, don't hit Montreal's finest</p><div class=road><div class=bike>🚲</div><div class=hole style="left:20%"></div><div class=hole style="left:64%;animation-delay:1.1s"></div></div><p class=score>score 0 · best 0</p>`,
+];
+const H = [`<h1>Bagels &amp; Potholes 🦝</h1><small>built live by pebble, bolt &amp; commie</small>`];
+const steps = [
+  [1.5, "a", A[0], "pebble saves part-a.html"], [3.2, "b", B[0], "bolt saves part-b.html"],
+  [5.0, "a", A[1], "pebble: title + subtitle"], [6.6, "b", B[1], "bolt: the road"],
+  [8.4, "a", A[2], "pebble: the two sides"], [10.0, "b", B[2], "bolt: the bike"],
+  [11.8, "a", A[3], "pebble: vote buttons"], [13.4, "b", B[3], "bolt: potholes"],
+  [15.2, "a", A[4], "pebble: live tally"], [16.8, "b", B[4], "bolt: score line"],
+  [18.6, "header", H[0], "commie: names the page"], [20.4, "a", A[5], "Maya: \"vote button BIGGER\" → pebble"],
+];
+const t0 = performance.now();
+for (const [t, part, html, what] of steps) setTimeout(() => {
+  const el = document.querySelector(`[data-part="${part}"]`);
+  Presence.apply(el, html, W[part]);
+  document.getElementById("ticker").textContent = `${what}`;
+  setTimeout(() => delete el.dataset.editing, 1500);
+}, t * 1000);
+</script>
+</body>
+</html>
