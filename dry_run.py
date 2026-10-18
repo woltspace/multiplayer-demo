@@ -97,4 +97,8 @@ lines += ["", f"Shipped: {f'{ship} s' if ship is not None else 'no'} · replies 
           "## Wolt to wolt", *[f"- {e['from']} → {e['to']}: {e['text'][:160]}" for e in iwcl], "",
           "## Timeline", *[f"- {t} s · {w}" for t, w in log]]
 (out / "report.md").write_text("\n".join(lines) + "\n")
-print(f"\n{out}/report.md")
+# The raw steps: the show log this run wrote. render.py makes the video from it.
+if Path("data/show.jsonl").exists():
+    import shutil
+    shutil.copy("data/show.jsonl", out / "show.jsonl")
+print(f"\n{out}/report.md\nvideo: uv run --with playwright python render.py {out}/show.jsonl")

@@ -75,6 +75,21 @@ box, ship time, every reply and wolt-to-wolt message, the timeline), crowd scree
 the end. A scenario is a small JSON file: see `scenarios/bagels.json`. Afterwards, a plain Reset in backstage
 gives the host slot back to `SHOW_HOST_PLAYER`.
 
+## Recording: the video is made from the raw steps
+
+In lodge mode the app writes `data/show.jsonl`, one line per thing the room saw: app events (joins, what players
+typed, replies, phases, the ship), IWCL messages, every version of every box, terminal screens when they change,
+and the cast. Reset everything moves it to `data/shows/<time>.jsonl`; a dry run copies it into its run folder.
+
+```sh
+uv run --with playwright python render.py runs/<run>/show.jsonl              # -> show-crowd.mp4, the big screen
+uv run --with playwright python render.py runs/<run>/show.jsonl --view stage # the live page only
+SHOW_MODE=replay SHOW_REPLAY=runs/<run>/show.jsonl uv run app.py              # click through a replay yourself
+```
+
+`render.py` starts its own copy of the app in replay mode, plays the log from the top and stitches frames with
+ffmpeg, so the same log always gives the same show. Publish the log and the video together.
+
 ## Settings
 
 | Env | Default | |

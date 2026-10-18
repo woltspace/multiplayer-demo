@@ -110,10 +110,24 @@ PHASES = ("ready", "live", "paused")
 phase = PHASE_FILE.read_text().strip() if PHASE_FILE.exists() else "ready"
 
 
+# The show log: everything the room saw, in order, so a show can be replayed and its video rendered from it
+# (SHOW_MODE=replay, render.py). App events, IWCL messages, every version of every box, terminal screens, phases.
+SHOW_LOG = DATA / "show.jsonl"
+_showlog_lock = threading.Lock()
+
+
+def showlog(kind: str, **row) -> None:
+    if MODE != "lodge":
+        return
+    with _showlog_lock, SHOW_LOG.open("a") as f:
+        f.write(json.dumps({"ts": time.time(), "kind": kind, **row}) + "\n")
+
+
 def set_phase(p: str) -> None:
     global phase
     phase = p
     PHASE_FILE.write_text(p)
+    showlog("phase", phase=p)
 
 
 def open_for(sid: str) -> None:
@@ -137,6 +151,7 @@ def record(event: dict) -> dict:
     with LOG.open("a") as f:
         f.write(json.dumps(event) + "\n")
     events.append(event)
+    showlog("event", event=event)
     return event
 
 
@@ -168,6 +183,54 @@ class MockDriver:
         now = self.now(t)
         b = [e["v"] for e in self.scn["events"] if e["type"] == "build" and e["t"] <= now]
         return b[-1] if b else 0
+
+
+class ReplayDriver:
+    """Plays a show log (data/show.jsonl from a real show) back on a clock, like MockDriver plays a script."""
+
+    def __init__(self, path: Path):
+        self.rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+        t0 = self.rows[0]["ts"] if self.rows else 0
+        for r in self.rows:
+            r["t"] = r["ts"] - t0
+        self.length = self.rows[-1]["t"] if self.rows else 0
+        self.t0 = time.time()
+
+    def now(self, t: float | None) -> float:
+        return t if t is not None else time.time() - self.t0
+
+    def _upto(self, t, kind):
+        now = self.now(t)
+        return [r for r in self.rows if r["kind"] == kind and r["t"] <= now]
+
+    def events(self, t: float | None) -> list[dict]:
+        evs = [dict(r["event"], seq=f"a{i}") for i, r in enumerate(self._upto(t, "event"))]
+        evs += [dict(r["row"], seq=f"f{i}") for i, r in enumerate(self._upto(t, "iwcl"))]
+        return sorted(evs, key=lambda e: e["ts"])
+
+    def terms(self, t: float | None) -> dict:
+        return {r["wolt"]: r["lines"] for r in self._upto(t, "term")}
+
+    def busy(self, t: float | None) -> list[str]:
+        now = self.now(t)
+        return sorted({r["wolt"] for r in self._upto(t, "term") if r["t"] > now - 2})
+
+    def parts(self, t: float | None) -> dict:
+        out = {sid: {"file": PART_OF[sid], "wolt": None, "html": "", "v": 0} for sid in ("host", "p1", "p2")}
+        for r in self._upto(t, "part"):
+            out[r["slot"]] = {k: v for k, v in r.items() if k not in ("ts", "t", "kind", "slot")} | {"v": int(r["t"] * 1000) + 1}
+        return out
+
+    def build(self, t: float | None) -> int:
+        return max(p["v"] for p in self.parts(t).values())
+
+    def cast(self, t: float | None) -> list[dict]:
+        rows = self._upto(t, "cast")
+        return rows[-1]["cast"] if rows else []
+
+    def phase(self, t: float | None) -> str:
+        rows = self._upto(t, "phase")
+        return rows[-1]["phase"] if rows else "ready"
 
 
 class LodgeDriver:
@@ -202,7 +265,7 @@ class LodgeDriver:
         return out.stdout if out.returncode == 0 else ""
 
 
-driver = MockDriver() if MODE == "mock" else LodgeDriver()
+driver = MockDriver() if MODE == "mock" else ReplayDriver(Path(os.environ["SHOW_REPLAY"])) if MODE == "replay" else LodgeDriver()
 
 # The lodge's IWCL log (woltspace 0.5.20+): one line per wolt-to-wolt message or spawn.
 _wolts_dir = os.environ.get("WOLTSPACE_WOLTS_DIR") or str(Path.home() / ".woltspace" / "wolts")
@@ -313,7 +376,7 @@ def owner(request: Request, token: str) -> tuple[str, dict]:
 
 def mock_t(request: Request) -> float | None:
     t = request.query_params.get("t")
-    return float(t) if t and MODE == "mock" else None
+    return float(t) if t and MODE in ("mock", "replay") else None
 
 
 def public_slots() -> list[dict]:
@@ -471,7 +534,7 @@ ship_lock = threading.Lock()
 
 def check_ship(parts: dict | None = None) -> int:
     """The build's version (0: nothing written yet). The host writing the header is the ship moment."""
-    if MODE == "mock":
+    if MODE != "lodge":
         return 0
     parts = parts or read_parts()
     build = max(p["v"] for p in parts.values())
@@ -483,12 +546,54 @@ def check_ship(parts: dict | None = None) -> int:
     return build
 
 
+def recorder() -> None:
+    """Once a second: new IWCL rows, changed boxes, changed terminal screens and the cast go into the show log."""
+    seen_iwcl, seen_v, seen_term, seen_cast = 0, {}, {}, None
+    while True:
+        if _recorder["reset"]:  # a reset started a new show log
+            _recorder["reset"] = False
+            seen_iwcl, seen_v, seen_term, seen_cast = 0, {}, {}, None
+        try:
+            rows = feed.poll() if feed else []
+            if len(rows) < seen_iwcl:
+                seen_iwcl = 0  # a reset started a new feed
+            for r in rows[seen_iwcl:]:
+                showlog("iwcl", row=r)
+            seen_iwcl = len(rows)
+            for sid, part in read_parts().items():
+                if part["v"] and part["v"] != seen_v.get(sid):
+                    seen_v[sid] = part["v"]
+                    showlog("part", slot=sid, **{k: v for k, v in part.items() if k != "v"})
+            for x in list(slots.values()):
+                w = x.get("wolt") or {}
+                if w.get("session"):
+                    screen = driver.capture(w["session"])
+                    if screen != seen_term.get(w["name"]):
+                        seen_term[w["name"]] = screen
+                        showlog("term", wolt=w["name"], lines=screen.rstrip("\n").splitlines()[-40:])
+            cast = [c for c in public_slots() if c["wolt"]]
+            if cast != seen_cast:
+                seen_cast = cast
+                showlog("cast", cast=cast)
+        except Exception as e:
+            print(f"recorder: {e}")
+        time.sleep(1)
+
+
+_recorder = {"reset": False}
+if MODE == "lodge":
+    threading.Thread(target=recorder, daemon=True).start()
+
+
 _parts = {"at": 0.0, "body": None}
 
 
 @app.get("/api/parts")
 def parts_api():
     """Public, like the page itself: the stage polls it. Read from disk at most once a second for everyone."""
+    if MODE == "replay":
+        return JSONResponse({"parts": driver.parts(None), "phase": driver.phase(None)},
+                            headers={"Cache-Control": "no-store", "Access-Control-Allow-Origin": "*"})
     if _parts["body"] is None or time.time() - _parts["at"] >= 1.0:
         parts = read_parts()
         check_ship(parts)
@@ -504,6 +609,11 @@ def stage_page():
 @app.get("/api/crowd")
 def crowd(request: Request, after: int = 0):
     admin(request)
+    if MODE == "replay":
+        t = mock_t(request)
+        return JSONResponse({"events": driver.events(t), "terms": driver.terms(t), "typing": [], "busy": driver.busy(t),
+                             "build": driver.build(t), "cast": driver.cast(t), "mode": MODE, "phase": driver.phase(t)},
+                            headers={"Cache-Control": "no-store"})
     if MODE == "mock":
         t = mock_t(request)
         evs = driver.events(t)
@@ -546,6 +656,8 @@ def room(request: Request):
                  "creature": c.get("creature") or c["wolt"].get("creature"), "harness": c.get("harness") or c["wolt"].get("harness")}
                 for c in cast if c.get("wolt") and c["slot"] in joined]
         busy_now = typing
+    elif MODE == "replay":
+        evs, build, cast, busy_now = driver.events(t), driver.build(t), driver.cast(t), driver.busy(t)
     else:
         build = check_ship()
         with lock:
@@ -554,7 +666,7 @@ def room(request: Request):
         busy_now = []
     body = {"events": [{k: e.get(k) for k in ("seq", "type", "slot", "from", "to", "player", "wolt", "creature", "text")}
                        for e in evs if e.get("type") in ROOM_TYPES][-80:],
-            "cast": cast, "busy": busy_now, "build": build, "mode": MODE, "phase": phase}
+            "cast": cast, "busy": busy_now, "build": build, "mode": MODE, "phase": driver.phase(t) if MODE == "replay" else phase}
     if t is None:
         _room.update(at=time.time(), body=body)
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
@@ -628,6 +740,10 @@ def reset_all(request: Request, host_player: str = ""):
             if child.name != ".space":
                 shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
         IWCL_LOG.unlink(missing_ok=True)
+    if SHOW_LOG.exists():  # keep the last show's log for replays: data/shows/<time>.jsonl
+        (DATA / "shows").mkdir(exist_ok=True)
+        SHOW_LOG.rename(DATA / "shows" / time.strftime("%m%d-%H%M%S.jsonl"))
+    _recorder["reset"] = True
     HOST_PLAYER = host_player or HOST_PLAYER_DEFAULT
     _host_file.write_text(HOST_PLAYER)
     with lock:
@@ -664,8 +780,8 @@ def reset_all(request: Request, host_player: str = ""):
 @app.post("/api/mock/start")
 def mock_start(request: Request):
     admin(request)
-    if MODE != "mock":
-        raise HTTPException(400, "not in mock mode")
+    if MODE not in ("mock", "replay"):
+        raise HTTPException(400, "not in mock or replay mode")
     driver.t0 = time.time()
     return {"ok": True}
 
