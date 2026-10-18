@@ -1,5 +1,7 @@
 # Lodge Show
 
+Repo: [woltspace/multiplayer-demo](https://github.com/woltspace/multiplayer-demo) (private). In a lodge it lives at `wolts/apps/lodge-show`.
+
 A multiplayer, multi-agent demo for a live audience. Two volunteers scan private QR codes, name and create
 their own wolt from their phone, and tell it what to build by typing. A host wolt welcomes them over IWCL,
 gives each one half of a page, merges the halves and ships it. A crowd screen on the projector shows the
