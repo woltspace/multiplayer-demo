@@ -36,6 +36,8 @@ def scaffold(wolts: Path, name: str, creature: str, harness: str, model: str, ro
     tmpl = folder / "wolt" / "wolt.json.tmpl"
     data = json.loads(fill(tmpl.read_text()))
     tmpl.unlink()
+    if not data.get("model"):  # no model: the harness's own default
+        data.pop("model", None)
     (folder / "wolt" / "wolt.json").write_text(json.dumps(data, indent=2) + "\n")
     mem = folder / "wolt" / "memory"
     mem.mkdir(parents=True, exist_ok=True)

@@ -7,6 +7,10 @@ const av = (c, s) => c === "human" ? `<span class=av style="font-size:${s * .8}p
 const fit = () => document.getElementById("stage").style.setProperty("--s", Math.min(innerWidth / 1920, innerHeight / 1080));
 addEventListener("resize", fit); fit();
 document.getElementById("logo").innerHTML = woltSpriteAvatar("beaver", 52);
+// The public room: the short link and its QR, for everyone in the audience.
+const ROOM = new URL(".", location.href);
+document.getElementById("jurl").textContent = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
+if (window.QRCode) new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});
 
 let state = null, seen = new Set(), buildOn = false, lastBuild = 0, forced = null;
 const castBy = () => Object.fromEntries((state.cast || []).filter((c) => c.wolt).map((c) => [c.wolt.name || c.wolt, c]));
@@ -72,7 +76,7 @@ function chromeless(lines) {
   }
   return lines.filter((l, i) => !/Update available!|^\s*$/.test(l.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "")) || false);
 }
-const engine = (h) => ({claude: "Claude Code · Sonnet", codex: "Codex", opencode: "opencode"}[h] || h);
+const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", opencode: "OpenCode"}[h]; if (!n) return h; const s = String(m || "").split("/").pop(); return s ? `${n} · ${s}` : n; };
 const clip = (t, n = 200) => t.length > n ? t.slice(0, n - 1) + "…" : t;
 
 function flame(lines) { // activity: how much each terminal moved lately
@@ -93,7 +97,7 @@ function terminals() {
     const busy = (state.busy || state.typing).includes(name);
     return `<div class=tw data-c=${sid}><div class=tt><span class=avw>${av(creature, 44)}<i class="dot${busy ? " busy" : ""}"></i></span>
       <div><span class=nm>${esc(name)}</span><span class=who>${esc(c.player)}'s wolt${sid === "host" ? " · host" : ""}</span></div>
-      <span class=rl>${esc(engine(c.harness || c.wolt.harness || ""))}</span>${flame(raw)}</div>
+      <span class=rl>${esc(engine(c.harness || c.wolt.harness || "", c.model || c.wolt.model))}</span>${flame(raw)}</div>
       <div class=tb><pre>${lines.slice(-14).join("\n")}</pre></div></div>`;
   }).join("");
 }

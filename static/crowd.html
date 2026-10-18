@@ -19,6 +19,8 @@ body:before{content:"";position:absolute;inset:0;background-image:radial-gradien
 .cnt{margin-left:auto;display:flex;gap:14px;font:700 19px JB;color:#a8957d}
 .cnt div{background:#2b1d12;border:3px solid #4a3523;border-radius:10px;padding:6px 14px}.cnt b{color:var(--cream);font-size:26px;margin-left:6px}
 .cnt .zero b{color:#6fd47f}
+.join{display:flex;align-items:center;gap:12px;font:700 15px JB;color:#a8957d}.join b{display:block;color:var(--cream);font-size:21px}
+#jqr{background:#fff;padding:5px;border-radius:6px;line-height:0}
 /* chat */
 .chat{position:absolute;left:30px;top:122px;width:760px;bottom:30px;background:var(--cream);color:var(--ink);border:4px solid var(--ink);border-radius:14px;box-shadow:10px 10px #6b4a2e;overflow:hidden;display:flex;flex-direction:column}
 .lh{height:50px;flex:none;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:4px solid var(--ink);background:#f3e6c9;font:700 20px JB}
@@ -68,12 +70,14 @@ body:before{content:"";position:absolute;inset:0;background-image:radial-gradien
   <div class="hd">
     <div class="brand"><span class="av" id="logo"></span><div><b>woltspace</b><span>gnaw. build. repeat.</span></div></div>
     <div class="title">1 lodge · <em id="nh">0</em> humans · <em id="nw">0</em> wolts</div>
+    <div class="join"><div id="jqr"></div><div>watch on your phone<b id="jurl"></b></div></div>
     <div class="cnt"><div>humans typed<b id="ch">0</b></div><div>wolts sent<b id="cw">0</b></div><div class="zero">copy-paste<b>0</b></div></div>
   </div>
   <section class="chat"><div class="lh"><b>IWCL</b> #lodge<span class="live">live</span></div><div class="rows" id="rows"></div></section>
   <section class="terms" id="terms"></section>
   <section class="build" id="build"><div class="wbar"><div class="dots"><i></i><i></i><i></i></div><span class="url">the page they built · live on every phone in the room</span></div><iframe id="frame" sandbox="allow-scripts" title="the build"></iframe></section>
 </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js"></script>
 <script src="static/crowd.js"></script>
 </body>

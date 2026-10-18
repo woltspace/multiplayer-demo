@@ -4,6 +4,7 @@
 # ///
 """Lodge Show: multiplayer, multi-agent, live on stage (AI Tinkerers Montreal, 2026-10-22).
 
+Room:     GET /            public: the chat and the build, for everyone in the room
 Players:  GET /p/<token>     claim the slot, name + create your wolt, then type to it
 Crowd:    GET /crowd?k=KEY   full screen: #lodge chat + every wolt's terminal, live
 Admin:    GET /admin?k=KEY   the private QR per slot, reset a slot
@@ -40,6 +41,14 @@ MODE = os.environ.get("SHOW_MODE", "mock")
 LODGE = os.environ.get("SHOW_LODGE", "http://127.0.0.1:47990")
 HARNESS = os.environ.get("SHOW_HARNESS", "claude")
 MODEL = os.environ.get("SHOW_MODEL", "sonnet")
+
+
+def engine_for(sid: str) -> tuple[str, str]:
+    """Each player slot can race on its own harness: SHOW_HARNESS_P1=codex, SHOW_MODEL_P2=openrouter/z-ai/glm-5.2..."""
+    k = sid.upper()
+    harness = os.environ.get(f"SHOW_HARNESS_{k}", HARNESS)
+    model = os.environ.get(f"SHOW_MODEL_{k}") or (MODEL if harness == HARNESS else "")
+    return harness, model
 HOST = os.environ.get("SHOW_HOST_WOLT", "commie")
 HOST_PLAYER = os.environ.get("SHOW_HOST_PLAYER", "jerpint")  # tests use an honest tester name, never jerpint's
 REPLY_CMD = os.environ.get("SHOW_REPLY_CMD", "show-reply")
@@ -76,7 +85,7 @@ def default_slots() -> dict:
         "p1": {"label": "Player 1", "token": secrets.token_urlsafe(9), "claimed": None, "player": None, "wolt": None},
         "p2": {"label": "Player 2", "token": secrets.token_urlsafe(9), "claimed": None, "player": None, "wolt": None},
         "host": {"label": HOST_PLAYER, "token": secrets.token_urlsafe(9), "claimed": None, "player": HOST_PLAYER,
-                 "wolt": {"name": HOST, "creature": "raccoon", "harness": HARNESS, "session": None}},
+                 "wolt": {"name": HOST, "creature": "raccoon", "harness": HARNESS, "model": MODEL, "session": None}},
     }
 
 
@@ -140,10 +149,10 @@ class LodgeDriver:
         with urllib.request.urlopen(req, timeout=60) as r:
             return json.loads(r.read() or b"{}")
 
-    def create(self, name: str, creature: str, player: str) -> dict:
+    def create(self, name: str, creature: str, player: str, harness: str, model: str) -> dict:
         """Pre-baked: write the curated wolt folder first, then boot its first session on it."""
         from show_scaffold import scaffold, slug
-        scaffold(Path(_wolts_dir), name, creature, HARNESS, MODEL, "player",
+        scaffold(Path(_wolts_dir), name, creature, harness, model, "player",
                  {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir})
         return self.post("/sessions/new/lodge", {"wolt": slug(name), "creature": creature})
 
@@ -276,7 +285,7 @@ def mock_t(request: Request) -> float | None:
 
 def public_slots() -> list[dict]:
     return [{"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"] and s["wolt"]["name"],
-             "creature": s["wolt"] and s["wolt"]["creature"], "harness": s["wolt"] and s["wolt"]["harness"]}
+             "creature": s["wolt"] and s["wolt"]["creature"], "harness": s["wolt"] and s["wolt"]["harness"], "model": s["wolt"] and s["wolt"].get("model", "")}
             for sid, s in slots.items()]
 
 
@@ -327,9 +336,10 @@ def create_wolt(token: str, c: Create, request: Request):
     taken = {x["wolt"]["name"].lower() for x in slots.values() if x["wolt"]}
     if name.lower() in taken:
         raise HTTPException(409, "that name is taken, pick another")
+    harness, model = engine_for(sid)
     if MODE == "lodge":
         try:
-            res = driver.create(name, c.creature, player)
+            res = driver.create(name, c.creature, player, harness, model)
         except FileExistsError as e:
             raise HTTPException(409, str(e))
         except Exception as e:  # the lodge says why (engine missing...)
@@ -338,9 +348,9 @@ def create_wolt(token: str, c: Create, request: Request):
     else:
         session = f"{name}-mock"
     with lock:
-        s["player"], s["wolt"] = player, {"name": name, "creature": c.creature, "harness": HARNESS, "session": session}
+        s["player"], s["wolt"] = player, {"name": name, "creature": c.creature, "harness": harness, "model": model, "session": session}
         save_slots()
-    record({"type": "join", "slot": sid, "player": player, "wolt": name, "creature": c.creature, "harness": HARNESS})
+    record({"type": "join", "slot": sid, "player": player, "wolt": name, "creature": c.creature, "harness": harness})
     host = slots["host"]["wolt"]
     if MODE == "lodge" and host.get("session"):
         # An automatic note from the show app (not a human): the host welcomes the new wolt itself.
@@ -393,6 +403,20 @@ def reply(r: Reply, request: Request):
     return {"ok": True}
 
 
+ship_lock = threading.Lock()
+
+
+def check_ship() -> int:
+    """The build's version (0: nothing yet). The host writing the page is the ship moment."""
+    build = (LIVE / "index.html").stat().st_mtime_ns // 1_000_000 if (LIVE / "index.html").exists() else 0
+    with ship_lock:  # the crowd screen and the room both ask: one ship event only
+        if not build or any(e["type"] == "ship" for e in events):
+            return build
+        humans = 1 + sum(1 for x in slots.values() if x["wolt"] and x is not slots["host"])
+        record({"type": "ship", "text": f"{humans} humans · {humans} wolts · 0 copy-paste"})
+    return build
+
+
 @app.get("/api/crowd")
 def crowd(request: Request, after: int = 0):
     admin(request)
@@ -404,10 +428,7 @@ def crowd(request: Request, after: int = 0):
         build = driver.build(t)
         cast = driver.scn["cast"]
     else:
-        build = (LIVE / "index.html").stat().st_mtime_ns // 1_000_000 if (LIVE / "index.html").exists() else 0
-        if build and not any(e["type"] == "ship" for e in events):  # the host wrote the page: that's the ship moment
-            humans = 1 + sum(1 for x in slots.values() if x["wolt"] and x is not slots["host"])
-            record({"type": "ship", "text": f"{humans} humans · {humans} wolts · 0 copy-paste"})
+        build = check_ship()
         evs = sorted([dict(e, seq=f"a{e['seq']}") for e in events] + feed.poll(), key=lambda e: e["ts"])
         terms, typing = {}, []
         for s in slots.values():
@@ -421,6 +442,43 @@ def crowd(request: Request, after: int = 0):
                              "build": build, "cast": cast, "mode": MODE}, headers={"Cache-Control": "no-store"})
     return JSONResponse({"events": [e for e in evs if e["seq"] > after], "terms": terms, "typing": typing,
                          "build": build, "cast": cast, "mode": MODE}, headers={"Cache-Control": "no-store"})
+
+
+# The room: the public page everyone in the audience opens (short link on the big screen). The chat and
+# the build only: no terminals, no tokens, no keys. One answer per second, shared by every phone.
+ROOM_TYPES = {"host", "join", "add", "say", "iwcl", "reply", "ship"}
+_room = {"at": 0.0, "body": None}
+
+
+@app.get("/api/room")
+def room(request: Request):
+    t = mock_t(request)
+    if t is None and _room["body"] is not None and time.time() - _room["at"] < 1.0:
+        return JSONResponse(_room["body"], headers={"Cache-Control": "no-store"})
+    if MODE == "mock":
+        evs, build, cast, typing = driver.events(t), driver.build(t), driver.scn["cast"], driver.typing(t)
+        joined = {e["slot"] for e in evs if e["type"] == "join"} | ({"host"} if any(e["type"] == "host" for e in evs) else set())
+        cast = [{"slot": c["slot"], "player": c["player"], "wolt": c["wolt"]["name"] if isinstance(c["wolt"], dict) else c["wolt"],
+                 "creature": c.get("creature") or c["wolt"].get("creature"), "harness": c.get("harness") or c["wolt"].get("harness")}
+                for c in cast if c.get("wolt") and c["slot"] in joined]
+        busy_now = typing
+    else:
+        build = check_ship()
+        with lock:
+            evs = sorted([dict(e, seq=f"a{e['seq']}") for e in events] + feed.poll(), key=lambda e: e["ts"])
+        cast = [c for c in public_slots() if c["wolt"]]
+        busy_now = []
+    body = {"events": [{k: e.get(k) for k in ("seq", "type", "slot", "from", "to", "player", "wolt", "creature", "text")}
+                       for e in evs if e.get("type") in ROOM_TYPES][-80:],
+            "cast": cast, "busy": busy_now, "build": build, "mode": MODE}
+    if t is None:
+        _room.update(at=time.time(), body=body)
+    return JSONResponse(body, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/")
+def room_page():
+    return FileResponse(HERE / "static" / "room.html")
 
 
 @app.get("/api/admin")

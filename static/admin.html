@@ -17,6 +17,7 @@ h1{font:400 32px Preahvihear;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 2
 .st{font:700 13px JB;color:var(--muted)}.st.on{color:var(--ok)}
 .url{font:12px JB;color:var(--muted);word-break:break-all;text-align:center}
 button{font:600 15px DMSans;background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);padding:8px 14px;cursor:pointer}
+.lbl{font:400 24px Preahvihear;margin:30px 0 12px}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 18px}
 a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);padding:8px 14px;text-decoration:none}
 @media print{.row,button,.sub{display:none}.slot{box-shadow:none;break-inside:avoid}}
@@ -28,6 +29,8 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
   <p class="sub">Print the two player QRs (or show one on your laptop). Each QR works for the first phone only. Reset = a new QR, the old one stops working.</p>
   <div class="row"><a class="b" id="crowd" href="#">Open the crowd screen ↗</a><button onclick="print()">Print QRs</button><button id="mock" hidden>Restart mock show</button></div>
   <div class="grid" id="grid"></div>
+  <h2 class="lbl">Everyone in the room</h2>
+  <div class="grid"><div class="slot" data-c="host" id="room"><h2>Room (public)</h2><div class=qr id="room-qr"></div><div class=st>no key: the chat and the build only</div><div class=url id="room-url"></div><a class="b" id="room-open" target="_blank">Open the room ↗</a></div></div>
 </main>
 <script>
 const KEY = new URLSearchParams(location.search).get("k") || "", H = {"X-Admin-Key": KEY};
@@ -49,6 +52,9 @@ async function load() {
   }
 }
 load();
+const room = new URL(".", location.href).href;
+document.getElementById("room-url").textContent = room; document.getElementById("room-open").href = room;
+new QRCode(document.getElementById("room-qr"), {text: room, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});
 </script>
 </body>
 </html>

@@ -3,8 +3,8 @@
   "description": "Lodge Show: a multiplayer, multi-agent live demo. Volunteers scan a QR, create their own wolt and type to it; the wolts build one page together over IWCL while a crowd screen shows the chat and every terminal live",
   "stack": "python",
   "port": 4060,
-  "start": "SHOW_PORT=$PORT uv run app.py",
+  "start": "SHOW_PORT=$PORT ./run-test.sh",
   "keeper": "commie",
-  "emoji": "🎪",
+  "emoji": "\ud83c\udfaa",
   "public": false
 }

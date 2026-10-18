@@ -12,9 +12,10 @@ terminals are `tmux capture-pane` of each wolt's session.
 
 | URL | Who | What |
 |---|---|---|
+| `/` | everyone in the room (short link + QR on the big screen) | the #lodge chat as it happens, who plays which wolt on which harness, and the build when it ships. No keys, no terminals |
 | `/p/<token>` | each player (QR) | claim the seat, name + create your wolt, then type to it. First phone wins, others see "Spot taken" |
 | `/crowd?k=KEY` | projector | #lodge chat on the left, three terminals on the right; the built page takes over when it ships (`B` toggles, `Esc` releases) |
-| `/admin?k=KEY` | backstage | the QR per seat (printable), who claimed what, reset a seat |
+| `/admin?k=KEY` | backstage | the QR per seat (printable), the room's QR, who claimed what, reset a seat |
 | `/live/` | everyone | the page the wolts built |
 
 The admin key is generated in `data/admin.key` on first start (or set `SHOW_ADMIN_KEY`).
@@ -45,13 +46,23 @@ the host reads both and writes the merged `index.html` into `SHOW_LIVE`, which t
 ```sh
 WOLTSPACE_BIN=/path/to/woltspace lodge/start.sh   # throwaway lodge, clean env, no tunnel, no bots
 ./reset-test.sh                                    # wipe it, recreate the host
-./run-test.sh                                      # the app in lodge mode
+./run-test.sh                                      # the app in lodge mode (the lodge's Start button runs this too)
 uv run --with playwright python test_run.py shots-real 240   # two test players, crowd screenshots every 10 s
 ```
 
 The throwaway lodge must start from a clean environment (`lodge/start.sh` does it): a lodge started from a
 wolt's environment would pick up that lodge's tunnel and chat bot tokens. `reset-test.sh` only wipes a
-folder marked by `lodge/start.sh`.
+folder marked by `lodge/start.sh`. The only thing it takes from the main lodge is `OPENROUTER_API_KEY`
+(for OpenCode players), read from `SHOW_KEYS_FROM` (default `~/.woltspace/wolts/.env`).
+
+`run-test.sh` reads a local, gitignored `.env` first, for example:
+
+```sh
+SHOW_HOST_PLAYER=jerpint
+SHOW_HARNESS_P1=codex
+SHOW_HARNESS_P2=opencode
+SHOW_MODEL_P2=openrouter/z-ai/glm-5.2
+```
 
 ## Settings
 
@@ -60,7 +71,8 @@ folder marked by `lodge/start.sh`.
 | `SHOW_MODE` | `mock` | `mock` or `lodge` |
 | `SHOW_PORT` | `4060` | binds 127.0.0.1 only; put a tunnel in front for phones |
 | `SHOW_LODGE` | `http://127.0.0.1:47990` | the lodge's API |
-| `SHOW_HARNESS` / `SHOW_MODEL` | `claude` / `sonnet` | for players' wolts |
+| `SHOW_HARNESS` / `SHOW_MODEL` | `claude` / `sonnet` | the host's and, by default, the players' wolts |
+| `SHOW_HARNESS_P1` / `SHOW_MODEL_P1` (and `_P2`) | | one harness per player: `claude`, `codex` or `opencode` (model e.g. `openrouter/z-ai/glm-5.2`) |
 | `SHOW_HOST_WOLT` / `SHOW_HOST_PLAYER` | `commie` / `jerpint` | the host wolt and the person who briefs it |
 | `SHOW_LIVE` | `./live` | where the merged page is written and served from |
 | `SHOW_REPLY_CMD` | `show-reply` | the reply command as wolts should type it |
@@ -69,5 +81,4 @@ folder marked by `lodge/start.sh`.
 
 ## Still to do
 
-- A room page so the build lands on everyone's phone.
 - Run the whole thing inside a throwaway container (app + lodge + wolts), only the app exposed.

@@ -11,6 +11,6 @@ done
 find "$L/wolts" -mindepth 1 -maxdepth 1 ! -name .space -exec rm -rf {} +
 rm -f "$L/wolts/.space/logs/iwcl.jsonl"
 rm -rf data && mkdir data
-export SHOW_LIVE="$L/wolts/commie/wolt/site/show" SHOW_REPLY_CMD="$PWD/bin/show-reply" SHOW_HOST_PLAYER="tester (commie)"
+export SHOW_LIVE="$L/wolts/commie/wolt/site/show" SHOW_REPLY_CMD="$PWD/bin/show-reply" SHOW_HOST_PLAYER="${SHOW_HOST_PLAYER:-tester (commie)}"
 uv run python setup_host.py --lodge "$LODGE" --wolts "$L/wolts"
 mkdir -p "$SHOW_LIVE"
