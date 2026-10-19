@@ -46,6 +46,10 @@ main{max-width:640px;margin:0 auto;padding:12px 16px calc(28px + env(safe-area-i
 .toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:608px;margin:0 auto;z-index:3;background:var(--org);color:#fff;border:2px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);padding:12px 14px;font:700 15px DMSans;display:flex;align-items:center;gap:10px;cursor:pointer;animation:pop .3s ease-out}
 .toast[hidden]{display:none}
 </style>
+<link rel="stylesheet" href="static/arcade.css" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
+(()=>{const F=["jb","vt","pixel"],q=new URLSearchParams(location.search).get("font");let f=q;try{f=f||localStorage.getItem("show-font")}catch(e){}
+document.documentElement.dataset.font=F.includes(f)?f:"pixel";
+addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,[contenteditable]"))return;const d=document.documentElement,n=F[(F.indexOf(d.dataset.font)+1)%F.length];d.dataset.font=n;try{localStorage.setItem("show-font",n)}catch(_){}});})()</script>
 </head>
 <body>
 <div class="top">

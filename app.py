@@ -23,6 +23,7 @@ import secrets
 import subprocess
 import threading
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -248,7 +249,21 @@ class LodgeDriver:
                  {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir,
                   "PART": PART_OF[sid], "SIDE": SIDE_OF[sid], "BOX": PART_OF[sid].removesuffix(".html"),
                   "BOXJS": "partA" if sid == "p1" else "partB"})
+        if harness == "codex" and is_throwaway():
+            self.auto_grant(slug(name))
         return self.post("/sessions/new/lodge", {"wolt": slug(name), "creature": creature})
+
+    def auto_grant(self, wolt: str) -> None:
+        """jerpint's call (2026-10-19): Codex players run in Auto, in the throwaway lodge only. Revoked at reset-all.
+        Without it Codex stops on an approval prompt for the show-reply call. The lodge wants the exact folder confirmed."""
+        try:
+            self.post("/auto-grants/grant", {"wolt": wolt})
+        except urllib.error.HTTPError as e:
+            canonical = json.loads(e.read() or b"{}").get("canonical_workdir")
+            if not canonical:
+                raise
+            self.post("/auto-grants/grant", {"wolt": wolt, "confirm": canonical})
+        record({"type": "auto_grant", "wolt": wolt})
 
     def deliver(self, session: str, text: str) -> dict:
         return self.post(f"/sessions/{session}/message", {"text": text})
@@ -269,6 +284,11 @@ driver = MockDriver() if MODE == "mock" else ReplayDriver(Path(os.environ["SHOW_
 
 # The lodge's IWCL log (woltspace 0.5.20+): one line per wolt-to-wolt message or spawn.
 _wolts_dir = os.environ.get("WOLTSPACE_WOLTS_DIR") or str(Path.home() / ".woltspace" / "wolts")
+
+
+def is_throwaway() -> bool:
+    wolts = Path(_wolts_dir).resolve()
+    return (wolts.parent / ".lodge-show-throwaway").exists() and wolts != (Path.home() / ".woltspace" / "wolts").resolve()
 IWCL_LOG = Path(os.environ.get("SHOW_IWCL_LOG") or Path(_wolts_dir) / ".space" / "logs" / "iwcl.jsonl")
 
 
@@ -736,6 +756,12 @@ def reset_all(request: Request, host_player: str = ""):
             except Exception as e:
                 print(f"stop {name}: {e}")
         import shutil
+        for child in wolts.iterdir():
+            if child.is_dir() and child.name != ".space":
+                try:
+                    driver.post("/auto-grants/revoke", {"wolt": child.name})
+                except Exception as e:
+                    print(f"revoke {child.name}: {e}")
         for child in wolts.iterdir():
             if child.name != ".space":
                 shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
