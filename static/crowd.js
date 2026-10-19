@@ -90,9 +90,12 @@ function flame(lines) { // activity: how much each terminal moved lately
 
 function terminals() {
   const cast = state.cast || [];
+  const isIn = (sid) => { const c = cast.find((x) => x.slot === sid);
+    return c && c.wolt && (state.mode !== "mock" || state.events.some((e) => (e.type === "join" && e.slot === sid) || (e.type === "host" && sid === "host"))); };
+  const nIn = SLOTS.filter(isIn).length; // host first: an empty player slot is a slim "insert coin" strip, a joined one grows
   return SLOTS.map((sid) => {
     const c = cast.find((x) => x.slot === sid);
-    const joined = c && c.wolt && (state.mode !== "mock" || state.events.some((e) => (e.type === "join" && e.slot === sid) || (e.type === "host" && sid === "host")));
+    const joined = isIn(sid);
     if (!joined) return `<div class="tw empty"><span class=big>${sid === "p1" ? "Player 1" : sid === "p2" ? "Player 2" : "host"}</span>waiting… scan your QR</div>`;
     const name = c.wolt.name || c.wolt, creature = c.creature || c.wolt.creature;
     const raw = chromeless(state.terms[name] || []);
@@ -101,7 +104,7 @@ function terminals() {
     return `<div class=tw data-c=${sid}><div class=tt><span class=avw>${av(creature, 44)}<i class="dot${busy ? " busy" : ""}"></i></span>
       <div><span class=nm>${esc(name)}</span><span class=who>${esc(c.player)}'s wolt${sid === "host" ? " · host" : ""}</span></div>
       <span class=rl>${esc(engine(c.harness || c.wolt.harness || "", c.model || c.wolt.model))}</span>${flame(raw)}</div>
-      <div class=tb><pre>${lines.slice(-14).join("\n")}</pre></div></div>`;
+      <div class=tb><pre>${lines.slice(nIn <= 1 ? -34 : nIn === 2 ? -22 : -14).join("\n")}</pre></div></div>`;
   }).join("");
 }
 
