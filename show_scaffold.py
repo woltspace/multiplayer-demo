@@ -19,6 +19,27 @@ def slug(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:24]
 
 
+def container_claude_config(folder: Path) -> None:
+    """In the woltspace container each wolt's HOME is its own folder, so Claude reads <wolt>/.claude.json. A wolt the
+    lodge creates gets one from setup_wolt_claude_config (woltspace _bundle/container/lib/wolts.py); our pre-baked
+    folders skip that step, so Claude would open on its first-run screens. Same file, same keys, written the same
+    way: a copy of the global ~/.claude.json plus folder trust and the headless flags. Container only (native
+    lodges use the owner's own Claude config)."""
+    if os.environ.get("WOLTSPACE_ISOLATION", "external") == "host" or not str(folder.resolve()).startswith("/workspace/wolts/"):
+        return
+    cfg = folder / ".claude.json"
+    if cfg.exists():
+        return
+    glob = Path.home() / ".claude.json"
+    data = json.loads(glob.read_text()) if glob.exists() else {}
+    trust = {"hasTrustDialogAccepted": True, "hasCompletedProjectOnboarding": True}
+    projects = data.get("projects", {})
+    projects[str(folder)] = trust
+    projects[str(folder / "wolt")] = trust
+    data.update(projects=projects, autoUpdates=False, hasCompletedOnboarding=True, bypassPermissionsAccepted=True)
+    cfg.write_text(json.dumps(data, indent=2) + "\n")
+
+
 def scaffold(wolts: Path, name: str, creature: str, harness: str, model: str, role: str, values: dict) -> Path:
     folder = Path(wolts) / slug(name)
     if folder.exists():
@@ -50,6 +71,7 @@ def scaffold(wolts: Path, name: str, creature: str, harness: str, model: str, ro
     if role == "host":
         shutil.copy(SEED / "host" / "TMUX-POST.md", folder / "TMUX-POST.md")
     (folder / "wolt" / "site").mkdir(parents=True, exist_ok=True)
+    container_claude_config(folder)
     if role == "player":  # players race on low effort (SHOW_EFFORT): quick small saves beat long thinking on stage
         effort = os.environ.get("SHOW_EFFORT", "low")
         (folder / ".claude").mkdir(exist_ok=True)
