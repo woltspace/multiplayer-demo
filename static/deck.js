@@ -1,7 +1,8 @@
 // The explainer deck: what the big screen (/world) shows before the show starts, and whenever the board is up.
 // ← → (or click) move between slides; "▶ Start the show" drops it. Edit freely: each slide is a kicker, a title, an
 // optional row of boxes (with an optional message bubble between them) and one line ({b}...{/b} = highlighted).
-// Box colours: "host" (orange), "p1" (green), "p2" (blue). The last slide shows the room's QR to play along.
+// Box colours: "host" (orange), "p1" (green), "p2" (blue). qr: true shows the room's QR (play along); qrs: a list of
+// {url, label} QR codes. The slide marked closing: true comes up by itself when the board goes up after the ship.
 const DECK = [
   {kick: "tonight", title: "Multiplayer<br>multi-agent",
    line: "Three people. Three coding agents. {b}One thing built together, live.{/b}"},
@@ -17,4 +18,9 @@ const DECK = [
   {kick: "the game", title: "Dam Builders", qr: true,
    boxes: [{icon: "📱", label: "one page"}, {icon: "💬", label: "one chat"}, {icon: "🔁", label: "one turn at a time"}],
    line: "hostie builds the base game. Two volunteers each get a wolt and {b}riff on it from their phones{/b}. Scan to play along: {b}watch it get built, live.{/b}"},
+  {kick: "under the hood", title: "It's just tmux", closing: true,
+   boxes: [{icon: "🖥️", label: "tmux"}, {icon: "📄", label: "config files"}, {icon: "🦫", label: "a scaffold"}],
+   line: "No agent framework, no orchestration engine: {b}your own coding agents, in terminals, talking through tmux.{/b} All open source. Come build the community with us: {b}say hi to onboardie{/b}.",
+   qrs: [{url: "https://woltspace.com/blog/", label: "the blog: tmux is all you need"},
+         {url: "https://woltspace.com/jerpint/onboardie", label: "talk to onboardie"}]},
 ];

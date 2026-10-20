@@ -67,8 +67,13 @@ function term(sid) {
   return `<section class="box term" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
 }
 
+let closingShown = false;
 function render() {
   document.getElementById("curtain").hidden = (state.phase || "live") === "live";
+  // After the ship, putting the board up opens the closing slide (under the hood + the call to action).
+  if (!document.getElementById("curtain").hidden && !closingShown && state.events.some((e) => e.type === "ship")) {
+    closingShown = true; const c = DECK.findIndex((d) => d.closing); if (c >= 0) { slide = c; drawSlide(); }
+  }
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
@@ -118,8 +123,10 @@ function drawSlide() {
     : `<div class=bx data-c=${x.c || "host"}><div>${x.icon}</div><span>${esc(x.label)}</span></div>`).join("");
   document.getElementById("deck").innerHTML = `<div class=kick>${esc(d.kick || "")}</div><h1>${d.title}</h1>`
     + (boxes ? `<div class=dia>${boxes}</div>` : "") + `<div class=line>${b(d.line || "")}</div>`
-    + (d.qr ? `<div class=dq><div id=dqr></div>scan to play along<br>${esc(SHORT)}</div>` : "");
+    + (d.qr ? `<div class=dq><div id=dqr></div>scan to play along<br>${esc(SHORT)}</div>` : "")
+    + (d.qrs ? `<div class=dqs>${d.qrs.map((q, k) => `<div class=dq><div id=dqr${k} class=qrb></div>${esc(q.label)}</div>`).join("")}</div>` : "");
   if (d.qr && window.QRCode) new QRCode(document.getElementById("dqr"), {text: ROOM.href, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M});
+  (d.qrs || []).forEach((q, k) => window.QRCode && new QRCode(document.getElementById("dqr" + k), {text: q.url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel.M}));
   document.getElementById("dnav").textContent = `${slide + 1} / ${DECK.length}  ·  ← →`;
 }
 const deckUp = () => !document.getElementById("curtain").hidden;
