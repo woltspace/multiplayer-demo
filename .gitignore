@@ -6,3 +6,4 @@ __pycache__/
 lodge/*
 !lodge/start.sh
 runs/
+show-data/
