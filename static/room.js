@@ -14,7 +14,7 @@ const creatureOf = (name) => (by()[name] || {}).creature || "raccoon";
 
 function bubble(e) {
   const anim = seen.has(e.seq) ? ' style="animation:none"' : ""; seen.add(e.seq);
-  if (e.type === "host") return `<div class=sys${anim}><span>${av("raccoon", 20)} ${esc(e.from || e.wolt || "commie")}</span> is hosting tonight's lodge</div>`;
+  if (e.type === "host") return `<div class=sys${anim}><span>${av("raccoon", 20)} ${esc(e.from || e.wolt || "host")}</span> is hosting tonight's lodge</div>`;
   if (e.type === "join") return `<div class=sys data-c=${esc(e.slot)}${anim}><span>👤 ${esc(e.player)}</span> created <span>${av(e.creature, 20)} ${esc(e.wolt)}</span></div>`;
   if (e.type === "add") return `<div class=sys${anim}><span>${av(creatureOf(e.from), 20)} ${esc(e.from)}</span> added <span>${av(creatureOf(e.to), 20)} ${esc(e.to)}</span> to #lodge</div>`;
   if (e.type === "ship") return `<div class="sys ship"${anim}>✓ shipped · ${esc(e.text)}</div>`;

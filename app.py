@@ -9,7 +9,7 @@ Players:  GET /p/<token>     claim the slot, name + create your wolt, then type 
 Crowd:    GET /crowd?k=KEY   full screen: #lodge chat + every wolt's terminal, live
 Admin:    GET /admin?k=KEY   the private QR per slot, reset a slot
 
-The host wolt (curated commie) already exists and runs the show; players create theirs live.
+The host wolt (curated hostie, scratch memory) already exists and runs the show; players create theirs live.
 Everything that happens is one line in data/events.jsonl (append-only), so a show can be replayed.
 
 SHOW_MODE=mock  replays mock/scenario.json on a clock (for mocks, no lodge needed)
@@ -58,7 +58,7 @@ def engine_for(sid: str) -> tuple[str, str]:
     harness = os.environ.get(f"SHOW_HARNESS_{k}", HARNESS)
     model = os.environ.get(f"SHOW_MODEL_{k}") or (MODEL if harness == HARNESS else "")
     return harness, model
-HOST = os.environ.get("SHOW_HOST_WOLT", "commie")
+HOST = os.environ.get("SHOW_HOST_WOLT", "hostie")
 HOST_PLAYER_DEFAULT = os.environ.get("SHOW_HOST_PLAYER", "jerpint")
 # Who plays the host slot. Dry runs reset the show with an honest tester name (never jerpint's); a plain Reset goes back
 # to the default. Kept in data/ so an app restart doesn't rename the host mid-show.
@@ -411,7 +411,7 @@ class LodgeDriver:
         scaffold(Path(_wolts_dir), name, creature, harness, model, "player",
                  {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir,
                   "PART": PART_OF[sid], "SIDE": SIDE_OF[sid], "BOX": PART_OF[sid].removesuffix(".html"),
-                  "BOXJS": "partA" if sid == "p1" else "partB", "POST": POST_CMD, "SLOT": sid})
+                  "BOXJS": "partA" if sid == "p1" else "partB", "POST": POST_CMD, "SLOT": sid, "HOST": HOST})
         if harness == "codex" and is_throwaway():
             self.auto_grant(slug(name))
         return self.post("/sessions/new/lodge", {"wolt": slug(name), "creature": creature})

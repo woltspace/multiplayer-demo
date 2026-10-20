@@ -86,9 +86,9 @@ document.getElementById("skip").onclick = () => act("api/admin/turn/skip", "skip
 document.getElementById("game").onclick = () => act("api/admin/game/start", "starting the game…");
 document.getElementById("stop").onclick = () => act("api/admin/phase/paused", "board going up…");
 document.getElementById("resetall").onclick = () => {
-  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh commie.")) return;
+  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh hostie.")) return;
   if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;
-  act("api/admin/reset-all", "resetting… (commie takes a few seconds to wake up)");
+  act("api/admin/reset-all", "resetting… (hostie takes a few seconds to wake up)");
 };
 load(); setInterval(load, 3000);
 const room = new URL(".", location.href).href;

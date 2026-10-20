@@ -24,7 +24,7 @@ const put = (el, html) => { if (el && el._html !== html) { el._html = html; el.i
 const wname = (c) => c && c.wolt ? (c.wolt.name || c.wolt) : "";
 const cast = () => state.cast || [];
 const bySlot = (sid) => cast().find((c) => c.slot === sid);
-const hostName = () => wname(bySlot("host")) || "commie";
+const hostName = () => wname(bySlot("host")) || "host";
 const slotOf = (name) => { const c = cast().find((x) => wname(x) === name || x.player === name); return c ? c.slot : "host"; };
 const creatureOf = (name) => { const c = cast().find((x) => wname(x) === name); return (c && (c.creature || (c.wolt && c.wolt.creature))) || "raccoon"; };
 const joined = (sid) => { const c = bySlot(sid);
