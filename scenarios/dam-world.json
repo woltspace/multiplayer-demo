@@ -1,11 +1,11 @@
 {
   "name": "dam-world",
   "about": "Shared-world rehearsal: three humans, three wolts, one page, one turn at a time. Honest test names only.",
-  "host": "tester (commie)",
+  "host": "tester (hostie)",
   "screen": "world",
   "duration": 230,
   "steps": [
-    {"t": 3, "slot": "host", "say": "hi commie! say hi to the room and tell them what tonight is"},
+    {"t": 3, "slot": "host", "say": "hi hostie! say hi to the room and tell them what tonight is"},
     {"t": 12, "slot": "p1", "create": {"player": "Tester A", "wolt": "flint", "creature": "beaver"}},
     {"t": 20, "slot": "p2", "create": {"player": "Tester B", "wolt": "bolt", "creature": "otter"}},
     {"t": 34, "start": true},
