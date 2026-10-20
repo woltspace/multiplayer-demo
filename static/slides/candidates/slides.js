@@ -5,8 +5,17 @@ const showCurrentScene = () => {
   const active = location.hash.slice(1) || document.querySelector('.candidate').id;
   document.querySelectorAll('.candidate').forEach(scene => { scene.hidden = scene.id !== active; });
 };
-showCurrentScene();
-addEventListener('hashchange', showCurrentScene);
+// Each slide's 1600×1000 canvas, scaled to fit its box and centred (one column on phones: no scaling).
+const fitCanvas = () => document.querySelectorAll('.candidate:not([hidden]) .cv').forEach(cv => {
+  const box = cv.parentElement, w = box.clientWidth, h = box.clientHeight;
+  if (innerWidth <= 760) { cv.style.transform = ''; return; }
+  const k = Math.min(w / 1600, h / 1000);
+  cv.style.transform = `translate(${(w - 1600 * k) / 2}px, ${(h - 1000 * k) / 2}px) scale(${k})`;
+});
+showCurrentScene(); fitCanvas();
+addEventListener('hashchange', () => { showCurrentScene(); fitCanvas(); });
+addEventListener('resize', fitCanvas);
+if (window.ResizeObserver) document.querySelectorAll('.candidate').forEach(c => new ResizeObserver(fitCanvas).observe(c));
 
 document.querySelectorAll('[data-wolt]').forEach(el => { el.innerHTML = woltSpriteAvatar(el.dataset.wolt, 112); });
 // Provider badges (IWCL slide): the model's mark over each wolt.
