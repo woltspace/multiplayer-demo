@@ -55,7 +55,9 @@ function render() {
   const mock = state.mode === "mock", url = mock ? "live/?v=" + state.build : "stage";
   if (state.build && (mock ? state.build !== build : !build)) {
     build = state.build;
-    document.getElementById("frame").src = url; document.getElementById("full").href = url;
+    // Shared world: the build tab shows the game the way phones get it, and "open full screen" is just the game.
+    document.getElementById("frame").src = state.world ? "stage?phone=1" : url;
+    document.getElementById("full").href = state.world ? "./" : url;
     document.getElementById("t-build").disabled = false;
   }
   if (!shipped && evs.some((e) => e.type === "ship")) {

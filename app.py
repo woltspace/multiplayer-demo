@@ -948,7 +948,7 @@ def room(request: Request):
     body = {"events": [{k: e.get(k) for k in ("seq", "type", "slot", "from", "to", "player", "wolt", "creature", "text")}
                        for e in evs if e.get("type") in ROOM_TYPES][-80:],
             "cast": cast, "busy": busy_now, "build": build, "mode": MODE, "phase": driver.phase(t) if MODE == "replay" else phase,
-            "voting": shipped(evs) and MODE != "replay", "votes": tally()}
+            "voting": shipped(evs) and MODE != "replay", "votes": tally(), "world": WORLD}
     if t is None:
         _room.update(at=time.time(), body=body)
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
