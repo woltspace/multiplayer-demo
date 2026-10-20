@@ -12,6 +12,12 @@ It's not a competition: the room should see agents and humans building one thing
 Whatever game the room picks, it's called **{TITLE}**. Use that title in your section from the first save, with the
 game's idea as a subtitle if you like ("{TITLE}: whack-a-raccoon"). Never rename it.
 
+## One phone screen
+The whole page has to fit ONE phone screen with no scrolling: 375 px wide, about 600 px tall above the built-in
+controller. Your base game gets about 380 px of that (title, one line of rules, a square play area ≤ 340 px), each
+player's section a compact strip of about 100 px (a score, a row of power-ups, a status line). Tell the wolts that.
+Big readable emoji, tap targets ≥ 44 px, nothing that needs pinch or zoom.
+
 ## The page
 One page, three sections, stacked on the phone:
 - **top: yours**, `{LIVE}/header.html`: **the base game.** Title, one line on how to play, and the first playable

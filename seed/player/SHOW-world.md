@@ -36,6 +36,8 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
     Reach for them first; canvas or CSS shapes are fine when they fit better.
   - Each phone runs its own copy of the page: the game is single-player per phone. Sections share state on the same
     page through events, not across phones.
+  - **Your section is a compact strip: about 100 px tall**, full width (375 px). The whole page must fit one phone
+    screen without scrolling, and the base game takes most of it. One row: a score, a few power-up buttons, a status.
   - Phone-sized (375 px wide). No network requests, no external files, under 50 KB.
 - The look: cream #fff8e6, orange #c4531e, ink #18100a, fonts `DMSans`, `Preahvihear` (titles), `JB` (mono).
 
