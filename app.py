@@ -1040,15 +1040,17 @@ def reset_all(request: Request, host_player: str = ""):
             except Exception as e:
                 print(f"stop {name}: {e}")
         import shutil
-        for child in wolts.iterdir():
-            if child.is_dir() and child.name != ".space":
-                try:
-                    driver.post("/auto-grants/revoke", {"wolt": child.name})
-                except Exception as e:
-                    print(f"revoke {child.name}: {e}")
-        for child in wolts.iterdir():
-            if child.name != ".space":
-                shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
+        # Only wolt folders go (a folder with wolt/ inside). Never apps/ (this app runs from there in the show
+        # container), dot-folders (.space, .state, .codex), .env or the lodge's own settings.
+        wolt_dirs = [c for c in wolts.iterdir() if c.is_dir() and not c.is_symlink() and not c.name.startswith(".")
+                     and c.name != "apps" and (c / "wolt").is_dir()]
+        for child in wolt_dirs:
+            try:
+                driver.post("/auto-grants/revoke", {"wolt": child.name})
+            except Exception as e:
+                print(f"revoke {child.name}: {e}")
+        for child in wolt_dirs:
+            shutil.rmtree(child)
         IWCL_LOG.unlink(missing_ok=True)
     if SHOW_LOG.exists():  # keep the last show's log for replays: data/shows/<time>.jsonl
         (DATA / "shows").mkdir(exist_ok=True)
