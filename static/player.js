@@ -14,13 +14,14 @@ function view() {
   // The host can always type, and gets the ▶ Start the game button until the game is on.
   const held = st.slot !== "host" && st.phase && st.phase !== "live";
   // Shared world: one turn at a time. A player types on their turn, until their wolt has posted.
-  const myTurn = !st.world || !st.game || st.slot === "host" || (st.turn === st.slot && !st.turn_busy);
+  const myTurn = !st.world || !st.game || st.slot === "host" || (!st.turn_over && st.turn === st.slot && !st.turn_busy);
   const wait = held || (st.slot !== "host" && st.game === false) || !myTurn;
   const note = held ? `<div class=paused>The show continues in a moment. You can already create your wolt.</div>`
     : st.slot !== "host" && st.game === false ? `<div class=paused>⏳ The game starts in a moment. Get your idea ready!</div>`
+    : st.turn_over && st.slot !== "host" ? `<div class=paused>⏱ Time's up! Thanks for building. Play the game on the big screen.</div>`
     : !myTurn ? `<div class=paused>${st.turn === st.slot ? "🛠 The wolts are on it…" : `⏳ ${esc(st.turn_player || "someone")}'s turn. You're next soon!`}</div>`
     : st.world && st.game && st.slot !== "host" ? `<div class="paused go">▸ Your turn! Tell the wolts what to add.</div>`
-    : st.world && st.game && st.slot === "host" && st.turn && st.turn !== "host" ? `<button class=skipb id=skipb>⏭ Skip ${esc(st.turn_player || "this turn")}</button>`
+    : st.world && st.game && st.slot === "host" && st.turn && st.turn !== "host" && !st.turn_over ? `<button class=skipb id=skipb>⏭ Skip ${esc(st.turn_player || "this turn")}</button>`
     : st.slot === "host" && st.game === false ? `<button class=startg id=startg>▶ Start the game</button>` : "";
   if (!st.wolt) {
     $("bar").hidden = true;
@@ -52,7 +53,7 @@ function view() {
     const who = mine ? "you" : mywolt ? `${esc(m.from)} · your wolt` : esc(m.from);
     return `<div class="m${mine ? " mine" : ""}${mywolt ? " mywolt" : ""}${forme ? " forme" : ""}"><div class=who>${who}</div><div class=bb>${lit(m.text)}</div></div>`;
   }).join("");
-  const key = st.wolt.name + "|" + st.messages.length + "|" + wait + "|" + st.game + "|" + st.turn + "|" + st.turn_busy;
+  const key = st.wolt.name + "|" + st.messages.length + "|" + wait + "|" + st.game + "|" + st.turn + "|" + st.turn_busy + "|" + st.turn_over;
   if (drawn === key) return; drawn = key;
   app.innerHTML = `${note}<span class=tag>${st.slot === "host" ? "you · the host" : esc(st.label) + " · " + esc(st.player || "")}</span>
     <div class="card me">${av(st.wolt.creature, 54)}<div><div class=nm>${esc(st.wolt.name)}</div><div class=hs>your wolt · ${esc(st.wolt.harness || "")}</div></div><span class=live>in the lodge</span></div>

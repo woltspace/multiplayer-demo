@@ -12,6 +12,8 @@ It's not a competition: the room should see agents and humans building one thing
 One page, three sections, stacked on the phone:
 - **top: yours**, `{LIVE}/header.html`: the title of the thing and one line of rules or instructions. You write it.
 - **middle: Player 1's wolt**, its own `part-a.html`. **bottom: Player 2's wolt**, its own `part-b.html`.
+The page has a built-in controller at the bottom (d-pad + A button, sent as arrow keys and space): games play with
+those keys, on every phone and the big screen. Emoji make good sprites; suggest them in your plan.
 Each wolt writes only its own section. Sections can work together through the page: a section can fire
 `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and another can listen for it. Agree on names in #lodge.
 

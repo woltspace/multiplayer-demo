@@ -184,6 +184,8 @@ def open_for(sid: str) -> None:
         raise HTTPException(423, "the game starts in a moment")
     if WORLD and sid != "host":
         t = turn_state()
+        if t.get("turn_over"):
+            raise HTTPException(423, "time's up: thanks for building!")
         if t["turn"] != sid:
             raise HTTPException(423, f"one at a time: it's {t['turn_player'] or 'someone else'}'s turn")
         if t["turn_busy"]:
@@ -236,7 +238,8 @@ WORLD = os.environ.get("SHOW_WORLD", "1") == "1"
 POST_CMD = os.environ.get("SHOW_POST_CMD", str(HERE / "bin" / "show-post"))
 TURN_ORDER = ("host", "p1", "p2")
 TURN_MAX = int(os.environ.get("SHOW_TURN_SECONDS", "45"))
-TURN_IDLE = int(os.environ.get("SHOW_TURN_IDLE", "60"))  # a turn nobody takes passes on after this long
+TURN_IDLE = int(os.environ.get("SHOW_TURN_IDLE", "0"))  # >0: a turn nobody takes passes on after this long. 0: it
+# waits (the host skips it with ⏭ if someone froze)
 turn = {"sid": "host", "spoke_at": None, "since": time.time()}
 
 
@@ -248,9 +251,11 @@ def turn_state() -> dict:
     """Whose turn it is; passes the turn on lazily (every screen asks once a second)."""
     if not (WORLD and game_on):
         return {"turn": None, "turn_player": None, "turn_busy": False}
+    if any(e["type"] in ("timeup", "ship") for e in events[-200:]):  # the clock ran out or we shipped: no more turns
+        return {"turn": None, "turn_player": None, "turn_busy": False, "turn_over": True}
     sid, at = turn["sid"], turn["spoke_at"]
     posted = at and any(e["type"] == "post" and e.get("slot") == sid and e["ts"] > at for e in events[-80:])
-    if posted or (at and time.time() - at > TURN_MAX) or (not at and time.time() - turn["since"] > TURN_IDLE):
+    if posted or (at and time.time() - at > TURN_MAX) or (not at and TURN_IDLE and time.time() - turn["since"] > TURN_IDLE):
         order = seated() or ["host"]
         prev_since = turn["since"]
         nxt = order[(order.index(sid) + 1) % len(order)] if sid in order else order[0]

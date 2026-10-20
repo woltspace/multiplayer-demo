@@ -48,6 +48,7 @@ function line(e) {
 }
 
 function turns() {
+  if (state.turn_over) return `<span class="turn now" data-c=host>⏱ time's up · no more turns</span>`;
   if (!state.turn) return "";
   const order = SLOTS.filter(joined);
   return `turn ▸ ` + order.map((sid) => { const c = bySlot(sid), now = sid === state.turn;

@@ -19,13 +19,17 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
     clear them first (`clearInterval(window.{BOXJS}Timer)`), listen on your own elements.
   - Talk to the other sections through events: `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and
     `addEventListener("<name>", ...)` on `window`. Agree on event names in #lodge.
-  - **Controls you can see**, like phone games do: something that moves gets an on-screen **d-pad** (four big
-    arrow buttons, at least 56 px, under the play area where thumbs are), and swipes can steer too; an action gets
-    one big button (or tap the thing itself, Crossy Road style). Never a hidden gesture like "tap the side of the
-    board". Add one line on how to play.
-  - **And the keyboard:** the big screen plays your game from the keyboard too. Listen for `keydown` on `document`
-    (arrows or WASD to move, space or Enter for the main action) and keep it in sync with the buttons. Keep the
-    handler on `window.{BOXJS}Key` and remove the old one first, since your script re-runs on each save.
+  - **Controls: the page has a built-in controller** stuck to the bottom of every screen: a d-pad (▲◀▶▼) and a big
+    **A** button. They send the same keys as a keyboard: `ArrowUp/Down/Left/Right` and `" "` (space), as
+    `keydown`/`keyup` on `document`. So make your game play with those keys (arrows to move, space = A), and it
+    works on every phone and on the big screen. Don't build your own d-pad; extra on-screen buttons only if you need
+    more than A, and tapping things directly (Crossy Road style) is fine too. No hidden gestures. One line on how
+    to play. Keep the key handler on `window.{BOXJS}Key` and remove the old one first (your script re-runs on save).
+  - **Games never end.** People keep playing on their phones after the show: on game over (or a win), flash the
+    score for a moment, then start a fresh round by itself or on **A**. No "thanks for playing" end screen.
+    When one section restarts the round, fire a `restart` event so the other sections reset with it.
+  - **Emoji make great sprites** (🦫 🪵 🦝 ✨ 👾 🐍 🍎 🚀): quick, readable on a projector, and they match the lodge.
+    Reach for them first; canvas or CSS shapes are fine when they fit better.
   - Each phone runs its own copy of the page: the game is single-player per phone. Sections share state on the same
     page through events, not across phones.
   - Phone-sized (375 px wide). No network requests, no external files, under 50 KB.

@@ -70,6 +70,38 @@ html.phone .part-body{padding:8px 18px}
 html.phone .waiting{padding:18px 10px!important}
 html.only .waiting{font-size:13px!important;line-height:1.8!important;padding:30vh 16px!important;white-space:normal}
 </style>
+<!-- The built-in controller: a d-pad and an A button, stuck to the bottom of every copy of the page. They send the
+     same keys as a keyboard (arrows, space), so games only handle keys, and the big screen plays them too. -->
+<div class="lpad" id="lpad"><div class="dpad"><button data-k="ArrowUp" aria-label="up">▲</button><button data-k="ArrowLeft" aria-label="left">◀</button><button data-k="ArrowRight" aria-label="right">▶</button><button data-k="ArrowDown" aria-label="down">▼</button></div><button class="abtn" data-k=" " aria-label="A">A</button></div>
+<style>
+/* The controller has its own strip below the content (never on top of it): the page scrolls above it. */
+html,body{height:100%}
+body{display:flex;flex-direction:column}
+#lscroll{flex:1;min-height:0;overflow-y:auto}
+.lpad{flex:none;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 8px;background:#18100a}
+.lpad .dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,34px);gap:3px}
+.lpad button{font:20px sans-serif;color:#18100a;background:#fff8e6;border:3px solid #000;border-radius:10px;box-shadow:0 4px 0 #c4531e;touch-action:manipulation;user-select:none;-webkit-user-select:none;padding:0}
+.lpad button.on{transform:translateY(3px);box-shadow:0 1px 0 #c4531e}
+.lpad [data-k=ArrowUp]{grid-column:2;grid-row:1}.lpad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.lpad [data-k=ArrowRight]{grid-column:3;grid-row:2}.lpad [data-k=ArrowDown]{grid-column:2;grid-row:2}
+.lpad .abtn{width:56px;height:56px;border-radius:50%;font:700 24px DMSans,sans-serif;background:#c4531e;color:#fff;box-shadow:0 4px 0 #000}
+.lpad .abtn.on{box-shadow:0 1px 0 #000}
+</style>
+<script>
+// Everything above the controller goes into one scroll area, so the controller never covers the game.
+(() => { const sc = document.createElement("div"); sc.id = "lscroll"; const pad = document.getElementById("lpad");
+  [...document.body.children].filter((el) => el !== pad && el.tagName !== "SCRIPT" && el.tagName !== "STYLE").forEach((el) => sc.append(el));
+  document.body.insertBefore(sc, pad); })();
+document.querySelectorAll("#lpad button").forEach((b) => {
+  const send = (type) => document.body.dispatchEvent(new KeyboardEvent(type, {key: b.dataset.k, code: b.dataset.k === " " ? "Space" : b.dataset.k, bubbles: true}));
+  b.addEventListener("pointerdown", (e) => { e.preventDefault(); b.classList.add("on"); send("keydown"); });
+  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => { if (b.classList.contains("on")) { b.classList.remove("on"); send("keyup"); } });
+});
+// The big screen's keys light the buttons too, so the room sees what's pressed.
+for (const t of ["keydown", "keyup"]) document.addEventListener(t, (e) => {
+  const k = {w: "ArrowUp", a: "ArrowLeft", s: "ArrowDown", d: "ArrowRight", Enter: " "}[e.key] || e.key;
+  const b = document.querySelector(`#lpad button[data-k="${k === " " ? " " : k}"]`); if (b && e.isTrusted === false) b.classList.toggle("on", t === "keydown");
+});
+</script>
 <script src="static/presence.js"></script>
 <script>
 // Polls the parts once a second; a box changes only when its file's version does. Presence outlines the edit.
