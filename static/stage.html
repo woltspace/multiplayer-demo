@@ -48,15 +48,12 @@ addEventListener("message", (m) => {
   // One event from the focused element (or body); it bubbles to document and window, where games listen.
   (document.activeElement || document.body).dispatchEvent(new KeyboardEvent(d.up ? "keyup" : "keydown", {key: d.key, code: d.code || "", bubbles: true}));
 });
-// The audience page: at the site root (/) the stage IS the game for each phone in the room, so it's the woltPhone
-// layout with a small button to the #lodge chat.
+// The audience page: at the site root (/) the stage IS the game for each phone in the room: the woltPhone layout.
 const AUDIENCE = location.pathname.replace(/\/+$/, "") === "" ;
 // ?phone=1: the woltPhone (wPhone). The whole shared page, sections stacked (title, Player 1, Player 2), no chrome around them.
 if (new URLSearchParams(location.search).get("phone") || AUDIENCE) document.documentElement.classList.add("only", "phone");
-if (AUDIENCE) addEventListener("DOMContentLoaded", () => {
-  const a = document.createElement("a"); a.href = "chat"; a.className = "lchat"; a.textContent = "💬 #lodge";
-  document.body.append(a);
-});
+// No chat here on purpose: the chat is on the big screen. The audience just watches the game get built, live on every
+// save, and plays it.
 if (ONLY) {
   document.documentElement.classList.add("only");
   document.querySelectorAll("[data-part]").forEach((el) => { if (el.dataset.part !== ONLY) el.remove(); });
