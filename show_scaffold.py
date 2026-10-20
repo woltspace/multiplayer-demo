@@ -41,6 +41,11 @@ def container_claude_config(folder: Path) -> None:
     data.update(projects=projects, autoUpdates=False, hasCompletedOnboarding=True, bypassPermissionsAccepted=True,
                 bypassPermissionsModeAccepted=True)
     cfg.write_text(json.dumps(data, indent=2) + "\n")
+    # Claude 2.1.30x keeps the "accepted" answer as a setting; merged into the wolt's own settings (HOME = the wolt).
+    st = folder / ".claude" / "settings.json"
+    st.parent.mkdir(exist_ok=True)
+    cur = json.loads(st.read_text()) if st.exists() else {}
+    st.write_text(json.dumps({**cur, "skipDangerousModePermissionPrompt": True}, indent=2) + "\n")
 
 
 def scaffold(wolts: Path, name: str, creature: str, harness: str, model: str, role: str, values: dict) -> Path:
