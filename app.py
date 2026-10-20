@@ -979,6 +979,13 @@ def vote(v: Vote, request: Request):
 
 @app.get("/")
 def room_page():
+    """What the audience opens (the QR on the big screen). Shared world: the game itself, full screen on the phone,
+    with a button to the #lodge chat (/chat). Side-by-side mode: the room page (chat + the build)."""
+    return FileResponse(HERE / "static" / ("stage.html" if WORLD else "room.html"))
+
+
+@app.get("/chat")
+def room_chat_page():
     return FileResponse(HERE / "static" / "room.html")
 
 

@@ -32,7 +32,7 @@ addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,
 </head>
 <body>
 <header class="top" id="host" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
-<script>if (new URLSearchParams(location.search).get("phone")) document.querySelector("header.top .part-body").innerHTML = "<h1>Dam Builders</h1><small>the woltPhone · 3 humans · 3 wolts · one page. Waiting for the game…</small>";</script>
+<script>if (new URLSearchParams(location.search).get("phone") || location.pathname.replace(/\/+$/, "") === "") document.querySelector("header.top .part-body").innerHTML = "<h1>Dam Builders</h1><small>the woltPhone · 3 humans · 3 wolts · one page. Waiting for the game…</small>";</script>
 <div class="grid">
   <section id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
   <section id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
@@ -48,8 +48,15 @@ addEventListener("message", (m) => {
   // One event from the focused element (or body); it bubbles to document and window, where games listen.
   (document.activeElement || document.body).dispatchEvent(new KeyboardEvent(d.up ? "keyup" : "keydown", {key: d.key, code: d.code || "", bubbles: true}));
 });
+// The audience page: at the site root (/) the stage IS the game for each phone in the room, so it's the woltPhone
+// layout with a small button to the #lodge chat.
+const AUDIENCE = location.pathname.replace(/\/+$/, "") === "" ;
 // ?phone=1: the woltPhone (wPhone). The whole shared page, sections stacked (title, Player 1, Player 2), no chrome around them.
-if (new URLSearchParams(location.search).get("phone")) document.documentElement.classList.add("only", "phone");
+if (new URLSearchParams(location.search).get("phone") || AUDIENCE) document.documentElement.classList.add("only", "phone");
+if (AUDIENCE) addEventListener("DOMContentLoaded", () => {
+  const a = document.createElement("a"); a.href = "chat"; a.className = "lchat"; a.textContent = "💬 #lodge";
+  document.body.append(a);
+});
 if (ONLY) {
   document.documentElement.classList.add("only");
   document.querySelectorAll("[data-part]").forEach((el) => { if (el.dataset.part !== ONLY) el.remove(); });
@@ -85,6 +92,7 @@ body{display:flex;flex-direction:column}
 .lpad [data-k=ArrowUp]{grid-column:2;grid-row:1}.lpad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.lpad [data-k=ArrowRight]{grid-column:3;grid-row:2}.lpad [data-k=ArrowDown]{grid-column:2;grid-row:2}
 .lpad .abtn{width:56px;height:56px;border-radius:50%;font:700 24px DMSans,sans-serif;background:#c4531e;color:#fff;box-shadow:0 4px 0 #000}
 .lpad .abtn.on{box-shadow:0 1px 0 #000}
+.lchat{position:fixed;top:10px;right:10px;z-index:50;font:700 13px JB,monospace;color:#fff8e6;background:#18100a;border:2px solid #000;border-radius:999px;padding:6px 12px;text-decoration:none;box-shadow:2px 2px 0 #c4531e}
 </style>
 <script>
 // Everything above the controller goes into one scroll area, so the controller never covers the game.
