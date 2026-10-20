@@ -96,3 +96,33 @@ document.querySelectorAll('[data-qr]').forEach(el => {
   const fit = () => { scene.style.transform = `scale(${box.clientWidth / 1150})`; };
   addEventListener('resize', fit); addEventListener('hashchange', fit); fit();
 })();
+
+// IWCL slide: messages go around the triangle, one at a time. The line lights up, arrows flash towards the
+// one it's for, and a small @ box pops up by them.
+(function iwcl() {
+  const tri = document.querySelector('#iwcl .tri'), pings = tri.querySelector('.pings');
+  const P = { top: [50, 18], left: [16, 80], right: [84, 80] }; // card centres, % of the triangle box
+  const SEND = [ // edge, from, to, who it's for
+    { e: 0, from: 'top', to: 'left', at: '@beaver' },
+    { e: 1, from: 'left', to: 'right', at: '@otter' },
+    { e: 2, from: 'right', to: 'top', at: '@raccoon' },
+  ];
+  let k = 0;
+  function send() {
+    if (document.getElementById('iwcl').hidden) return;
+    const m = SEND[k++ % SEND.length], w = tri.clientWidth, h = tri.clientHeight;
+    tri.querySelectorAll('svg path').forEach(p => p.classList.toggle('on', +p.dataset.e === m.e));
+    const [x0, y0] = P[m.from].map((v, i) => v / 100 * (i ? h : w)), [x1, y1] = P[m.to].map((v, i) => v / 100 * (i ? h : w));
+    const deg = Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI;
+    let html = '';
+    [0.3, 0.42, 0.54].forEach((f, i) => { html += `<i class="arrow" style="left:${x0 + (x1 - x0) * f}px;top:${y0 + (y1 - y0) * f}px;rotate:${deg}deg;animation-delay:${i * .15}s"></i>`; });
+    // The @ box sits near the one it's for, pushed off the line, away from the triangle's middle.
+    const len = Math.hypot(x1 - x0, y1 - y0), nx = -(y1 - y0) / len, ny = (x1 - x0) / len;
+    const mx = x0 + (x1 - x0) * 0.68, my = y0 + (y1 - y0) * 0.68, cx = w * .5, cy = h * .59;
+    const out = Math.abs(deg) < 10 || Math.abs(deg) > 170 ? (ny > 0 ? -1 : 1) : (mx - cx) * nx + (my - cy) * ny > 0 ? 1 : -1; // the bottom line: above it
+    html += `<div class="ping" style="left:${mx + nx * out * 58}px;top:${my + ny * out * 58}px"><b>@</b>${m.at.slice(1)}</div>`;
+    pings.innerHTML = html;
+  }
+  send(); setInterval(send, 2200);
+  addEventListener('hashchange', send);
+})();

@@ -71,10 +71,20 @@
 .hello-codes{left:5%;right:auto;top:auto;bottom:9%;display:flex;gap:24px}
 .hello-codes .qr img,.hello-codes .qr canvas{width:150px!important;height:150px!important}
 
-/* IWCL: wolts on four providers, talking to each other. */
-.iwcl-row{top:58%;gap:18px}
-.iwcl-row .tk-card{position:relative;min-width:190px;padding-top:44px}
-.iwcl-row .lg{position:absolute!important;top:-26px;left:50%;translate:-50% 0;width:52px!important;height:52px!important;display:grid!important;place-items:center;background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--amber)}
-.iwcl-row .lg svg{width:30px!important;height:30px;fill:#18100a}
-.iwcl-row .link{font:700 40px 'JetBrains Mono',monospace;color:var(--amber)}
-.iwcl-msg{position:absolute;z-index:10;right:5%;top:30%}
+/* IWCL: three wolts on three providers, each connected to the other two (a hint at the demo's setup). */
+.tri{position:absolute;z-index:10;right:4%;top:9%;width:50%;height:84%}
+.tri > svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.tri > svg path{fill:none;stroke:#ffca4e55;stroke-width:4;stroke-dasharray:12 10;vector-effect:non-scaling-stroke}
+.tri > svg path.on{stroke:var(--amber);stroke-width:6}
+.tri .v{position:absolute;translate:-50% -50%;width:210px;padding-top:40px;white-space:nowrap}
+.tri .top{left:50%;top:18%}.tri .left{left:16%;top:80%}.tri .right{left:84%;top:80%}
+.tri .lg{position:absolute!important;top:-26px;left:50%;translate:-50% 0;width:52px!important;height:52px!important;display:grid!important;place-items:center;background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--amber)}
+.tri .lg svg{width:30px!important;height:30px;fill:#18100a}
+.tri .pings{position:absolute;inset:0;pointer-events:none;z-index:3}
+/* Flashing arrows along the line that's talking, pointing at who gets the message, in arcade steps. */
+.tri .arrow{position:absolute;width:0;height:0;margin:-12px 0 0 -9px;border:12px solid transparent;border-left:18px solid var(--amber);border-right:0;filter:drop-shadow(0 0 8px #ffca4e);opacity:0;animation:blinkon .9s steps(1) infinite}
+@keyframes blinkon{0%{opacity:0}33%{opacity:1}100%{opacity:1}}
+/* The message: a small box that pops up by the one it's for. Just an @. */
+.tri .ping{position:absolute;translate:-50% -50%;padding:8px 14px;background:#0c0805;border:3px solid var(--amber);box-shadow:4px 4px 0 var(--ink);color:var(--cream);font:700 26px 'JetBrains Mono',monospace;white-space:nowrap;animation:pop .25s steps(3) both}
+.tri .ping b{color:var(--amber)}
+@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
