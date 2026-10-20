@@ -764,6 +764,43 @@ def admin_start(request: Request):
     return {"ok": True, "started": start_game("backstage"), "game": game_on}
 
 
+# Public / private, from backstage: the Mac's switch (container/public.py serve) flips the Cloudflare Access bypass.
+# Cloudflare's token stays on the Mac; this app only holds the switch's key (written into data/ by the switch).
+SWITCH = os.environ.get("SHOW_SWITCH", "http://host.docker.internal:47993")
+
+
+def switch(method: str, path: str):
+    key_file = DATA / "public.key"
+    if not key_file.exists():
+        raise HTTPException(503, "the public switch isn't running on the Mac (container/public.py serve)")
+    req = urllib.request.Request(SWITCH + path, method=method, headers={"X-Public-Key": key_file.read_text().strip()})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        raise HTTPException(502, f"public switch: {e.read().decode(errors='replace')[:300]}")
+    except Exception as e:
+        raise HTTPException(503, f"public switch unreachable: {e}")
+
+
+@app.get("/api/admin/public")
+def public_state(request: Request):
+    admin(request)
+    return switch("GET", "/status")
+
+
+@app.post("/api/admin/public/{state}")
+def public_set(state: str, request: Request):
+    """Public: the room, the seats and the slides open to everyone. Private: owner-only again. Backstage and the big
+    screen stay owner-only either way."""
+    admin(request)
+    if state not in ("on", "off"):
+        raise HTTPException(400, "on or off")
+    s = switch("POST", "/" + state)
+    record({"type": "public", "public": s.get("public")})
+    return s
+
+
 class Reply(BaseModel):
     slot: str
     text: str = Field(min_length=1, max_length=4000)

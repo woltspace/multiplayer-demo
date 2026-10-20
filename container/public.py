@@ -5,14 +5,22 @@
     uv run container/public.py off      # back to owner-only (deletes that one bypass policy)
     uv run container/public.py status
     uv run container/public.py down     # remove the route, the DNS record and the Access apps
+    uv run container/public.py serve    # the switch for backstage's Public/Private button (keep it running)
 
 The host's own tunnel (cloudflared on this Mac) points at the app alone on 127.0.0.1:47992 (container/up.sh
 publishes it), never at the lodge. Backstage, the big screen and their APIs keep their own owner-only Access app,
 so they stay gated even when the rest is public. Reads CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID from the
 lodge's .env (never printed). Settings: SHOW_PUBLIC_HOST (multiplayer.woltspace.app), SHOW_APP_PORT (47992),
 SHOW_TUNNEL (woltspace-lodge), SHOW_OWNER_EMAIL (the owner's Access email, required), WOLTSPACE_ENV (~/.woltspace/wolts/.env).
+
+serve: the button. Cloudflare's token never goes into the container; this small server on the Mac's loopback
+(127.0.0.1:47993, SHOW_SWITCH_PORT) does on / off / status only, for whoever has the key it writes into the show's
+data folder (SHOW_DATA, as in up.sh: <data>/wolts/apps/lodge-show/data/public.key). The app calls it at
+host.docker.internal from backstage, behind the owner-only Access app.
 """
 import json
+import secrets
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
 import sys
 import time
@@ -148,14 +156,59 @@ def off():
     status()
 
 
-def status():
+def state():
     apps = access_apps()
     root, back = apps.get(ROOT_APP), apps.get(BACKSTAGE_APP)
     tid = tunnel_id()
     routed = any(r.get("hostname") == HOST for r in get_ingress(tid)["ingress"])
     public = bool(root) and any(p["name"] == PUBLIC_POLICY for p in root.get("policies", []))
-    print(f"{HOST}: route {'yes' if routed else 'no'} · Access {'yes' if root else 'NO'} · backstage gated "
-          f"{'yes' if back else 'NO'} · {'PUBLIC (room, seats, slides)' if public else 'owner only'}")
+    return {"host": HOST, "routed": routed, "gated": bool(root), "backstage_gated": bool(back), "public": public}
+
+
+def status():
+    s = state()
+    print(f"{HOST}: route {'yes' if s['routed'] else 'no'} · Access {'yes' if s['gated'] else 'NO'} · backstage gated "
+          f"{'yes' if s['backstage_gated'] else 'NO'} · {'PUBLIC (room, seats, slides)' if s['public'] else 'owner only'}")
+    return s
+
+
+def serve():
+    data = Path(os.environ.get("SHOW_DATA", Path(__file__).resolve().parent.parent / "show-data"))
+    key_file = data / "wolts/apps/lodge-show/data/public.key"
+    if not key_file.parent.is_dir():
+        sys.exit(f"No show data at {key_file.parent} (set SHOW_DATA as for up.sh)")
+    if not key_file.exists():
+        key_file.write_text(secrets.token_urlsafe(24))
+        key_file.chmod(0o600)
+    key = key_file.read_text().strip()
+    port = int(os.environ.get("SHOW_SWITCH_PORT", 47993))
+
+    class Switch(BaseHTTPRequestHandler):
+        def answer(self, fn):
+            if not secrets.compare_digest(self.headers.get("X-Public-Key", ""), key):
+                return self.send_error(403)
+            try:
+                body, code = json.dumps(fn()).encode(), 200
+            except SystemExit as e:  # cf() exits on a Cloudflare error: report it, keep serving
+                body, code = json.dumps({"error": str(e)}).encode(), 502
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            self.answer(state) if self.path == "/status" else self.send_error(404)
+
+        def do_POST(self):
+            fn = {"/on": on, "/off": off}.get(self.path)
+            self.answer(lambda: (fn(), state())[1]) if fn else self.send_error(404)
+
+        def log_message(self, fmt, *args):
+            if self.command == "POST":
+                print(time.strftime("%H:%M:%S"), self.path, flush=True)
+
+    print(f"switch on 127.0.0.1:{port} (key in {key_file})", flush=True)
+    ThreadingHTTPServer(("127.0.0.1", port), Switch).serve_forever()
 
 
 def down():
@@ -175,5 +228,5 @@ def down():
 
 
 if __name__ == "__main__":
-    cmds = {"setup": setup, "on": on, "off": off, "status": status, "down": down}
+    cmds = {"setup": setup, "on": on, "off": off, "status": status, "down": down, "serve": serve}
     (cmds.get(sys.argv[1] if len(sys.argv) > 1 else "") or (lambda: sys.exit(__doc__)))()

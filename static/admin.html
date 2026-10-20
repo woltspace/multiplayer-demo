@@ -36,6 +36,9 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
   <div class="show card-ish"><span class="ph" id="ph">…</span>
     <button class="go" id="start">▶ Start the show</button><button class="go" id="game">⚡ Start the game</button><button id="skip">⏭ Skip turn</button><button id="stop">▣ Show the board</button><button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
     <span class="msg" id="msg" role="status"></span></div>
+  <div class="show card-ish"><span class="ph" id="pub">checking the public address…</span>
+    <button id="pubon">🌍 Make public</button><button id="puboff">🔒 Make private</button>
+    <span class="msg" id="pubmsg" role="status"></span></div>
   <div class="row"><a class="b" id="world" href="#">Open the big screen ↗</a></div>
   <div class="grid" id="grid"></div>
   <h2 class="lbl">Everyone in the room</h2>
@@ -90,6 +93,24 @@ document.getElementById("resetall").onclick = () => {
   if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;
   act("api/admin/reset-all", "resetting… (hostie takes a few seconds to wake up)");
 };
+// Public / private: the room, the seats and the slides. Backstage and the big screen stay owner-only either way.
+async function pub(path, msg) {
+  const m = document.getElementById("pubmsg"); m.textContent = msg || "";
+  const r = await fetch("api/admin/public" + (path || ""), {method: path ? "POST" : "GET", headers: H, cache: "no-store"});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { m.textContent = d.detail || "that didn't work"; return; }
+  m.textContent = "";
+  const el = document.getElementById("pub");
+  el.textContent = d.public ? "🌍 PUBLIC · anyone with the link: room, seats, slides" : d.gated ? "🔒 private · your login only" : "no public address set up";
+  el.className = "ph " + (d.public ? "live" : "paused");
+  document.getElementById("pubon").disabled = !!d.public || !d.gated; document.getElementById("puboff").disabled = !d.public;
+}
+document.getElementById("pubon").onclick = () => {
+  if (!confirm("Make it public?\n\nAnyone with the link can open the room, the seats and the slides. Backstage and the big screen stay yours only.")) return;
+  pub("/on", "opening… (Cloudflare takes a few seconds)");
+};
+document.getElementById("puboff").onclick = () => pub("/off", "closing…");
+pub(); setInterval(pub, 20000);
 load(); setInterval(load, 3000);
 const room = new URL(".", location.href).href;
 const ru = document.getElementById("room-url"); ru.innerHTML = ""; const ra = document.createElement("a"); ra.className = "url"; ra.href = room; ra.target = "_blank"; ra.rel = "noopener"; ra.textContent = room; ru.append(ra); document.getElementById("room-open").href = room;
