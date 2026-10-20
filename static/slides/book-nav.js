@@ -30,7 +30,7 @@
     return document.body.classList.contains('cover-active') ? 'cover' : 'lodge';
   };
 
-  const fallback = [{ id: 'tonight', number: 1, title: 'Tonight', url: 'candidates/index.html#tonight' }];
+  const fallback = [{ id: 'hello', number: 1, title: 'Hello', url: 'candidates/index.html#hello' }];
   let chapters = fallback;
   try {
     const response = await fetch(`${prefix}release-manifest.json`, { cache: 'no-store' });

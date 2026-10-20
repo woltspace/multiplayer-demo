@@ -9,6 +9,8 @@ showCurrentScene();
 addEventListener('hashchange', showCurrentScene);
 
 document.querySelectorAll('[data-wolt]').forEach(el => { el.innerHTML = woltSpriteAvatar(el.dataset.wolt, 112); });
+// Provider badges (IWCL slide): the model's mark over each wolt.
+document.querySelectorAll('[data-logo]').forEach(el => { el.innerHTML = `<svg viewBox="0 0 24 24"><path d="${LOGOS[el.dataset.logo]}"/></svg>`; });
 
 // QR codes: data-qr="room" is the show's own page (the app root, three levels up from here), else a URL.
 const ROOM = new URL('../../../', location.href);

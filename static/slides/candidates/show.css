@@ -61,3 +61,20 @@
 .on-board .book-nav,.on-board .mobile-pager{display:none!important}
 .on-board body{padding:0}
 .on-board .candidate{max-width:none;width:100vw;height:100vh;min-height:0;margin:0;box-shadow:none}
+
+/* Hello: the slide that's up while setting up. Name, one line, and the talk to go watch. */
+.hello .label{max-width:40%}
+.hello .label h1{font-size:clamp(56px,8vw,120px)}
+.hello .talk{position:absolute;z-index:10;right:5%;top:12%;width:50%;aspect-ratio:16/9;border:6px solid var(--ink);box-shadow:10px 10px 0 var(--terra);background:#000;display:block}
+.hello .talk img{width:100%;height:100%;object-fit:cover;display:block}
+.hello .talk .play{position:absolute;left:50%;top:50%;translate:-50% -50%;width:96px;height:96px;display:grid;place-items:center;background:#ff0033;color:#fff;font-size:44px;border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+.hello-codes{left:5%;right:auto;top:auto;bottom:9%;display:flex;gap:24px}
+.hello-codes .qr img,.hello-codes .qr canvas{width:150px!important;height:150px!important}
+
+/* IWCL: wolts on four providers, talking to each other. */
+.iwcl-row{top:58%;gap:18px}
+.iwcl-row .tk-card{position:relative;min-width:190px;padding-top:44px}
+.iwcl-row .lg{position:absolute!important;top:-26px;left:50%;translate:-50% 0;width:52px!important;height:52px!important;display:grid!important;place-items:center;background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--amber)}
+.iwcl-row .lg svg{width:30px!important;height:30px;fill:#18100a}
+.iwcl-row .link{font:700 40px 'JetBrains Mono',monospace;color:var(--amber)}
+.iwcl-msg{position:absolute;z-index:10;right:5%;top:30%}
