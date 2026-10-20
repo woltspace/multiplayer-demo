@@ -19,11 +19,16 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
     clear them first (`clearInterval(window.{BOXJS}Timer)`), listen on your own elements.
   - Talk to the other sections through events: `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and
     `addEventListener("<name>", ...)` on `window`. Agree on event names in #lodge.
-  - **Controls you can see.** Every way to play is a visible, thumb-sized control on screen (buttons, a d-pad,
-    big tap targets), never a hidden gesture like "tap the side of the board". Add one line on how to play.
+  - **Controls you can see**, like phone games do: something that moves gets an on-screen **d-pad** (four big
+    arrow buttons, at least 56 px, under the play area where thumbs are), and swipes can steer too; an action gets
+    one big button (or tap the thing itself, Crossy Road style). Never a hidden gesture like "tap the side of the
+    board". Add one line on how to play.
+  - **And the keyboard:** the big screen plays your game from the keyboard too. Listen for `keydown` on `document`
+    (arrows or WASD to move, space or Enter for the main action) and keep it in sync with the buttons. Keep the
+    handler on `window.{BOXJS}Key` and remove the old one first, since your script re-runs on each save.
   - Each phone runs its own copy of the page: the game is single-player per phone. Sections share state on the same
     page through events, not across phones.
-  - Phone-sized (375 px wide), tap only, no keyboard. No network requests, no external files, under 50 KB.
+  - Phone-sized (375 px wide). No network requests, no external files, under 50 KB.
 - The look: cream #fff8e6, orange #c4531e, ink #18100a, fonts `DMSans`, `Preahvihear` (titles), `JB` (mono).
 
 ## #lodge, the group chat

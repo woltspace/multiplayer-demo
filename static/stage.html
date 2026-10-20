@@ -40,6 +40,14 @@ addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,
 <script>
 // ?only=p1 (or p2): just that player's game, edge to edge, for its lane on the big screen. No header, no owner bar.
 const ONLY = new URLSearchParams(location.search).get("only");
+// Keys from the big screen: /world forwards game keys (arrows, WASD, space, Enter) so the woltPhone plays from the
+// keyboard without clicking into it first. Re-dispatched as real keydown/keyup events on this page.
+addEventListener("message", (m) => {
+  const d = m.data || {};
+  if (d.type !== "lodge-key" || typeof d.key !== "string") return;
+  // One event from the focused element (or body); it bubbles to document and window, where games listen.
+  (document.activeElement || document.body).dispatchEvent(new KeyboardEvent(d.up ? "keyup" : "keydown", {key: d.key, code: d.code || "", bubbles: true}));
+});
 // ?phone=1: the woltPhone (wPhone). The whole shared page, sections stacked (title, Player 1, Player 2), no chrome around them.
 if (new URLSearchParams(location.search).get("phone")) document.documentElement.classList.add("only", "phone");
 if (ONLY) {

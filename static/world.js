@@ -97,6 +97,13 @@ async function poll() {
   } catch {}
 }
 poll(); if (!T) setInterval(poll, 700);
+// Game keys go to the woltPhone (the page inside listens for them), so the big screen plays from the keyboard.
+const GAME_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", "w", "a", "s", "d", "W", "A", "S", "D"]);
+for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
+  if (!GAME_KEYS.has(e.key) || e.shiftKey && e.key === "G") return;
+  e.preventDefault();
+  document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
+});
 // Shift+G starts the game from the big screen itself (for a mirrored display, when backstage can't be on screen).
 addEventListener("keydown", async (e) => {
   if (!(e.key === "G" && e.shiftKey)) return;
