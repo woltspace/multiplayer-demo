@@ -63,7 +63,9 @@ function term(sid) {
   }
   const name = wname(c), busy = (state.busy || state.typing || []).includes(name);
   const raw = chromeless(state.terms[name] || [], true), lines = (state.mode === "mock" ? raw : raw.map(ansi)).slice(-40).join("\n");
-  return `<section class="box term" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}</pre></div></section>`;
+  // Live typing: the human's draft, as they type it on their phone, on this wolt's prompt line.
+  const d = (state.drafts || {})[sid], typing = d ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>` : "";
+  return `<section class="box term" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
 }
 
 function render() {

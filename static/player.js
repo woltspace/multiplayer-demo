@@ -41,14 +41,22 @@ function view() {
     return;
   }
   $("bar").hidden = false; $("send").disabled = wait;
+  // Shared world: the phone shows the whole #lodge group chat. @mentions are lit; ones for your wolt stand out,
+  // your wolt's posts say so, and everything else reads as the group talking.
+  const me = st.wolt.name.toLowerCase();
+  const lit = (t) => esc(t).replace(/@([a-z0-9_-]+)/gi, (x, n) => `<b class="${n.toLowerCase() === me ? "atme" : "at"}">@${n}</b>`);
   const msgs = st.messages.map((m) => {
     const mine = m.type === "say" && (!st.world || m.slot === st.slot);
-    return `<div class="m${mine ? " mine" : ""}"><div class=who>${mine ? "you" : esc(m.from)}</div><div class=bb>${esc(m.text)}</div></div>`;
+    const mywolt = st.world && m.type === "post" && m.from === st.wolt.name;
+    const forme = st.world && new RegExp("@" + me + "\\b", "i").test(m.text || "");
+    const who = mine ? "you" : mywolt ? `${esc(m.from)} · your wolt` : esc(m.from);
+    return `<div class="m${mine ? " mine" : ""}${mywolt ? " mywolt" : ""}${forme ? " forme" : ""}"><div class=who>${who}</div><div class=bb>${lit(m.text)}</div></div>`;
   }).join("");
   const key = st.wolt.name + "|" + st.messages.length + "|" + wait + "|" + st.game + "|" + st.turn + "|" + st.turn_busy;
   if (drawn === key) return; drawn = key;
   app.innerHTML = `${note}<span class=tag>${st.slot === "host" ? "you · the host" : esc(st.label) + " · " + esc(st.player || "")}</span>
     <div class="card me">${av(st.wolt.creature, 54)}<div><div class=nm>${esc(st.wolt.name)}</div><div class=hs>your wolt · ${esc(st.wolt.harness || "")}</div></div><span class=live>in the lodge</span></div>
+    ${st.world ? `<div class=grp># lodge · group chat · everyone sees this</div>` : ""}
     <div class=msgs>${msgs || `<div class=waking>${av(st.wolt.creature, 64)}<br>${esc(st.wolt.name)} is waking up…<br>say hi, or tell it what to build</div>`}</div>
     <p class=hint>everything you type shows up on the big screen</p>`;
   const sg = $("startg"); if (sg) sg.onclick = startGame;
@@ -87,5 +95,15 @@ $("sayf").onsubmit = async (e) => {
   $("send").disabled = false;
   if (r.ok) { $("say").value = ""; load(); } else { const d = await r.json().catch(() => ({})); $("say").placeholder = d.detail || "try again"; }
 };
+// Live typing: send the draft (throttled) so the big screen can show it in this wolt's terminal as it's typed.
+let draftT = null, draftSent = "";
+$("say").addEventListener("input", () => {
+  if (draftT) return;
+  draftT = setTimeout(async () => {
+    draftT = null; const text = $("say").value;
+    if (text === draftSent) return; draftSent = text;
+    fetch(API + "/draft", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({text: text.slice(0, 280)})}).catch(() => {});
+  }, 300);
+});
 $("say").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("sayf").requestSubmit(); } });
 load(); if (!T) setInterval(load, 1500);

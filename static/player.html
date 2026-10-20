@@ -26,6 +26,10 @@ button:disabled{opacity:.5}
 .me .nm{font:400 26px/1 Preahvihear}.me .hs{font:700 13px JB;color:var(--m)}
 .me .live{margin-left:auto;white-space:nowrap;font:700 12px JB;color:var(--ok)}.me .live:before{content:"● ";animation:blink 1.2s infinite}
 .msgs{display:flex;flex-direction:column;gap:10px}
+.grp{font:700 12px JB;color:var(--muted);text-align:center;margin:4px 0 10px;letter-spacing:.5px}
+.m .bb b.at{color:var(--org)}.m .bb b.atme{background:#ffc23d;color:var(--ink);padding:0 3px;border-radius:4px}
+.m.mywolt .bb{border-width:3px;box-shadow:3px 3px 0 var(--m),0 0 0 3px color-mix(in srgb,var(--m) 25%,transparent)}
+.m:not(.mine):not(.mywolt):not(.forme) .bb{opacity:.82}
 .m{max-width:86%;animation:pop .3s ease-out}
 .m .who{font:700 12px JB;color:var(--muted);margin:0 6px 2px}
 .m .bb{background:#fff;border:2px solid var(--ink);border-radius:14px 14px 14px 4px;padding:8px 12px;box-shadow:3px 3px 0 var(--m);white-space:pre-wrap;word-break:break-word}
@@ -50,6 +54,6 @@ button:disabled{opacity:.5}
   <form id="sayf"><textarea id="say" maxlength="280" rows="1" placeholder="tell your wolt what to build…"></textarea><button id="send">Send</button></form>
 </div>
 <script src="../static/sprites.js?v=2"></script>
-<script src="../static/player.js?v=8"></script>
+<script src="../static/player.js?v=10"></script>
 </body>
 </html>

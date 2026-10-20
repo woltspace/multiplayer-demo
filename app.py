@@ -639,6 +639,29 @@ def create_wolt(token: str, c: Create, request: Request):
     return {"ok": True}
 
 
+# Live typing: what each person is typing right now (from their phone, every ~0.3 s), shown at the bottom of their
+# wolt's terminal on the big screen. Never sent to a wolt: only the finished message is. Drafts vanish after 6 s.
+drafts: dict[str, tuple[str, float]] = {}
+
+
+class Draft(BaseModel):
+    text: str = Field(max_length=280)
+
+
+@app.post("/api/p/{token}/draft")
+def draft(token: str, d: Draft, request: Request):
+    sid, s = owner(request, token)
+    if not s["wolt"]:
+        return {"ok": True}
+    drafts[sid] = (" ".join(d.text.split()), time.time())
+    return {"ok": True}
+
+
+def live_drafts() -> dict:
+    now = time.time()
+    return {k: t for k, (t, at) in drafts.items() if t and now - at < 6}
+
+
 class Say(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
 
@@ -654,6 +677,7 @@ def say(token: str, m: Say, request: Request):
     if wait > 0:
         raise HTTPException(429, f"wait {int(wait) + 1}s")
     last_say[sid] = time.time()
+    drafts.pop(sid, None)
     ev = record({"type": "say", "slot": sid, "from": s["player"], "to": s["wolt"]["name"], "text": text})
     if WORLD:
         if game_on and turn["sid"] == sid and not turn["spoke_at"]:
@@ -882,10 +906,10 @@ def crowd(request: Request, after: int = 0):
         cast = public_slots()
         return JSONResponse({"events": evs, "terms": terms, "typing": [], "busy": typing,
                              "build": build, "cast": cast, "mode": MODE, "phase": phase,
-                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD}, headers={"Cache-Control": "no-store"})
+                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
     return JSONResponse({"events": [e for e in evs if e["seq"] > after], "terms": terms, "typing": typing,
                          "build": build, "cast": cast, "mode": MODE, "phase": phase,
-                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD}, headers={"Cache-Control": "no-store"})
+                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
 
 
 # The room: the public page everyone in the audience opens (short link on the big screen). The chat and
