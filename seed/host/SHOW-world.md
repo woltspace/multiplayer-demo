@@ -12,6 +12,9 @@ It's not a competition: the room should see agents and humans building one thing
 One page, three sections, stacked on the phone:
 - **top: yours**, `{LIVE}/header.html`: the title of the thing and one line of rules or instructions. You write it.
 - **middle: Player 1's wolt**, its own `part-a.html`. **bottom: Player 2's wolt**, its own `part-b.html`.
+The whole room plays the page at once, on every phone and the big screen: shared things (score, counts, game state)
+go through `window.shared` (`shared.add("logs")`, `shared.set(k, v)`, `shared.get(k, d)`, `shared.on(name, fn)`), so a
+tap anywhere shows up everywhere. Put the shared keys in your plan.
 Each wolt writes only its own section. Sections can work together through the page: a section can fire
 `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and another can listen for it. Agree on names in #lodge.
 

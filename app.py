@@ -860,6 +860,50 @@ if MODE == "lodge":
 _parts = {"at": 0.0, "body": None}
 
 
+# The shared game state: what the whole room plays together. Every copy of the page (the big screen's woltPhone,
+# every phone in the room) reads and writes it through window.shared (static/shared.js), so a tap on one phone shows
+# up everywhere. Small on purpose: numbers and short strings, a few dozen keys. Cleared on Reset everything.
+# The page runs in a sandboxed iframe (opaque origin), hence CORS * and a text/plain body (no preflight).
+SHARED_MAX_KEYS, SHARED_RATE = 64, 20  # keys; writes per second per client
+shared: dict = {"state": {}, "v": 0}
+_shared_hits: dict[str, list[float]] = {}
+CORS = {"Cache-Control": "no-store", "Access-Control-Allow-Origin": "*"}
+
+
+@app.get("/api/shared")
+def shared_get():
+    return JSONResponse(shared, headers=CORS)
+
+
+@app.post("/api/shared")
+async def shared_op(request: Request):
+    who = request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
+    now = time.time()
+    hits = [t for t in _shared_hits.get(who, []) if now - t < 1.0]
+    if len(hits) >= SHARED_RATE:
+        return JSONResponse({"error": "slow down"}, status_code=429, headers=CORS)
+    _shared_hits[who] = hits + [now]
+    try:
+        op = json.loads((await request.body())[:2000] or b"{}")
+        kind, key, val = op.get("op"), str(op.get("key", ""))[:40], op.get("value")
+    except (ValueError, AttributeError):
+        return JSONResponse({"error": "bad op"}, status_code=400, headers=CORS)
+    st = shared["state"]
+    if not key or (key not in st and len(st) >= SHARED_MAX_KEYS):
+        return JSONResponse({"error": "bad key"}, status_code=400, headers=CORS)
+    with lock:
+        if kind == "add":
+            n = val if isinstance(val, (int, float)) and not isinstance(val, bool) else 1
+            cur = st.get(key, 0)
+            st[key] = (cur if isinstance(cur, (int, float)) else 0) + max(-1000, min(1000, n))
+        elif kind == "set" and (val is None or isinstance(val, (int, float, bool)) or (isinstance(val, str) and len(val) <= 200)):
+            st[key] = val
+        else:
+            return JSONResponse({"error": "bad op"}, status_code=400, headers=CORS)
+        shared["v"] += 1
+    return JSONResponse(shared, headers=CORS)
+
+
 @app.get("/api/parts")
 def parts_api():
     """Public, like the page itself: the stage polls it. Read from disk at most once a second for everyone."""
@@ -1054,6 +1098,7 @@ def reset_all(request: Request, host_player: str = ""):
         LOG.write_text("")
         events.clear()
         last_say.clear()
+        shared.update(state={}, v=0)
         with vote_lock:
             votes.clear()
             VOTES_FILE.unlink(missing_ok=True)
