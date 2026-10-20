@@ -36,7 +36,10 @@ def container_claude_config(folder: Path) -> None:
     projects = data.get("projects", {})
     projects[str(folder)] = trust
     projects[str(folder / "wolt")] = trust
-    data.update(projects=projects, autoUpdates=False, hasCompletedOnboarding=True, bypassPermissionsAccepted=True)
+    # bypassPermissionsAccepted is the name the platform writes; Claude Code 2.1.30x reads bypassPermissionsModeAccepted
+    # (the lodge runs container wolts with --dangerously-skip-permissions; jerpint's call: no warning screen on stage).
+    data.update(projects=projects, autoUpdates=False, hasCompletedOnboarding=True, bypassPermissionsAccepted=True,
+                bypassPermissionsModeAccepted=True)
     cfg.write_text(json.dumps(data, indent=2) + "\n")
 
 
