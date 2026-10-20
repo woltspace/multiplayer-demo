@@ -1,21 +1,19 @@
 /* Arcade skin (jerpint, 2026-10-19: "more arcade game, keep the lodge flair"). Loaded last on crowd, room and stage.
-   Lodge colours stay (orange, cream, wood); the room becomes a dark CRT cabinet: pixel type, scanlines, glow, hard pixel edges.
+   Lodge colours stay (orange, cream, wood); the room becomes a dark cabinet: pixel type, glow, hard pixel edges. Motion stays mild: no scanlines or flicker,
+   only the blinking cursors and a slow breathe on "waiting" labels.
    Add ?classic to the URL to see the old look. */
 @font-face{font-family:Pixel;src:url(PressStart2P.woff2)}
 @font-face{font-family:VT;src:url(VT323.woff2)}
 :root{--glow:#ff8a3d;--neon:#ffc23d;--crt:#0b0710;--panel:#140d16;--wood:#3a2414;
  --host:#ff8a3d;--p1:#4ee06a;--p2:#4aa8ff}
-@keyframes flick{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.86}94%{opacity:1}}
 @keyframes coin{0%,49%{opacity:1}50%,100%{opacity:0}}
-@keyframes scan{from{background-position:0 0}to{background-position:0 8px}}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.55}}
 
 /* ── crowd (big screen) ── */
 body:has(#stage){background:radial-gradient(ellipse at 50% 40%,#22121c 0,#0b0710 70%),#0b0710;color:#fff3dc}
 body:has(#stage):before{background-image:none}
 body:has(#stage):after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
- background:repeating-linear-gradient(0deg,#0000 0 3px,#0000004d 3px 4px);animation:scan .4s linear infinite;
  box-shadow:inset 0 0 220px 40px #000c}
-#stage{animation:flick 6s infinite}
 #stage .brand{background:var(--panel);color:#fff3dc;border:4px solid var(--glow);border-radius:0;box-shadow:0 0 0 4px #000,0 0 28px #ff8a3d66}
 #stage .brand b{font:400 22px Pixel;color:var(--glow);text-shadow:0 0 10px #ff8a3d99}
 #stage .brand span{font:400 18px VT;color:var(--neon);letter-spacing:1px}
@@ -53,7 +51,7 @@ body:has(#stage):after{content:"";position:fixed;inset:0;pointer-events:none;z-i
 #stage .tb pre{font:400 25px/1.12 VT;color:#d9f7d9;text-shadow:0 0 4px #4ee06a55}
 #stage .inmsg{background:#ffffff12;border-left:6px solid var(--m)}
 #stage .tw.empty{flex:0 0 92px;flex-direction:row;background:#000;border:4px dashed #5a3a22;box-shadow:none;font:400 16px Pixel;color:#8a7258}
-#stage .tw.empty .big{font:400 22px Pixel;color:var(--neon);animation:coin 1.1s steps(1) infinite;text-shadow:0 0 12px #ffc23d}
+#stage .tw.empty .big{font:400 22px Pixel;color:var(--neon);animation:breathe 3s ease-in-out infinite;text-shadow:0 0 12px #ffc23d}
 /* build + curtain */
 #stage .build{border:4px solid #000;border-radius:0;box-shadow:0 0 0 4px var(--neon),0 0 50px #ffc23d55}
 #stage .wbar{background:#000;color:var(--neon);border-bottom:4px solid var(--neon)}
@@ -62,7 +60,7 @@ body:has(#stage):after{content:"";position:fixed;inset:0;pointer-events:none;z-i
 #stage .curtain{background:radial-gradient(ellipse at 50% 40%,#2a1420 0,#0b0710 75%)}
 #stage .cbox{background:var(--panel);color:#fff3dc;border:6px solid #000;border-radius:0;box-shadow:0 0 0 6px var(--glow),0 0 0 12px #000,0 0 80px #ff8a3d55}
 #stage .cbox h1{font:400 68px/1.1 Pixel;color:var(--glow);text-shadow:6px 6px 0 #000,0 0 30px #ff8a3daa}
-#stage .cbox p{font:400 30px Pixel;color:var(--neon);animation:coin 1.1s steps(1) infinite;text-shadow:0 0 14px #ffc23d}
+#stage .cbox p{font:400 30px Pixel;color:var(--neon);animation:breathe 3s ease-in-out infinite;text-shadow:0 0 14px #ffc23d}
 #stage .cbox .cq{font:400 24px VT;color:#c9b59a;text-transform:uppercase;letter-spacing:1px}
 #stage .cbox .cq b{font:400 18px Pixel;color:#fff3dc}
 #stage #cqr{border:4px solid #000;border-radius:0;box-shadow:0 0 0 4px var(--neon)}
@@ -77,7 +75,7 @@ section[data-part] .owner{background:#000;color:#fff3dc;border-bottom:4px solid 
 section[data-part] .owner b{font:400 13px Pixel;color:var(--m);text-shadow:0 0 8px var(--m)}
 section[data-part] .owner .file{color:#8a7258}
 section[data-part] .owner .dot{border-radius:0}
-section[data-part] .waiting{font:400 15px/2 Pixel;color:#8a7258;animation:coin 1.1s steps(1) infinite}
+section[data-part] .waiting{font:400 15px/2 Pixel;color:#8a7258;animation:breathe 3s ease-in-out infinite}
 .presence{border-radius:0}.presence .who{font:400 11px Pixel;border-radius:0;padding:5px 8px}
 /* ── room (phones) ── */
 body:has(.cast){background:#0b0710;color:#fff3dc}
@@ -87,7 +85,7 @@ body:has(.cast) .hd small{font:400 15px VT;color:var(--neon);letter-spacing:1px}
 body:has(.cast) .hd .live{font:400 10px Pixel;color:#ff4d4d}
 body:has(.cast) .chip{background:#140d16;color:#fff3dc;border:2px solid var(--m);border-radius:0;box-shadow:0 0 10px color-mix(in srgb,var(--m) 40%,transparent)}
 body:has(.cast) .chip .nm{font:400 10px Pixel;color:var(--m)}body:has(.cast) .chip .hs{font:400 13px VT;color:#c9b59a}
-body:has(.cast) .chip.wait{border-color:#5a3a22;box-shadow:none;color:#8a7258;font:400 9px/1.6 Pixel;animation:coin 1.1s steps(1) infinite}
+body:has(.cast) .chip.wait{border-color:#5a3a22;box-shadow:none;color:#8a7258;font:400 9px/1.6 Pixel;animation:breathe 3s ease-in-out infinite}
 body:has(.cast) .tabs button{font:400 11px Pixel;color:#8a7258}
 body:has(.cast) .tabs button.on{color:var(--neon);border-color:var(--glow)}
 body:has(.cast) .cn{font:400 14px VT;color:#b8a48a;letter-spacing:1px;text-transform:uppercase}
@@ -97,6 +95,8 @@ body:has(.cast) .cm.h .bb{background:var(--m);color:#000;border-color:#000;borde
 body:has(.cast) .cm.r .bb{background:#120c14;border-style:dashed}
 body:has(.cast) .sys{font:400 15px VT;color:#c9b59a;background:#000;border:2px dashed #5a3a22;border-radius:0;text-transform:uppercase;letter-spacing:1px}
 body:has(.cast) .sys span{color:#fff3dc}
+body:has(.cast) .sys>span{display:inline;vertical-align:baseline}
+body:has(.cast) .sys .av{display:inline-block;vertical-align:-4px;margin-right:4px}
 body:has(.cast) .sys.ship{font:400 13px/1.6 Pixel;color:#000;background:var(--neon);border:3px solid #000;border-radius:0;box-shadow:0 0 0 3px var(--glow),0 0 24px #ffc23d}
 body:has(.cast) .empty{font:400 11px/1.8 Pixel;color:#8a7258}
 
@@ -122,3 +122,19 @@ body:has(section[data-part]) .top h1::after{content:"█";animation:coin 1s step
 #stage .rows>.cm:last-of-type .bb::after,body:has(.cast) .rows>.cm:last-of-type .bb::after{background:var(--m)}
 #stage .cm.h:last-of-type .bb::after,body:has(.cast) .cm.h:last-of-type .bb::after{background:#000}
 #stage .tb pre::after{background:#8ed081;height:.95em}
+/* Mild motion: busy dots breathe instead of strobing, the live dot stays still (the cursor next to it blinks). */
+#stage .dot.busy,[data-editing] .owner .dot{animation:breathe 1.6s ease-in-out infinite}
+.presence .caret{animation-duration:1s}
+#stage .lh .live:before{animation:none}
+/* The board keeps one size while its cards rotate (long lines wrap instead of resizing the box). */
+#stage .cbox{width:1560px;max-width:92vw;box-sizing:border-box;justify-content:space-between}
+#stage .ccard{flex:1;min-width:0}
+#stage .cbox p{line-height:1.5}
+#stage .cbox{min-height:600px}
+#stage .cbox h1{font-size:60px;white-space:nowrap}
+/* the crowd vote: phone bar and big-screen tally */
+body:has(.cast) .vote{background:#000;color:var(--neon);border-top:3px solid var(--glow);font:400 18px VT;text-transform:uppercase;letter-spacing:1px}
+body:has(.cast) .vote button{background:var(--panel);color:#fff3dc;border:3px solid #000;border-radius:0;box-shadow:0 0 0 3px var(--glow);font:400 18px VT;text-transform:uppercase}
+body:has(.cast) .vote button.on{background:var(--glow);color:#000}
+#stage .tally{background:#000;color:var(--neon);font:400 26px VT;text-transform:uppercase;letter-spacing:1px}
+#stage .tally .bars{border:3px solid var(--neon);border-radius:0;color:#000}

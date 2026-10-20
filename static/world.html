@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lodge Show · world</title>
+<link rel="stylesheet" href="static/show.css">
+<style>
+/* The big screen for the shared world: three humans and three wolts build one page together. The #lodge group chat on
+   the left, the woltPhone (the shared page) in the middle, the three wolts' live terminals on the right. */
+@font-face{font-family:Pixel;src:url(static/PressStart2P.woff2)}@font-face{font-family:VT;src:url(static/VT323.woff2)}
+:root{--glow:#ff8a3d;--neon:#ffc23d;--cream2:#fff3dc;--tan:#c9b59a;--panel:#16101a;--p1:#5cb85c;--p2:#4a90d9;--host:#ff8a3d}
+@keyframes breathe{0%,100%{opacity:1}50%{opacity:.55}}
+@keyframes coin{0%,49%{opacity:1}50%,100%{opacity:0}}
+html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#22121c 0,#0b0710 70%),#0b0710;color:var(--cream2);font-family:DMSans,system-ui}
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform-origin:center;transform:translate(-50%,-50%) scale(var(--s,1))}
+/* top strip: title, the host's latest line, the room's QR */
+.top{height:96px;display:flex;align-items:center;gap:22px;padding:0 30px;border-bottom:4px solid var(--glow);background:#000}
+.top .t{font:400 26px Pixel;color:var(--glow);text-shadow:3px 3px 0 #3a1a08;white-space:nowrap}
+.host{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:2px dashed #5a3a22;padding:8px 14px;font:400 24px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
+.host b{color:var(--cream2);font-weight:400;white-space:nowrap}
+.host .msg{color:var(--cream2);text-transform:none;letter-spacing:0;font:15px/1.3 JB;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.host .tag{color:#000;background:var(--glow);padding:2px 8px;font:400 20px VT;white-space:nowrap}
+.host .tag.ship{background:var(--neon)}
+.qr{display:flex;align-items:center;gap:12px;font:400 20px VT;color:var(--neon);text-transform:uppercase;white-space:nowrap}
+#jqr{background:#fff;padding:4px;line-height:0}
+/* the build clock, from ⚡ Start the game: neon, red for the last 30 seconds, TIME! at zero */
+.clock{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 16px;border:3px solid var(--neon);background:#000;min-width:190px}
+.clock[hidden]{display:none}.clock small{font:400 16px VT;color:var(--tan);letter-spacing:2px;text-transform:uppercase}
+.clock b{font:400 34px Pixel;color:var(--neon);font-weight:400}
+.clock.late{border-color:#ff5a4a}.clock.late b{color:#ff5a4a}
+/* the shared world: #lodge chat left, the woltPhone in the middle, the three terminals right */
+.turns{flex:1;min-width:0;display:flex;align-items:center;gap:12px;font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
+.turn{display:flex;align-items:center;gap:8px;padding:6px 12px;border:2px solid #2a2030;color:#7a6a5c;white-space:nowrap}
+.turn.now{border-color:var(--m);color:#000;background:var(--m);box-shadow:0 0 18px var(--m)}
+.turn.busy{animation:breathe 2s ease-in-out infinite}
+.turns .arrow{color:#5a4a40}
+.main{display:grid;grid-template-columns:560px 1fr 620px;gap:24px;padding:22px 26px;height:calc(1080px - 96px)}
+.box{border:4px solid #000;box-shadow:0 0 0 4px var(--m,var(--glow)),0 0 30px color-mix(in srgb,var(--m,var(--glow)) 35%,transparent);background:var(--panel);display:flex;flex-direction:column;min-height:0;min-width:0}
+.bh{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#000;border-bottom:4px solid var(--m,var(--glow));font:400 20px VT;text-transform:uppercase;letter-spacing:1px;color:var(--m,var(--glow));white-space:nowrap;overflow:hidden}
+.bh b{font:400 16px Pixel;font-weight:400}.bh .r{margin-left:auto;color:#8a7258}
+.bh .dot{width:10px;height:10px;background:#45c25a;display:inline-block}.bh .dot.busy{animation:breathe 1.6s ease-in-out infinite}
+.chat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px;background:color-mix(in srgb,var(--glow) 8%,#140e10);overflow:hidden;
+ -webkit-mask-image:linear-gradient(transparent 0,#000 40px);mask-image:linear-gradient(transparent 0,#000 40px)}
+.cm{display:flex;gap:10px;align-items:flex-start;flex:none}
+.cm .ic{width:30px;flex:0 0 30px;display:flex;justify-content:center;padding-top:2px;font-size:24px;line-height:1}
+.cm .who{width:84px;flex:none;font:400 18px VT;color:var(--m);text-transform:uppercase;padding-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm .bb{font:15.5px/1.38 JB;background:#0d0909;border:2px solid #000;border-left:4px solid var(--m);padding:7px 10px;color:var(--cream2);overflow-wrap:anywhere;min-width:0}
+.cm .bb b{color:var(--neon);font-weight:700}
+.cm.h .bb{background:#2a2010;color:#ffe9b8}
+.cm.at .bb{box-shadow:0 0 12px color-mix(in srgb,var(--m) 40%,transparent)}
+.sys{align-self:center;flex:none;font:400 18px VT;color:var(--tan);border:2px dashed #5a3a22;padding:3px 12px;text-transform:uppercase;letter-spacing:1px;text-align:center}
+.sys.go{color:#000;background:var(--neon);border-color:var(--neon)}
+.world{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
+.wtitle{font:400 18px Pixel;color:var(--neon);letter-spacing:1px}
+.phone{position:relative;width:399px;height:850px;flex:none;transform:scale(.98);transform-origin:top center;background:#111;border-radius:52px;padding:12px 12px 58px;
+ box-shadow:0 0 0 3px #2a2a2a,0 0 0 6px var(--glow),0 0 60px #ff8a3d55,0 24px 60px #000c}
+.phone .screen{position:relative;width:375px;height:780px;background:#fff8e6;border-radius:40px;overflow:hidden}
+.phone .screen::before{content:"";position:absolute;top:10px;left:50%;width:110px;height:30px;margin-left:-55px;background:#111;border-radius:16px;z-index:2}
+.phone iframe{position:absolute;left:0;top:0;width:375px;height:780px;border:0}
+.phone .brand{position:absolute;left:0;right:0;bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;font:400 18px Pixel;color:#d8d0c4;letter-spacing:2px}
+.phone .brand b{font-weight:400;color:var(--glow)}
+.terms{display:flex;flex-direction:column;gap:16px;min-height:0}
+.term{flex:1}
+.tb{flex:1;position:relative;background:#050307;overflow:hidden;min-height:0}
+.tb pre{margin:0;position:absolute;left:0;right:0;bottom:0;padding:8px 12px;font:12.5px/1.38 JB,monospace;color:#d8d0c4;white-space:pre-wrap;word-break:break-word}
+.term.empty{align-items:center;justify-content:center;gap:10px;background:transparent;box-shadow:none;border:4px dashed color-mix(in srgb,var(--m) 60%,#000)}
+.term.empty .big{font:400 20px Pixel;color:var(--m);animation:breathe 3s ease-in-out infinite;text-align:center;line-height:1.6}
+.term.empty span{font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:2px}
+/* the placeholder board (cards in static/board.js), after a reset and on "Show the board" */
+.curtain{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#2a1420 0,#0b0710 75%)}
+.curtain[hidden]{display:none}
+.cbox{display:flex;align-items:center;justify-content:space-between;gap:80px;width:1560px;min-height:600px;background:var(--panel);border:6px solid #000;box-shadow:0 0 0 6px var(--glow),0 0 0 12px #000,0 0 80px #ff8a3d55;padding:60px 80px}
+.ccard{flex:1;min-width:0;transition:opacity .8s ease}.ccard.out{opacity:0}
+.cbox h1{font:400 60px/1.1 Pixel;color:var(--glow);text-shadow:6px 6px 0 #000,0 0 30px #ff8a3daa;margin:18px 0 10px;white-space:nowrap}
+.cbox h1::after{content:"";display:inline-block;width:.6em;height:1em;vertical-align:-.12em;background:currentColor;margin-left:.35em;animation:coin 1s steps(1) infinite}
+.cbox p{font:400 30px/1.5 Pixel;color:var(--neon);margin:0;animation:breathe 3s ease-in-out infinite}
+.cq{display:flex;flex-direction:column;align-items:center;gap:14px;font:400 24px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
+.cq b{font:400 18px Pixel;color:var(--cream2)}
+#cqr{background:#fff;padding:14px;border:4px solid var(--neon);line-height:0}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="top">
+    <div class="t">Lodge Show</div>
+    <div class="turns" id="turns"></div>
+    <div class="clock" id="clock" hidden></div>
+    <div class="qr"><div id="jqr"></div><div>scan to watch<br><span id="jurl"></span></div></div>
+  </div>
+  <div class="main">
+    <section class="box" data-c="host"><div class="bh"><b>#lodge</b><span id="who">· everyone</span><span class="r">live</span></div><div class="chat" id="chat"></div></section>
+    <div class="world"><div class="wtitle">★ the woltPhone ★</div>
+      <div class="phone"><div class="screen"><iframe sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1"></iframe></div><div class="brand"><span id="wbv"></span><span><b>w</b>Phone</span></div></div></div>
+    <div class="terms" id="terms"></div>
+  </div>
+  <div class="curtain" id="curtain" hidden><div class="cbox"><div class="ccard" id="ccard"><span class="av" id="clogo"></span><h1 id="ctitle">Lodge Show</h1><p id="ctext"></p></div>
+    <div class="cq"><div id="cqr"></div><b id="curl"></b>scan to watch on your phone</div></div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="static/sprites.js?v=2"></script>
+<script src="static/board.js?v=1"></script>
+<script src="static/term.js?v=2"></script>
+<script src="static/world.js?v=2"></script>
+</body>
+</html>

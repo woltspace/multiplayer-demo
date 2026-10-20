@@ -10,12 +10,21 @@ let st = null, creature = "beaver", drawn = "";
 function view() {
   const app = $("app");
   document.body.dataset.c = st.slot;
-  // Before Start and while paused, players wait (the host can always brief its wolt).
-  const wait = st.slot !== "host" && st.phase && st.phase !== "live";
-  const note = wait ? `<div class=paused>${st.phase === "paused" ? "⏸ The show is paused. Back in a moment." : "The show starts in a moment. You can pick your names now."}</div>` : "";
+  // Creating a wolt is always open. Players type once the host starts the game (and not while the board is up).
+  // The host can always type, and gets the ▶ Start the game button until the game is on.
+  const held = st.slot !== "host" && st.phase && st.phase !== "live";
+  // Shared world: one turn at a time. A player types on their turn, until their wolt has posted.
+  const myTurn = !st.world || !st.game || st.slot === "host" || (st.turn === st.slot && !st.turn_busy);
+  const wait = held || (st.slot !== "host" && st.game === false) || !myTurn;
+  const note = held ? `<div class=paused>The show continues in a moment. You can already create your wolt.</div>`
+    : st.slot !== "host" && st.game === false ? `<div class=paused>⏳ The game starts in a moment. Get your idea ready!</div>`
+    : !myTurn ? `<div class=paused>${st.turn === st.slot ? "🛠 The wolts are on it…" : `⏳ ${esc(st.turn_player || "someone")}'s turn. You're next soon!`}</div>`
+    : st.world && st.game && st.slot !== "host" ? `<div class="paused go">▸ Your turn! Tell the wolts what to add.</div>`
+    : st.world && st.game && st.slot === "host" && st.turn && st.turn !== "host" ? `<button class=skipb id=skipb>⏭ Skip ${esc(st.turn_player || "this turn")}</button>`
+    : st.slot === "host" && st.game === false ? `<button class=startg id=startg>▶ Start the game</button>` : "";
   if (!st.wolt) {
     $("bar").hidden = true;
-    if (drawn === "form" + wait) { const g = $("go"); if (g && !g.dataset.busy) g.disabled = wait; const n = $("pnote"); if (n) n.innerHTML = note; return; }
+    if (drawn === "form" + wait) { const g = $("go"); if (g && !g.dataset.busy) g.disabled = false; const n = $("pnote"); if (n) n.innerHTML = note; return; }
     drawn = "form" + wait;
     app.innerHTML = `<div id=pnote>${note}</div><span class=tag>${esc(st.label)}</span><h1>You're on stage 🎤</h1>
       <p class=sub>Name your wolt and it wakes up in tonight's lodge. Then tell it what to build. The whole room watches.</p>
@@ -23,9 +32,9 @@ function view() {
         <label for=pn>Your name</label><input id=pn maxlength=24 required placeholder="Maya">
         <label for=wn>Name your wolt</label><input id=wn maxlength=24 required placeholder="flint">
         <label>Pick a creature</label>
-        <div class=pick>${["beaver", "otter", "raccoon"].map((c) => `<button type=button data-k=${c} class="${c === creature ? "on" : ""}">${av(c, 56)}${c}</button>`).join("")}</div>
+        <div class=pick>${["otter", "beaver", "raccoon"].map((c) => `<button type=button data-k=${c} class="${c === creature ? "on" : ""}">${av(c, 56)}${c}</button>`).join("")}</div>
         <div class=err id=err role=status></div>
-        <button id=go${wait ? " disabled" : ""}>Create my wolt</button>
+        <button id=go>Create my wolt</button>
       </form>`;
     app.querySelectorAll(".pick button").forEach((b) => b.onclick = () => { creature = b.dataset.k; app.querySelectorAll(".pick button").forEach((x) => x.classList.toggle("on", x === b)); });
     $("cf").onsubmit = create;
@@ -33,16 +42,25 @@ function view() {
   }
   $("bar").hidden = false; $("send").disabled = wait;
   const msgs = st.messages.map((m) => {
-    const mine = m.type === "say";
+    const mine = m.type === "say" && (!st.world || m.slot === st.slot);
     return `<div class="m${mine ? " mine" : ""}"><div class=who>${mine ? "you" : esc(m.from)}</div><div class=bb>${esc(m.text)}</div></div>`;
   }).join("");
-  const key = st.wolt.name + "|" + st.messages.length + "|" + wait;
+  const key = st.wolt.name + "|" + st.messages.length + "|" + wait + "|" + st.game + "|" + st.turn + "|" + st.turn_busy;
   if (drawn === key) return; drawn = key;
   app.innerHTML = `${note}<span class=tag>${st.slot === "host" ? "you · the host" : esc(st.label) + " · " + esc(st.player || "")}</span>
     <div class="card me">${av(st.wolt.creature, 54)}<div><div class=nm>${esc(st.wolt.name)}</div><div class=hs>your wolt · ${esc(st.wolt.harness || "")}</div></div><span class=live>in the lodge</span></div>
     <div class=msgs>${msgs || `<div class=waking>${av(st.wolt.creature, 64)}<br>${esc(st.wolt.name)} is waking up…<br>say hi, or tell it what to build</div>`}</div>
     <p class=hint>everything you type shows up on the big screen</p>`;
+  const sg = $("startg"); if (sg) sg.onclick = startGame;
+  const sk = $("skipb"); if (sk) sk.onclick = async () => { sk.disabled = true; await fetch(API + "/skip", {method: "POST"}).catch(() => null); load(); };
   scrollTo(0, document.body.scrollHeight);
+}
+
+async function startGame() {
+  const b = $("startg"); b.disabled = true; b.textContent = "starting…";
+  const r = await fetch(API + "/start", {method: "POST"}).catch(() => null);
+  if (!r || !r.ok) { b.disabled = false; b.textContent = "▶ Start the game (try again)"; return; }
+  load();
 }
 
 async function load() {

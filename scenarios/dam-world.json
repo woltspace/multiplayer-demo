@@ -1,0 +1,20 @@
+{
+  "name": "dam-world",
+  "about": "Shared-world rehearsal: three humans, three wolts, one page, one turn at a time. Honest test names only.",
+  "host": "tester (commie)",
+  "screen": "world",
+  "duration": 230,
+  "steps": [
+    {"t": 3, "slot": "host", "say": "hi commie! say hi to the room and tell them what tonight is"},
+    {"t": 12, "slot": "p1", "create": {"player": "Tester A", "wolt": "flint", "creature": "beaver"}},
+    {"t": 20, "slot": "p2", "create": {"player": "Tester B", "wolt": "bolt", "creature": "otter"}},
+    {"t": 34, "start": true},
+    {"t": 40, "slot": "host", "say": "let's build a beaver dam the whole room can help with: tap to add logs, don't let it leak"},
+    {"t": 50, "slot": "p1", "say": "make the water leak back in if nobody taps for 3 seconds"},
+    {"t": 60, "slot": "p2", "say": "add a big ADD A LOG button and a score"},
+    {"t": 70, "slot": "host", "say": "twist: a raccoon sneaks in and steals logs"},
+    {"t": 80, "slot": "p1", "say": "let us tap the raccoon to scare it away"},
+    {"t": 90, "slot": "p2", "say": "celebrate with confetti at 20 logs"},
+    {"t": 200, "slot": "host", "say": "ship it"}
+  ]
+}

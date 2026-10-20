@@ -42,13 +42,19 @@ function woltSpriteAvatar(type, size) {
   const bw = maxC - minC + 1, bh = maxR - minR + 1;
   const px = size / Math.max(bw, bh);
   const w = bw * px, h = bh * px;
+  // Drawn in grid units (viewBox) and scaled by the SVG. At fractional scales, abutting rects leave hairline
+  // seams, so each pixel reaches half a cell into a filled right/bottom neighbour; that neighbour is drawn
+  // later and covers the overlap, and empty neighbours get no bleed.
+  const filled = (r, c) => { const ch = (map[r] || '')[c]; return ch && ch !== '.' && ch !== ' ' && !!s.pal[ch]; };
   let rects = '';
   for (let r = minR; r <= maxR; r++) for (let c = minC; c <= Math.min(maxC, map[r].length - 1); c++) {
-    const ch = map[r][c]; if (ch === '.' || ch === ' ') continue;
-    const fill = s.pal[ch]; if (!fill) continue;
-    rects += `<rect x="${((c - minC) * px).toFixed(2)}" y="${((r - minR) * px).toFixed(2)}" width="${px.toFixed(2)}" height="${px.toFixed(2)}" fill="${fill}"/>`;
+    if (!filled(r, c)) continue;
+    const ew = c < maxC && filled(r, c + 1) ? 1.5 : 1, eh = r < maxR && filled(r + 1, c) ? 1.5 : 1;
+    const x = c - minC, y = r - minR, f = s.pal[map[r][c]];
+    rects += `<rect x="${x}" y="${y}" width="${ew}" height="1" fill="${f}"/>`;  // two rects, so the bleed never reaches an empty diagonal cell
+    if (eh > 1) rects += `<rect x="${x}" y="${y}" width="1" height="${eh}" fill="${f}"/>`;
   }
-  return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;display:block;margin:0 auto" shape-rendering="crispEdges">${rects}</svg>`;
+  return `<svg width="${w.toFixed(1)}" height="${h.toFixed(1)}" viewBox="0 0 ${bw} ${bh}" xmlns="http://www.w3.org/2000/svg" style="image-rendering:pixelated;display:block;margin:0 auto" shape-rendering="crispEdges">${rects}</svg>`;
 }
 
 // Background scene sprite data (used by home page)

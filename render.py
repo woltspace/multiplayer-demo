@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 HERE = Path(__file__).parent
 ap = argparse.ArgumentParser()
 ap.add_argument("log")
-ap.add_argument("--view", choices=["crowd", "stage"], default="crowd")
+ap.add_argument("--view", choices=["crowd", "lanes", "world", "stage"], default="crowd")
 ap.add_argument("--out")
 ap.add_argument("--port", type=int, default=4071)
 ap.add_argument("--speed", type=float, default=1.0)
@@ -40,9 +40,9 @@ try:
     frames = tmp / "frames"; frames.mkdir()
     with sync_playwright() as p:
         b = p.chromium.launch(executable_path=os.environ.get("SHOW_CHROME"))
-        size = {"width": 1920, "height": 1080} if a.view == "crowd" else {"width": 1280, "height": 720}
+        size = {"width": 1280, "height": 720} if a.view == "stage" else {"width": 1920, "height": 1080}
         pg = b.new_context(viewport=size).new_page()
-        pg.goto(f"{base}/crowd?k=render" if a.view == "crowd" else f"{base}/stage")
+        pg.goto(f"{base}/stage" if a.view == "stage" else f"{base}/{a.view}?k=render")
         urllib.request.urlopen(urllib.request.Request(base + "/api/mock/start", method="POST", headers={"X-Admin-Key": "render"}))
         t0, ts, i = time.time(), [], 0
         while time.time() - t0 < length:

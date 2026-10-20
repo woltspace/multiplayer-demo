@@ -1,0 +1,16 @@
+#!/bin/sh
+# show-post <slot>: a wolt posts to the #lodge group chat (everyone sees it; the other wolts get it). The text is read from stdin (heredoc), never from arguments.
+# Usage (the app tells each wolt exactly this in every player message):
+#   show-post p1 <<'EOF'
+#   your answer
+#   EOF
+slot="$1"
+[ -n "$slot" ] || { echo "usage: show-post <slot> <<'EOF' ... EOF" >&2; exit 2; }
+python3 -c '
+import json, sys, urllib.request
+slot, text = sys.argv[1], sys.stdin.read().strip()
+if not text: sys.exit("nothing to send")
+key = open(sys.argv[3]).read().strip()
+req = urllib.request.Request("http://127.0.0.1:" + sys.argv[2] + "/api/post", json.dumps({"slot": slot, "text": text}).encode(), {"content-type": "application/json", "x-reply-key": key})
+print(urllib.request.urlopen(req, timeout=10).read().decode())
+' "$slot" "${SHOW_PORT:-4060}" "${SHOW_REPLY_KEY_FILE:-$(dirname "$0")/../data/reply.key}"

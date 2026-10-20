@@ -48,7 +48,7 @@ function render() {
   const nearBottom = innerHeight + scrollY >= document.body.scrollHeight - 80;
   const evs = state.events, ph = state.phase || "live", pb = document.getElementById("phase");
   pb.hidden = ph === "live"; pb.className = "phase " + ph;
-  pb.textContent = ph === "paused" ? "⏸ The show is paused. Back in a moment." : "The show starts soon. Keep this page open, it updates by itself.";
+  pb.textContent = "The show continues in a moment. Keep this page open, it updates by itself.";
   put("rows", evs.length ? evs.map(bubble).join("") : `<div class=empty>${av("beaver", 48)}<br>The show starts in a moment…</div>`);
   put("cast", cast());
   // Live from the first save (the stage updates itself); the toast is for the ship moment.
@@ -62,8 +62,25 @@ function render() {
     shipped = true;
     if (tab !== "build") { document.getElementById("t-build").innerHTML = 'the build<span class=new>new</span>'; document.getElementById("toast").hidden = false; }
   }
+  voteBar();
   if (tab === "chat" && nearBottom) scrollTo(0, document.body.scrollHeight);
 }
+
+// The crowd vote: after the ship, one vote per phone for the favourite of the two games (changeable).
+let mine = null; try { mine = localStorage.getItem("show-vote"); } catch {}
+function voteBar() {
+  const on = !!state.voting, bar = document.getElementById("vote");
+  bar.hidden = !on; document.body.classList.toggle("voting", on);
+  if (!on) return;
+  const c = Object.fromEntries((state.cast || []).map((x) => [x.slot, x])), v = state.votes || {};
+  put("vb", ["p1", "p2"].map((side) => { const x = c[side] || {};
+    return `<button data-side=${side} class="${mine === side ? "on" : ""}">${av(x.creature || "beaver", 18)} ${esc(x.wolt || (side === "p1" ? "left game" : "right game"))}<small>${esc(x.player || "")} · ${v[side] || 0} vote${v[side] === 1 ? "" : "s"}</small></button>`; }).join(""));
+}
+document.getElementById("vote").onclick = async (ev) => {
+  const b = ev.target.closest("button[data-side]"); if (!b) return;
+  const r = await fetch("api/vote", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({side: b.dataset.side})}).catch(() => null);
+  if (r && r.ok) { const d = await r.json(); mine = d.side; try { localStorage.setItem("show-vote", mine); } catch {} state.votes = d.votes; voteBar(); }
+};
 
 document.getElementById("t-chat").onclick = () => show("chat");
 document.getElementById("t-build").onclick = () => { document.getElementById("t-build").textContent = "the build"; show("build"); };
