@@ -19,13 +19,7 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
     clear them first (`clearInterval(window.{BOXJS}Timer)`), listen on your own elements.
   - Talk to the other sections through events: `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and
     `addEventListener("<name>", ...)` on `window`. Agree on event names in #lodge.
-  - **The whole room plays at once.** The page runs on every phone in the room and on the big screen. Anything the
-    room shares (a score, a count, who's winning, the state of the game) goes through `window.shared`, so a tap on one
-    phone shows up on every screen: `shared.add("logs")`, `shared.set("phase", "won")`, `shared.get("logs", 0)`,
-    `shared.on("{BOX}", (s) => render(s))` (called now and on every change; one listener per name, safe to re-run).
-    Keep only local, per-phone things (an animation, a hover) out of it. Agree on key names in #lodge, like events.
-  - Phone-sized (375 px wide), tap only, no keyboard. No network requests (`window.shared` is the one built-in
-    exception), no external files, under 50 KB.
+  - Phone-sized (375 px wide), tap only, no keyboard. No network requests, no external files, under 50 KB.
 - The look: cream #fff8e6, orange #c4531e, ink #18100a, fonts `DMSans`, `Preahvihear` (titles), `JB` (mono).
 
 ## #lodge, the group chat
