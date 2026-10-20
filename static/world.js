@@ -13,12 +13,10 @@ const fit = () => document.getElementById("stage").style.setProperty("--s", Math
 addEventListener("resize", fit); fit();
 
 const ROOM = new URL(".", location.href), SHORT = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
-document.getElementById("jurl").textContent = SHORT; document.getElementById("curl").textContent = SHORT;
+document.getElementById("jurl").textContent = SHORT;
 if (window.QRCode) {
   new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});
-  new QRCode(document.getElementById("cqr"), {text: ROOM.href, width: 300, height: 300, correctLevel: QRCode.CorrectLevel.M});
 }
-document.getElementById("clogo").innerHTML = woltSpriteAvatar("beaver", 120);
 document.getElementById("wbv").innerHTML = woltSpriteAvatar("beaver", 26);
 
 let state = null;
@@ -111,11 +109,25 @@ addEventListener("keydown", async (e) => {
   await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
 });
 
-let boardAt = 0;
-function boardCard(i) { const c = BOARD[i % BOARD.length]; document.getElementById("ctitle").textContent = c.title; document.getElementById("ctext").textContent = c.line; }
-boardCard(0);
-setInterval(() => {
-  if (BOARD.length < 2 || document.getElementById("curtain").hidden) return;
-  const card = document.getElementById("ccard"); card.classList.add("out");
-  setTimeout(() => { boardCard(++boardAt); card.classList.remove("out"); }, 800);
-}, BOARD_SECONDS * 1000);
+// The explainer deck on the board (static/deck.js): ← → or click to move while the board is up.
+let slide = 0;
+function drawSlide() {
+  const d = DECK[slide], b = (t) => t.replace(/\{b\}/g, "<b>").replace(/\{\/b\}/g, "</b>");
+  const boxes = (d.boxes || []).map((x, k, all) => x.msg
+    ? `<div class=arw>→</div><div class=msg>${esc(x.msg)}</div><div class=arw>→</div>`
+    : `<div class=bx data-c=${x.c || "host"}><div>${x.icon}</div><span>${esc(x.label)}</span></div>`).join("");
+  document.getElementById("deck").innerHTML = `<div class=kick>${esc(d.kick || "")}</div><h1>${d.title}</h1>`
+    + (boxes ? `<div class=dia>${boxes}</div>` : "") + `<div class=line>${b(d.line || "")}</div>`
+    + (d.qr ? `<div class=dq><div id=dqr></div>scan to play along<br>${esc(SHORT)}</div>` : "");
+  if (d.qr && window.QRCode) new QRCode(document.getElementById("dqr"), {text: ROOM.href, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M});
+  document.getElementById("dnav").textContent = `${slide + 1} / ${DECK.length}  ·  ← →`;
+}
+const deckUp = () => !document.getElementById("curtain").hidden;
+const go = (n) => { slide = Math.max(0, Math.min(DECK.length - 1, n)); drawSlide(); };
+addEventListener("keydown", (e) => {
+  if (!deckUp()) return;
+  if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.stopImmediatePropagation(); go(slide + 1); }
+  if (["ArrowLeft", "PageUp"].includes(e.key)) { e.stopImmediatePropagation(); go(slide - 1); }
+}, true);
+document.getElementById("curtain").addEventListener("click", (e) => go(slide + (e.clientX > innerWidth / 3 ? 1 : -1)));
+drawSlide();
