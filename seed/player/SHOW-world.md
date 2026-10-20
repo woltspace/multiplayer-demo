@@ -19,6 +19,10 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
     clear them first (`clearInterval(window.{BOXJS}Timer)`), listen on your own elements.
   - Talk to the other sections through events: `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and
     `addEventListener("<name>", ...)` on `window`. Agree on event names in #lodge.
+  - **Controls you can see.** Every way to play is a visible, thumb-sized control on screen (buttons, a d-pad,
+    big tap targets), never a hidden gesture like "tap the side of the board". Add one line on how to play.
+  - Each phone runs its own copy of the page: the game is single-player per phone. Sections share state on the same
+    page through events, not across phones.
   - Phone-sized (375 px wide), tap only, no keyboard. No network requests, no external files, under 50 KB.
 - The look: cream #fff8e6, orange #c4531e, ink #18100a, fonts `DMSans`, `Preahvihear` (titles), `JB` (mono).
 
