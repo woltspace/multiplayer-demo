@@ -59,6 +59,7 @@ def engine_for(sid: str) -> tuple[str, str]:
     model = os.environ.get(f"SHOW_MODEL_{k}") or (MODEL if harness == HARNESS else "")
     return harness, model
 HOST = os.environ.get("SHOW_HOST_WOLT", "hostie")
+TITLE = os.environ.get("SHOW_TITLE", "Dam Builders")  # the game's name for the show, whatever gets built
 HOST_PLAYER_DEFAULT = os.environ.get("SHOW_HOST_PLAYER", "jerpint")
 # Who plays the host slot. Dry runs reset the show with an honest tester name (never jerpint's); a plain Reset goes back
 # to the default. Kept in data/ so an app restart doesn't rename the host mid-show.
@@ -411,7 +412,7 @@ class LodgeDriver:
         scaffold(Path(_wolts_dir), name, creature, harness, model, "player",
                  {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir,
                   "PART": PART_OF[sid], "SIDE": SIDE_OF[sid], "BOX": PART_OF[sid].removesuffix(".html"),
-                  "BOXJS": "partA" if sid == "p1" else "partB", "POST": POST_CMD, "SLOT": sid, "HOST": HOST})
+                  "BOXJS": "partA" if sid == "p1" else "partB", "POST": POST_CMD, "SLOT": sid, "HOST": HOST, "TITLE": TITLE})
         if harness == "codex" and is_throwaway():
             self.auto_grant(slug(name))
         return self.post("/sessions/new/lodge", {"wolt": slug(name), "creature": creature})

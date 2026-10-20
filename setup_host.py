@@ -19,7 +19,7 @@ folder = scaffold(wolts, a.name, "raccoon", "claude", a.model, "host", {
     "LIVE": os.environ.get("SHOW_LIVE", str(wolts / slug(a.name) / "wolt" / "site" / "show")),
     "REPLY": os.environ.get("SHOW_REPLY_CMD", "show-reply"),
     "POST": os.environ.get("SHOW_POST_CMD", str(Path(__file__).resolve().parent / "bin" / "show-post")), "SLOT": "host",
-    "HOST": a.name})
+    "HOST": a.name, "TITLE": os.environ.get("SHOW_TITLE", "Dam Builders")})
 t0 = time.time()
 req = urllib.request.Request(a.lodge + "/sessions/new/lodge", json.dumps({"wolt": slug(a.name), "creature": "raccoon"}).encode(),
                              {"content-type": "application/json"})

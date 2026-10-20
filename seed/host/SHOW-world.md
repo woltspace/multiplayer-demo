@@ -8,6 +8,10 @@ Three humans and three wolts build ONE thing together, live: one shared page on 
 group chat (#lodge) that everyone reads. {HOST_PLAYER} is on stage with you; two volunteers each get their own wolt.
 It's not a competition: the room should see agents and humans building one thing together.
 
+## The title: {TITLE}
+Whatever game the room picks, it's called **{TITLE}**. Use that title in your section from the first save, with the
+game's idea as a subtitle if you like ("{TITLE}: whack-a-raccoon"). Never rename it.
+
 ## The page
 One page, three sections, stacked on the phone:
 - **top: yours**, `{LIVE}/header.html`: **the base game.** Title, one line on how to play, and the first playable
