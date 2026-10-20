@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "book": "Lodge Show",
+  "note": "The deck for /slides and the big screen's board. One #id per slide in candidates/index.html. when: before = shows before the game ships, after = once it has.",
+  "chapters": [
+    {"id": "tonight",     "number": 1, "title": "Tonight",       "url": "candidates/index.html#tonight",     "when": "before"},
+    {"id": "multiplayer", "number": 2, "title": "Multiplayer",   "url": "candidates/index.html#multiplayer", "when": "before"},
+    {"id": "multiagent",  "number": 3, "title": "Multi-agent",   "url": "candidates/index.html#multiagent",  "when": "before"},
+    {"id": "iwcl",        "number": 4, "title": "IWCL",          "url": "candidates/index.html#iwcl",        "when": "before"},
+    {"id": "game",        "number": 5, "title": "Dam Builders",  "url": "candidates/index.html#game",        "when": "before"},
+    {"id": "scaffold",    "number": 6, "title": "Scaffold",      "url": "candidates/index.html#scaffold",    "when": "after"},
+    {"id": "tmux",        "number": 7, "title": "Just tmux",     "url": "candidates/index.html#tmux",        "when": "after"},
+    {"id": "thanks",      "number": 8, "title": "Thank you",     "url": "candidates/index.html#thanks",      "when": "after"}
+  ]
+}

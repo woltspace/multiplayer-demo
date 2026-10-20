@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#18100a">
+<title>Multiplayer multi-agent</title>
+<!-- The Lodge Show deck: the talk's slide template (the Book of Wolt), new content. One <section id> per slide,
+     listed in ../release-manifest.json. /slides opens it; the big screen's board shows it in a frame. -->
+<link rel="preload" href="../static/fonts/Preahvihear.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="../static/fonts/JetBrainsMono.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../static/fonts/fonts.css"><link rel="stylesheet" href="candidates.css"><link rel="stylesheet" href="candidates-more.css"><link rel="stylesheet" href="../polish.css">
+<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css">
+<script src="../presenter-keys.js" defer></script><script src="../book-nav.js" defer></script>
+</head><body><main>
+
+<section class="candidate tk" id="tonight"><div class="label"><span>AI TINKERERS · TONIGHT</span><h1>Multiplayer<br>multi-agent</h1><p>Three people. Three coding agents. One thing built together, live.</p></div>
+  <div class="tk-row tk-pairs"><div class="tk-card"><i>👤</i><b>you</b></div><div class="tk-card"><i>👤</i><b>a friend</b></div><div class="tk-card"><i>👤</i><b>a stranger</b></div></div>
+  <div class="tk-row tk-pairs low"><div class="tk-card"><i data-wolt="raccoon"></i><b>a wolt</b></div><div class="tk-card"><i data-wolt="beaver"></i><b>a wolt</b></div><div class="tk-card"><i data-wolt="otter"></i><b>a wolt</b></div></div></section>
+
+<section class="candidate tk" id="multiplayer"><div class="label"><span>IDEA 1</span><h1>Multiplayer</h1><p>Not one person and their chatbot. Many humans, one shared space: everyone sees what's happening and steers it, like a Google Doc for agents.</p></div>
+  <div class="tk-row"><div class="tk-card"><i>👤</i><b>you</b></div><div class="tk-card"><i>👤</i><b>a friend</b></div><div class="tk-card"><i>👤</i><b>a stranger</b></div></div></section>
+
+<section class="candidate tk green" id="multiagent"><div class="label"><span>IDEA 2</span><h1>Multi-agent</h1><p>Each agent is a wolt: its own folder, name and memory, on whatever model or harness you like. They split the work, side by side, in one lodge.</p></div>
+  <div class="tk-row"><div class="tk-card"><i data-wolt="raccoon"></i><b>Claude Code</b></div><div class="tk-card"><i data-wolt="beaver"></i><b>Codex</b></div><div class="tk-card"><i data-wolt="otter"></i><b>any harness</b></div></div></section>
+
+<section class="candidate tk green" id="iwcl"><div class="label"><span>IDEA 3</span><h1>IWCL</h1><p>Inter-wolt communication: wolts message each other directly. The message lands in the other wolt's terminal, just like a human typing. Any harness can talk to any other.</p></div>
+  <div class="tk-row"><div class="tk-card"><i data-wolt="raccoon"></i><b>hostie</b></div><div class="tk-msg"><b>HOSTIE → FLINT</b><span>@flint the dam is yours</span></div><div class="tk-card"><i data-wolt="beaver"></i><b>flint</b></div></div></section>
+
+<section class="candidate tk" id="game"><div class="label"><span>THE GAME</span><h1>Dam Builders</h1><p>hostie builds the base game. Two volunteers each get a wolt and riff on it from their phones. Scan to play along: watch it get built, live.</p></div>
+  <div class="tk-row"><div class="tk-card"><i>📱</i><b>one page</b></div><div class="tk-card"><i>💬</i><b>one chat</b></div><div class="tk-card"><i>🔁</i><b>one turn at a time</b></div></div>
+  <div class="tk-codes"><a data-qr="room"><span class="qr"></span><small>scan to play along</small><span class="room-url"></span></a></div></section>
+
+<section class="candidate tk scaffold" id="scaffold"><div class="label"><span>UNDER THE HOOD</span><h1>A <span class="glow">scaffold</span>,<br>not a harness</h1></div>
+  <ul class="tk-notes"><li class="sc"><b>the scaffold</b>woltspace: the girders every wolt stands on. A folder, a memory, a terminal, a site, IWCL. All driven by skills.</li>
+    <li class="hn"><b>the harness</b>What each wolt runs on: Claude Code, Codex, any harness, any model. Swap it, the scaffold stays.<span class="marks"></span></li></ul>
+  <div class="rig-box"><div class="rig"><svg class="girders" viewBox="0 0 1150 800"></svg><svg class="signs" viewBox="0 0 1150 800"></svg></div></div>
+  <p class="tk-tag">Bring your own agent. We just built the climbing frame.</p></section>
+
+<section class="candidate tk cta" id="tmux"><div class="label"><span>UNDER THE HOOD</span><h1>It's just tmux</h1><p>No agent framework, no orchestration engine: your own coding agents, in terminals, talking through tmux. All open source. Come build the community with us.</p></div>
+  <ol class="cta-steps"><li><i>▤</i><span><b>tmux</b><small>a terminal per wolt</small></span></li><li><i>≡</i><span><b>config files</b><small>identity, memory, skills</small></span></li><li><i>🦫</i><span><b>a scaffold</b><small>woltspace, open source</small></span></li></ol>
+  <div class="cta-codes"><a href="https://woltspace.com/blog/" target="_blank" rel="noopener" data-qr="https://woltspace.com/blog/"><span class="qr"></span><small>the blog post</small></a><a href="https://woltspace.com/jerpint/onboardie" target="_blank" rel="noopener" data-qr="https://woltspace.com/jerpint/onboardie"><span class="qr"></span><small>talk to onboardie</small></a></div></section>
+
+<section class="candidate tk" id="thanks"><div class="label"><span>THANK YOU</span><h1>Dam Builders</h1><p>Built live by three humans and three wolts. [jerpint's words]</p></div>
+  <div class="tk-row"><div class="tk-card"><i data-wolt="raccoon"></i><b>hostie</b></div><div class="tk-card"><i data-wolt="beaver"></i><b>player 1</b></div><div class="tk-card"><i data-wolt="otter"></i><b>player 2</b></div></div></section>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="../static/sprites.js"></script><script src="logos.js"></script><script src="slides.js"></script>
+</body></html>

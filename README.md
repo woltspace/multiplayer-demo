@@ -19,6 +19,7 @@ terminals are `tmux capture-pane` of each wolt's session.
 | `/crowd?k=KEY` | projector | #lodge chat on the left, three terminals on the right; the built page takes over when it ships (`B` toggles, `Esc` releases) |
 | `/admin?k=KEY` | backstage | the QR per seat (printable), the room's QR, who claimed what, reset a seat |
 | `/live/` | everyone | the page the wolts built |
+| `/slides` | presenter | the deck on its own (the talk's slide template): ← → or a clicker, ⛶ for full screen. The big screen's board shows the same slides: the `before` ones until the game ships, then the `after` ones. Slides live in `static/slides/candidates/index.html` (one `<section id>` each) and are listed in `static/slides/release-manifest.json` |
 
 The admin key is generated in `data/admin.key` on first start (or set `SHOW_ADMIN_KEY`).
 

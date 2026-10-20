@@ -31,7 +31,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -1150,6 +1150,12 @@ def world_page(request: Request):
     """The big screen for the shared world: #lodge chat, the woltPhone, three terminals, turns, the clock."""
     admin(request)
     return FileResponse(HERE / "static" / "world.html")
+
+
+@app.get("/slides")
+def slides_page():
+    """The deck on its own (the talk's slide template): ← → or a clicker, ⛶ for full screen. The board shows it too."""
+    return RedirectResponse("static/slides/candidates/index.html#tonight")
 
 
 @app.get("/lanes")

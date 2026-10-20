@@ -111,24 +111,20 @@ addEventListener("keydown", async (e) => {
   await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
 });
 
-// The explainer deck on the board (static/deck.js): ← → or click to move while the board is up.
-// Slides before the game, slides after it ships: the board shows whichever set applies right now.
-let slide = 0, setNow = "before";
+// The explainer deck on the board: the same slides as /slides (static/slides/, one manifest), in a frame.
+// ← → or click to move while the board is up. Slides before the game, slides after it ships: the board shows
+// whichever set applies right now.
+let slide = 0, setNow = "before", DECK = [];
+const deckFrame = document.getElementById("deckf");
 const slides = () => DECK.filter((d) => (d.when || "before") === setNow);
 function drawSlide() {
-  const all = slides(); slide = Math.max(0, Math.min(all.length - 1, slide));
-  const d = all[slide], b = (t) => t.replace(/\{b\}/g, "<b>").replace(/\{\/b\}/g, "</b>");
-  const boxes = (d.boxes || []).map((x, k, all) => x.msg
-    ? `<div class=arw>→</div><div class=msg>${esc(x.msg)}</div><div class=arw>→</div>`
-    : `<div class=bx data-c=${x.c || "host"}><div>${x.icon}</div><span>${esc(x.label)}</span></div>`).join("");
-  document.getElementById("deck").innerHTML = `<div class=kick>${esc(d.kick || "")}</div><h1>${d.title}</h1>`
-    + (boxes ? `<div class=dia>${boxes}</div>` : "") + `<div class=line>${b(d.line || "")}</div>`
-    + (d.qr ? `<div class=dq><div id=dqr></div>scan to play along<br>${esc(SHORT)}</div>` : "")
-    + (d.qrs ? `<div class=dqs>${d.qrs.map((q, k) => `<div class=dq><div id=dqr${k} class=qrb></div>${esc(q.label)}</div>`).join("")}</div>` : "");
-  if (d.qr && window.QRCode) new QRCode(document.getElementById("dqr"), {text: ROOM.href, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M});
-  (d.qrs || []).forEach((q, k) => window.QRCode && new QRCode(document.getElementById("dqr" + k), {text: q.url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel.M}));
+  const all = slides(); if (!all.length) return;
+  slide = Math.max(0, Math.min(all.length - 1, slide));
+  try { deckFrame.contentWindow.location.hash = all[slide].id; } catch {}
   document.getElementById("dnav").textContent = `${setNow} · ${slide + 1} / ${all.length}  ·  ← →`;
 }
+fetch("static/slides/release-manifest.json", {cache: "no-store"}).then((r) => r.json()).then((m) => { DECK = m.chapters; drawSlide(); }).catch(() => {});
+deckFrame.addEventListener("load", drawSlide);
 const deckUp = () => !document.getElementById("curtain").hidden;
 const go = (n) => { slide = n; drawSlide(); };
 addEventListener("keydown", (e) => {
@@ -137,4 +133,3 @@ addEventListener("keydown", (e) => {
   if (["ArrowLeft", "PageUp"].includes(e.key)) { e.stopImmediatePropagation(); go(slide - 1); }
 }, true);
 document.getElementById("curtain").addEventListener("click", (e) => go(slide + (e.clientX > innerWidth / 3 ? 1 : -1)));
-drawSlide();

@@ -69,19 +69,8 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .term.empty{align-items:center;justify-content:center;gap:10px;background:transparent;box-shadow:none;border:4px dashed color-mix(in srgb,var(--m) 60%,#000)}
 .term.empty .big{font:400 20px Pixel;color:var(--m);animation:breathe 3s ease-in-out infinite;text-align:center;line-height:1.6}
 .term.empty span{font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:2px}
-/* the explainer deck (static/deck.js) on the board: ← → to move, Start the show drops it */
-.dk{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:52px;padding:60px 120px;text-align:center}
-.dk .kick{font:400 30px VT;color:var(--neon);letter-spacing:4px;text-transform:uppercase}
-.dk h1{margin:0;font:400 76px/1.2 Pixel;color:var(--glow);text-shadow:6px 6px 0 #000,0 0 30px #ff8a3daa}
-.dk .line{font:400 40px/1.4 VT;color:var(--cream2);max-width:1500px;letter-spacing:1px}.dk .line b{color:var(--neon);font-weight:400}
-.dk .dia{display:flex;align-items:center;gap:40px;font-size:96px;line-height:1}
-.dk .bx{display:flex;flex-direction:column;align-items:center;gap:16px;background:var(--panel);border:6px solid #000;box-shadow:0 0 0 6px var(--m,var(--glow)),0 0 40px color-mix(in srgb,var(--m,var(--glow)) 35%,transparent);padding:28px 36px;min-width:230px}
-.dk .bx span{font:400 28px VT;color:var(--tan);text-transform:uppercase;letter-spacing:2px}
-.dk .msg{font:400 30px/1.3 VT;background:#000;border:3px solid var(--neon);color:var(--neon);padding:10px 18px}
-.dk .arw{font:400 60px Pixel;color:var(--neon)}
-.dk .dq{display:flex;align-items:center;gap:22px;font:400 30px VT;color:var(--neon);text-transform:uppercase;letter-spacing:2px}
-.dk .dq #dqr{background:#fff;padding:10px;border:4px solid var(--neon);line-height:0}
-.dk .dqs{display:flex;gap:80px}.dk .qrb{background:#fff;padding:10px;border:4px solid var(--neon);line-height:0}
+/* the explainer deck on the board: the /slides deck in a frame (clicks land on the curtain, not the frame) */
+#deckf{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
 .dnav{position:absolute;bottom:24px;right:34px;font:400 24px VT;color:#6a5a50;letter-spacing:2px}
 /* the placeholder board (cards in static/board.js), after a reset and on "Show the board" */
 .curtain{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#2a1420 0,#0b0710 75%)}
@@ -110,11 +99,10 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
       <div class="phone"><div class="screen"><iframe sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1"></iframe></div><div class="brand"><span id="wbv"></span><span><b>w</b>Phone</span></div></div></div>
     <div class="terms" id="terms"></div>
   </div>
-  <div class="curtain" id="curtain" hidden><div class="dk" id="deck"></div><div class="dnav" id="dnav"></div></div>
+  <div class="curtain" id="curtain" hidden><iframe id="deckf" src="static/slides/candidates/index.html?board=1#tonight" title="The slides" tabindex="-1"></iframe><div class="dnav" id="dnav"></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
-<script src="static/deck.js?v=3"></script>
 <script src="static/term.js?v=2"></script>
 <script src="static/world.js?v=8"></script>
 </body>

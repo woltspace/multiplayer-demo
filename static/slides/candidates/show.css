@@ -1,0 +1,63 @@
+/* The Lodge Show deck: the talk's look (candidates.css + refocus.css), plus the few pieces these slides add. */
+.tk{background:linear-gradient(#2a2119,#18100a)}
+.tk.green{background:linear-gradient(#22302a,#121a16)}
+.tk.scaffold{background:linear-gradient(#1d1622,#0f0b12)}
+.tk .label p{max-width:640px}
+
+/* A row of cards: a sprite or an emoji, and a name (the fdw-lodge cards' look). */
+.tk-row{position:absolute;z-index:10;left:5%;right:5%;top:56%;display:flex;align-items:center;gap:28px}
+.tk-row.tk-pairs{left:52%;right:auto;top:16%;gap:22px}.tk-row.tk-pairs.low{top:45%}
+.tk-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;min-width:210px;padding:18px 26px;background:#f5f1e8;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--terra);color:var(--ink)}
+.tk-card i{font-style:normal;font-size:84px;line-height:112px;height:112px;display:flex;align-items:flex-end}
+.tk-card i svg{width:112px;height:auto;image-rendering:pixelated}
+.tk-card b{font:700 20px 'JetBrains Mono',monospace}
+.tk-pairs .tk-card{min-width:180px;padding:12px 20px}.tk-pairs .tk-card i{font-size:64px;line-height:86px;height:86px}.tk-pairs .tk-card i svg{width:86px}
+.tk-msg{display:flex;flex-direction:column;gap:6px;padding:14px 18px;background:#0c0805;border:3px solid var(--amber);color:var(--cream)}
+.tk-msg b{color:var(--amber);font:700 14px 'JetBrains Mono',monospace;letter-spacing:.1em}
+.tk-msg span{font:500 24px 'JetBrains Mono',monospace}
+
+/* QR codes (the cta-codes look). */
+.tk-codes{position:absolute;z-index:10;right:5%;top:12%}
+.tk-codes a,.tk .cta-codes a{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--amber);color:var(--ink);text-decoration:none}
+.tk .qr{display:block;line-height:0}.tk .qr img,.tk .qr canvas{width:170px;height:170px}
+.tk-codes small,.tk .cta-codes small{font:700 16px 'JetBrains Mono',monospace}
+.tk-codes .room-url{font:500 14px 'JetBrains Mono',monospace;color:#5c4d3c}
+
+/* The scaffold slide: the word to put forward glows, in a few steps, arcade-style. */
+.scaffold .label{max-width:44%}.scaffold .label h1{font-size:clamp(40px,5.4vw,76px)}
+.scaffold .label h1 .glow{font:inherit;letter-spacing:inherit;text-transform:none;color:var(--amber);animation:glow 2.4s steps(6) infinite alternate}
+@keyframes glow{from{text-shadow:3px 3px var(--ink),0 0 6px #ffca4e55}to{text-shadow:3px 3px var(--ink),0 0 20px #ffca4e,0 0 46px #ffca4ecc,0 0 84px #c4531e99}}
+.tk-notes{position:absolute;z-index:10;left:5%;top:40%;width:36%;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:16px}
+.tk-notes li{display:flex;flex-direction:column;gap:6px;padding:14px 18px;background:#0c0805;border:3px solid var(--c);color:#cbbfae;font:500 17px/1.35 'JetBrains Mono',monospace}
+.tk-notes b{color:var(--c);font:400 26px/1.1 var(--display)}
+.tk-notes .sc{--c:#e9824b}.tk-notes .hn{--c:var(--amber)}
+.tk-notes .marks{display:flex;gap:10px;margin-top:6px}
+.tk-notes .marks i,.rig .badge{display:grid;place-items:center;background:var(--bg-b);border:3px solid var(--ink);box-shadow:0 0 0 3px var(--c)}
+.tk-notes .marks i{width:40px;height:40px}.tk-notes .marks svg{width:24px;height:24px;fill:var(--fg)}
+.rig-box{position:absolute;z-index:5;right:3%;top:12%;width:56%;aspect-ratio:1150/800}
+.rig{position:absolute;left:0;top:0;width:1150px;height:800px;transform-origin:0 0}
+.rig svg.girders,.rig svg.signs{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rig svg.signs{z-index:2}
+.rig .sign{font:700 17px 'JetBrains Mono',monospace;fill:#18100a}
+.rig-wolt{position:absolute;left:0;top:0;width:72px;height:72px;will-change:transform}
+.rig-wolt .body{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center}
+.rig-wolt .body svg{width:72px;height:auto;image-rendering:pixelated}
+.rig .badge{position:absolute;left:50%;top:-50px;width:42px;height:42px;margin-left:-21px;box-shadow:0 0 0 3px var(--c),0 0 16px var(--c)}
+.rig .badge svg{width:24px;height:24px;fill:var(--fg)}
+.tk-tag{position:absolute;z-index:10;left:5%;bottom:7%;margin:0;color:var(--cream);font:400 clamp(22px,2.2vw,34px)/1.1 var(--display)}
+
+/* It's just tmux: the cta slide's steps and codes, three steps. */
+.tk.cta .cta-steps{top:46%;width:40%}
+.tk.cta .cta-codes{top:46%}
+
+@media (max-width:760px){
+  .tk-row{flex-wrap:wrap;top:auto;bottom:12%;gap:12px}.tk-card{min-width:0;padding:10px 14px}
+  .tk-card i{font-size:44px;line-height:60px;height:60px}.tk-card i svg{width:60px}
+  .tk-codes{display:none}
+  .scaffold .label{max-width:84%}.tk-notes{top:auto;bottom:4%;width:90%}.rig-box{top:30%;width:94%}
+}
+
+/* On the big screen's board: the board drives the deck, so no nav bar or pager. */
+.on-board .book-nav,.on-board .mobile-pager{display:none!important}
+.on-board body{padding:0}
+.on-board .candidate{max-width:none;width:100vw;height:100vh;min-height:0;margin:0;box-shadow:none}
