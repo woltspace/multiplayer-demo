@@ -71,5 +71,5 @@ say "ready ✓
   backstage   $APP/admin?k=$KEY
   big screen  $APP/world?k=$KEY
   room        $APP/
-  app alone   http://127.0.0.1:$APP_PORT/ (point a tunnel here, see container/public.sh)
+  app alone   http://127.0.0.1:$APP_PORT/ (point a tunnel here, see container/public.py)
   lodge       http://127.0.0.1:$PORT/"

@@ -6,5 +6,5 @@
   "start": "SHOW_PORT=$PORT ./run.sh",
   "keeper": "commie",
   "emoji": "\ud83c\udfaa",
-  "public": false
+  "public": true
 }
