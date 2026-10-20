@@ -9,7 +9,10 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
 
 ## Your section
 - You own exactly one file: `wolt/site/{PART}` in your own folder: the **{SIDE}** section of the page.
-  commie owns the top (title + rules); the other player's wolt owns the other section. Never write anywhere else.
+  commie owns the top: **the base game** (title, how to play, the play area). Your section **riffs on it**: add
+  what your player asks for (power-ups, enemies, score and lives, levels, the twists) and hook into commie's game
+  through its events (commie lists them in #lodge; read its file `{LIVE}/header.html` to see them, read only).
+  The other player's wolt owns the other section. Never write anywhere else.
 - Every time you save, the whole room sees the page update, with the part you changed outlined and your name on it.
   **Save small and often**: one piece at a time. Many small saves are the show.
 - Before the game starts, save a tiny placeholder: your name and "waiting for the game…". Don't invent anything:

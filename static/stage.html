@@ -31,7 +31,7 @@ document.documentElement.dataset.font=F.includes(f)?f:"pixel";
 addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,[contenteditable]"))return;const d=document.documentElement,n=F[(F.indexOf(d.dataset.font)+1)%F.length];d.dataset.font=n;try{localStorage.setItem("show-font",n)}catch(_){}});})()</script>
 </head>
 <body>
-<header class="top" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
+<header class="top" id="host" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
 <script>if (new URLSearchParams(location.search).get("phone")) document.querySelector("header.top .part-body").innerHTML = "<h1>The woltPhone</h1><small>3 humans · 3 wolts · one page. Waiting for the game…</small>";</script>
 <div class="grid">
   <section id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
@@ -61,10 +61,10 @@ html.only body{background:#fff8e6!important;min-height:0;padding-top:44px}
 html.only .grid{display:block;padding:0}
 html.only section[data-part]{border:0!important;border-radius:0;box-shadow:none!important;min-height:100vh;background:#fff8e6}
 html.only .owner{display:none}
-html.phone .top{background:#fff8e6!important;color:#18100a!important;border:0!important;box-shadow:none!important;padding:8px 18px 4px!important}
-html.phone .top h1{font:400 30px/1.05 Preahvihear!important;color:#c4531e!important;text-shadow:none!important}
+html.phone .top{background:#fff8e6!important;color:#18100a!important;border:0!important;box-shadow:none!important;padding:0!important}
+html.phone .top .part-body>h1{font:400 30px/1.05 Preahvihear!important;color:#c4531e!important;text-shadow:none!important}
 html.phone .top h1::after{display:none!important}
-html.phone .top small,html.phone .top p{font:14px/1.4 DMSans!important;color:#18100a!important;text-transform:none!important;letter-spacing:0!important}
+html.phone .top .part-body>small,html.phone .top .part-body>p{font:14px/1.4 DMSans!important;color:#18100a!important;text-transform:none!important;letter-spacing:0!important}
 html.phone section[data-part]{min-height:0!important;margin:0 0 6px}
 html.phone .part-body{padding:8px 18px}
 html.phone .waiting{padding:18px 10px!important}

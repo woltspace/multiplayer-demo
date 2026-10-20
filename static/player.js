@@ -46,6 +46,32 @@ function view() {
   // your wolt's posts say so, and everything else reads as the group talking.
   const me = st.wolt.name.toLowerCase();
   const lit = (t) => esc(t).replace(/@([a-z0-9_-]+)/gi, (x, n) => `<b class="${n.toLowerCase() === me ? "atme" : "at"}">@${n}</b>`);
+  // The #lodge chat, drawn like the big screen: an avatar and a coloured name per person, @mentions lit, and the
+  // show's moments (game on, whose turn, time's up) as small lines in between.
+  const castOf = (sid) => (st.cast || []).find((c) => c.slot === sid) || {};
+  const SYS = {game: () => "⚡ the game is on · one turn at a time", turn: (m) => `▸ ${esc(m.player || "")}'s turn`,
+    timeup: () => "⏱ time's up", ship: () => "✓ shipped", join: (m) => `👤 ${esc(m.player)} joined with ${esc(m.wolt)}`};
+  if (st.world) {
+    const rows = st.messages.map((m) => {
+      if (SYS[m.type]) return `<div class=sys>${SYS[m.type](m)}</div>`;
+      const sid = m.slot || "host", mine = m.type === "say" && sid === st.slot, mywolt = m.type === "post" && m.from === st.wolt.name;
+      const forme = new RegExp("@" + me + "\\b", "i").test(m.text || "");
+      const icon = m.type === "say" ? "👤" : av(castOf(sid).creature || "raccoon", 26);
+      const who = mine ? "you" : mywolt ? `${esc(m.from)} · your wolt` : esc(m.from);
+      return `<div class="lm${mine ? " mine" : ""}${mywolt ? " mywolt" : ""}${forme ? " forme" : ""}${m.type === "say" ? " h" : ""}" data-c=${sid}><span class=ic>${icon}</span><div><div class=who>${who}</div><div class=bb>${lit(m.text)}</div></div></div>`;
+    }).join("");
+    const key = "w|" + st.messages.length + "|" + wait + "|" + st.game + "|" + st.turn + "|" + st.turn_busy + "|" + st.turn_over;
+    if (drawn === key) return; drawn = key;
+    app.innerHTML = `${note}<span class=tag>${st.slot === "host" ? "you · the host" : esc(st.label) + " · " + esc(st.player || "")}</span>
+      <div class="card me">${av(st.wolt.creature, 54)}<div><div class=nm>${esc(st.wolt.name)}</div><div class=hs>your wolt · ${esc(st.wolt.harness || "")}</div></div><span class=live>in the lodge</span></div>
+      <div class=grp># lodge · group chat · everyone sees this</div>
+      <div class=lodge>${rows || `<div class=waking>${av(st.wolt.creature, 64)}<br>${esc(st.wolt.name)} is waking up…</div>`}</div>
+      <p class=hint>everything you type shows up on the big screen</p>`;
+    const sg2 = $("startg"); if (sg2) sg2.onclick = startGame;
+    const sk2 = $("skipb"); if (sk2) sk2.onclick = async () => { sk2.disabled = true; await fetch(API + "/skip", {method: "POST"}).catch(() => null); load(); };
+    scrollTo(0, document.body.scrollHeight);
+    return;
+  }
   const msgs = st.messages.map((m) => {
     const mine = m.type === "say" && (!st.world || m.slot === st.slot);
     const mywolt = st.world && m.type === "post" && m.from === st.wolt.name;

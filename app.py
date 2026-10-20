@@ -595,9 +595,10 @@ def player_state(token: str, request: Request):
         player = s["player"] or (joined and joined[0]["player"]) or None
         return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "phase": phase, "game": game_on, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
     if WORLD:  # the phone shows the whole #lodge chat
-        msgs = [e for e in events if e["type"] in ("say", "post")][-40:]
+        msgs = [e for e in events if e["type"] in ("say", "post", "join", "game", "turn", "timeup", "ship")][-50:]
+        cast = [{k: c[k] for k in ("slot", "player", "wolt", "creature")} for c in public_slots() if c["wolt"]]
         return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on,
-                "world": True, **turn_state(), "messages": msgs}
+                "world": True, **turn_state(), "messages": msgs, "cast": cast}
     mine = [e for e in events if e.get("slot") == sid or e.get("to_slot") == sid]
     return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
 
