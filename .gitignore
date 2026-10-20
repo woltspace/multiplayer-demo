@@ -7,3 +7,4 @@ lodge/*
 !lodge/start.sh
 runs/
 show-data/
+.cf-backups/

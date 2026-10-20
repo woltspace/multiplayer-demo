@@ -1184,4 +1184,6 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("SHOW_PORT", 4060))
     print(f"mode {MODE} · admin key in {_key_file}" if "SHOW_ADMIN_KEY" not in os.environ else f"mode {MODE}")
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning", proxy_headers=True)
+    # 127.0.0.1 unless SHOW_BIND says otherwise: the show container sets 0.0.0.0 so docker can publish the app on
+    # the host's loopback (container/up.sh), where the host's tunnel reaches it without going through the lodge.
+    uvicorn.run(app, host=os.environ.get("SHOW_BIND", "127.0.0.1"), port=port, log_level="warning", proxy_headers=True)

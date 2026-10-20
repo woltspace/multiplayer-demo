@@ -10,7 +10,8 @@
 # puts this app inside it (a clone of the current branch: commit your changes first), starts the container with the
 # token, marks the lodge throwaway, starts the app, resets the show (hostie wakes up) and prints the links.
 # Settings (environment): SHOW_WOLTSPACE_VERSION (0.5.21), SHOW_NAME (show-lodge), SHOW_LODGE_PORT (47991),
-# SHOW_DATA (./show-data), SHOW_TOKEN_FILE (~/.woltspace/.env.docker), SHOW_HOST_PLAYER (jerpint).
+# SHOW_DATA (./show-data), SHOW_TOKEN_FILE (~/.woltspace/.env.docker), SHOW_HOST_PLAYER (jerpint),
+# SHOW_APP_PORT (47992: the app alone on the host's loopback, for a tunnel; the lodge stays private).
 # Tear down: container/down.sh (data kept) or container/down.sh --wipe.
 set -eu
 cd "$(dirname "$0")/.."
@@ -18,6 +19,7 @@ REPO="$PWD"
 V="${SHOW_WOLTSPACE_VERSION:-0.5.21}"
 NAME="${SHOW_NAME:-show-lodge}"
 PORT="${SHOW_LODGE_PORT:-47991}"
+APP_PORT="${SHOW_APP_PORT:-47992}"
 DATA="${SHOW_DATA:-$REPO/show-data}"
 TOKEN_FILE="${SHOW_TOKEN_FILE:-$HOME/.woltspace/.env.docker}"
 IMAGE="woltspace-show:$V"
@@ -46,12 +48,12 @@ if [ ! -d "$DATA/wolts/apps/lodge-show/.git" ]; then
 else
   git -C "$DATA/wolts/apps/lodge-show" pull -q --ff-only
 fi
-printf 'SHOW_HOST_PLAYER=%s\n' "${SHOW_HOST_PLAYER:-jerpint}" > "$DATA/wolts/apps/lodge-show/.env"
+printf 'SHOW_HOST_PLAYER=%s\nSHOW_BIND=0.0.0.0\n' "${SHOW_HOST_PLAYER:-jerpint}" > "$DATA/wolts/apps/lodge-show/.env"
 [ -f "$DATA/wolts/woltspace.json" ] || printf '{\n  "claude": {"default_wolt": "hostie"}\n}\n' > "$DATA/wolts/woltspace.json"
 
-say "starting container $NAME (woltspace $V, lodge on 127.0.0.1:$PORT, no public tunnel)"
+say "starting container $NAME (woltspace $V, lodge on 127.0.0.1:$PORT, app alone on 127.0.0.1:$APP_PORT, no public tunnel)"
 docker run -d --name "$NAME" --env-file "$TOKEN_FILE" -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
-  -e WOLTSPACE_PUBLIC_TUNNEL=false -v "$DATA/wolts:/workspace/wolts" -p "127.0.0.1:$PORT:7777" "$IMAGE" >/dev/null
+  -e WOLTSPACE_PUBLIC_TUNNEL=false -v "$DATA/wolts:/workspace/wolts" -p "127.0.0.1:$PORT:7777" -p "127.0.0.1:$APP_PORT:4060" "$IMAGE" >/dev/null
 i=0; until curl -sf -o /dev/null "http://127.0.0.1:$PORT/"; do i=$((i+1)); [ $i -lt 90 ] || { echo "the lodge didn't come up" >&2; exit 1; }; sleep 1; done
 docker exec "$NAME" touch /workspace/.lodge-show-throwaway  # the show may reset this lodge (never a real one)
 
@@ -69,4 +71,5 @@ say "ready ✓
   backstage   $APP/admin?k=$KEY
   big screen  $APP/world?k=$KEY
   room        $APP/
+  app alone   http://127.0.0.1:$APP_PORT/ (point a tunnel here, see container/public.sh)
   lodge       http://127.0.0.1:$PORT/"
