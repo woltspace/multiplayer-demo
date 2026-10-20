@@ -721,6 +721,36 @@ def host_skip(token: str, request: Request):
     return skip_turn("host phone")
 
 
+@app.post("/api/admin/kill")
+def kill_switch(request: Request):
+    """Stop everything, now: every wolt session in the lodge stops, the board goes up, the players' phones lock.
+    Deletes nothing (Reset everything starts a fresh show)."""
+    admin(request)
+    global game_on
+    set_phase("paused")
+    game_on = False
+    GAME_FILE.unlink(missing_ok=True)
+    if _clock["timer"]:
+        _clock["timer"].cancel()
+    stopped = []
+    if MODE == "lodge":
+        try:
+            with urllib.request.urlopen(LODGE + "/sessions", timeout=10) as r:
+                running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running"]
+        except Exception as e:
+            running = []
+            print(f"kill: list sessions: {e}")
+        for name in running:
+            try:
+                driver.post(f"/sessions/{name}/stop", {})
+                stopped.append(name)
+            except Exception as e:
+                print(f"kill: stop {name}: {e}")
+    record({"type": "kill", "stopped": stopped})
+    _room["body"] = None
+    return {"ok": True, "stopped": stopped, "phase": phase}
+
+
 @app.post("/api/admin/turn/skip")
 def admin_skip(request: Request):
     admin(request)

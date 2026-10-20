@@ -2,7 +2,8 @@
 // ← → (or click) move between slides; "▶ Start the show" drops it. Edit freely: each slide is a kicker, a title, an
 // optional row of boxes (with an optional message bubble between them) and one line ({b}...{/b} = highlighted).
 // Box colours: "host" (orange), "p1" (green), "p2" (blue). qr: true shows the room's QR (play along); qrs: a list of
-// {url, label} QR codes. The slide marked closing: true comes up by itself when the board goes up after the ship.
+// {url, label} QR codes. when: "before" (default) slides show while the board is up before the game ships; when:
+// "after" slides show once it has shipped (put the board up after the ship and you land on the first one).
 const DECK = [
   {kick: "tonight", title: "Multiplayer<br>multi-agent",
    line: "Three people. Three coding agents. {b}One thing built together, live.{/b}"},
@@ -18,9 +19,11 @@ const DECK = [
   {kick: "the game", title: "Dam Builders", qr: true,
    boxes: [{icon: "📱", label: "one page"}, {icon: "💬", label: "one chat"}, {icon: "🔁", label: "one turn at a time"}],
    line: "hostie builds the base game. Two volunteers each get a wolt and {b}riff on it from their phones{/b}. Scan to play along: {b}watch it get built, live.{/b}"},
-  {kick: "under the hood", title: "It's just tmux", closing: true,
+  {when: "after", kick: "under the hood", title: "It's just tmux",
    boxes: [{icon: "🖥️", label: "tmux"}, {icon: "📄", label: "config files"}, {icon: "🦫", label: "a scaffold"}],
    line: "No agent framework, no orchestration engine: {b}your own coding agents, in terminals, talking through tmux.{/b} All open source. Come build the community with us: {b}say hi to onboardie{/b}.",
    qrs: [{url: "https://woltspace.com/blog/", label: "the blog: tmux is all you need"},
          {url: "https://woltspace.com/jerpint/onboardie", label: "talk to onboardie"}]},
+  {when: "after", kick: "thank you", title: "Dam Builders",
+   line: "Built live by three humans and three wolts. {b}Placeholder: tomorrow's content.{/b}"},
 ];

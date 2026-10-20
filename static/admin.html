@@ -32,26 +32,22 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
 <body>
 <main>
   <h1>Lodge Show · backstage</h1>
-  <p class="sub">Print the two player QRs (or show one on your laptop). Each QR works for the first phone only. Reset = a new QR, the old one stops working.</p>
+  <p class="sub">In show order, left to right. Each player QR works for the first phone only.</p>
   <div class="show card-ish"><span class="ph" id="ph">…</span>
-    <button class="go" id="start">▶ Start the show</button><button class="go" id="game">⚡ Start the game</button><button id="skip">⏭ Skip turn</button><button id="stop">▣ Show the board</button><button class="danger" id="resetall">↺ Reset everything</button>
+    <button class="go" id="start">▶ Start the show</button><button class="go" id="game">⚡ Start the game</button><button id="skip">⏭ Skip turn</button><button id="stop">▣ Show the board</button><button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
     <span class="msg" id="msg" role="status"></span></div>
-  <div class="row"><a class="b" id="world" href="#">Open the big screen ↗</a><a class="b" id="lanes" href="#">2-lane screen ↗</a><a class="b" id="crowd" href="#">classic screen ↗</a><button onclick="print()">Print QRs</button><button id="mock" hidden>Restart mock show</button></div>
+  <div class="row"><a class="b" id="world" href="#">Open the big screen ↗</a></div>
   <div class="grid" id="grid"></div>
   <h2 class="lbl">Everyone in the room</h2>
-  <div class="grid"><div class="slot" data-c="host" id="room"><h2>Room (public)</h2><div class=qr id="room-qr"></div><div class=st>no key: the chat and the build only</div><div class=url id="room-url"></div><a class="b" id="room-open" target="_blank">Open the room ↗</a></div></div>
+  <div class="grid"><div class="slot" data-c="host" id="room"><h2>Room (public)</h2><div class=qr id="room-qr"></div><div class=st>the game, live, for everyone</div><div class=url id="room-url"></div><a class="b" id="room-open" target="_blank">Open the room ↗</a></div></div>
 </main>
 <script>
 const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));  // player and wolt names are typed by players
 const KEY = new URLSearchParams(location.search).get("k") || "", H = {"X-Admin-Key": KEY};
-document.getElementById("crowd").href = "crowd?k=" + encodeURIComponent(KEY);
-document.getElementById("lanes").href = "lanes?k=" + encodeURIComponent(KEY);
 document.getElementById("world").href = "world?k=" + encodeURIComponent(KEY);
 async function load() {
   const d = await (await fetch("api/admin", {headers: H, cache: "no-store"})).json();
   phase(d.phase); game(d.game);
-  const m = document.getElementById("mock"); m.hidden = d.mode !== "mock";
-  m.onclick = async () => { await fetch("api/mock/start", {method: "POST", headers: H}); };
   const grid = document.getElementById("grid"), key = JSON.stringify(d.slots);
   if (grid._key === key) return; grid._key = key; grid.innerHTML = "";  // redraw the QRs only when a slot changed
   for (const s of d.slots) {
@@ -83,6 +79,10 @@ async function act(path, msg) {
 }
 document.getElementById("start").onclick = () => act("api/admin/phase/live", "starting…");
 document.getElementById("skip").onclick = () => act("api/admin/turn/skip", "skipping…");
+document.getElementById("kill").onclick = () => {
+  if (!confirm("Kill switch?\n\nStops every wolt now, puts the board up and locks the players' phones. Nothing is deleted: Reset everything starts a fresh show.")) return;
+  act("api/admin/kill", "stopping everything…");
+};
 document.getElementById("game").onclick = () => act("api/admin/game/start", "starting the game…");
 document.getElementById("stop").onclick = () => act("api/admin/phase/paused", "board going up…");
 document.getElementById("resetall").onclick = () => {

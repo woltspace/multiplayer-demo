@@ -67,13 +67,10 @@ function term(sid) {
   return `<section class="box term" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
 }
 
-let closingShown = false;
 function render() {
   document.getElementById("curtain").hidden = (state.phase || "live") === "live";
-  // After the ship, putting the board up opens the closing slide (under the hood + the call to action).
-  if (!document.getElementById("curtain").hidden && !closingShown && state.events.some((e) => e.type === "ship")) {
-    closingShown = true; const c = DECK.findIndex((d) => d.closing); if (c >= 0) { slide = c; drawSlide(); }
-  }
+  const want = state.events.some((e) => e.type === "ship") ? "after" : "before";
+  if (want !== setNow) { setNow = want; slide = 0; drawSlide(); }
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
@@ -115,9 +112,12 @@ addEventListener("keydown", async (e) => {
 });
 
 // The explainer deck on the board (static/deck.js): ← → or click to move while the board is up.
-let slide = 0;
+// Slides before the game, slides after it ships: the board shows whichever set applies right now.
+let slide = 0, setNow = "before";
+const slides = () => DECK.filter((d) => (d.when || "before") === setNow);
 function drawSlide() {
-  const d = DECK[slide], b = (t) => t.replace(/\{b\}/g, "<b>").replace(/\{\/b\}/g, "</b>");
+  const all = slides(); slide = Math.max(0, Math.min(all.length - 1, slide));
+  const d = all[slide], b = (t) => t.replace(/\{b\}/g, "<b>").replace(/\{\/b\}/g, "</b>");
   const boxes = (d.boxes || []).map((x, k, all) => x.msg
     ? `<div class=arw>→</div><div class=msg>${esc(x.msg)}</div><div class=arw>→</div>`
     : `<div class=bx data-c=${x.c || "host"}><div>${x.icon}</div><span>${esc(x.label)}</span></div>`).join("");
@@ -127,10 +127,10 @@ function drawSlide() {
     + (d.qrs ? `<div class=dqs>${d.qrs.map((q, k) => `<div class=dq><div id=dqr${k} class=qrb></div>${esc(q.label)}</div>`).join("")}</div>` : "");
   if (d.qr && window.QRCode) new QRCode(document.getElementById("dqr"), {text: ROOM.href, width: 200, height: 200, correctLevel: QRCode.CorrectLevel.M});
   (d.qrs || []).forEach((q, k) => window.QRCode && new QRCode(document.getElementById("dqr" + k), {text: q.url, width: 170, height: 170, correctLevel: QRCode.CorrectLevel.M}));
-  document.getElementById("dnav").textContent = `${slide + 1} / ${DECK.length}  ·  ← →`;
+  document.getElementById("dnav").textContent = `${setNow} · ${slide + 1} / ${all.length}  ·  ← →`;
 }
 const deckUp = () => !document.getElementById("curtain").hidden;
-const go = (n) => { slide = Math.max(0, Math.min(DECK.length - 1, n)); drawSlide(); };
+const go = (n) => { slide = n; drawSlide(); };
 addEventListener("keydown", (e) => {
   if (!deckUp()) return;
   if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.stopImmediatePropagation(); go(slide + 1); }
