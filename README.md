@@ -43,6 +43,24 @@ player's phone with `bin/show-reply`, which only works from the same machine (re
 Every wolt writes only in its own folder. Players' wolts write `wolt/site/part-a.html` / `part-b.html`;
 the host reads both and writes the merged `index.html` into `SHOW_LIVE`, which the app serves at `/live/`.
 
+## Run the show in a container (the setup for the night)
+
+The show runs in its own woltspace container: a throwaway lodge where the wolts work without permission prompts,
+on the stable woltspace from PyPI. From a fresh clone:
+
+1. Install Docker and [uv](https://docs.astral.sh/uv/).
+2. Make a Claude token once: `claude setup-token` (needs a Claude subscription). Put it in a file, one line,
+   `CLAUDE_CODE_OAUTH_TOKEN=<token>`, by default `~/.woltspace/.env.docker`, then `chmod 600` that file.
+3. Commit what you want in the show (the container gets a clone of the current branch), then run
+   `container/up.sh`. It builds the image from woltspace's own Dockerfile at a pinned version, starts the
+   container, starts this app inside it, resets the show (hostie, the host wolt, wakes up) and prints the
+   backstage, big screen and room links.
+4. Tear down with `container/down.sh` (keeps the data folder) or `container/down.sh --wipe`.
+
+Settings: `SHOW_WOLTSPACE_VERSION` (0.5.21), `SHOW_NAME`, `SHOW_LODGE_PORT` (47991), `SHOW_DATA` (./show-data),
+`SHOW_TOKEN_FILE`, `SHOW_HOST_PLAYER`. Inside, every wolt gets the token from the container's environment, skips
+Claude's first-run and bypass-mode screens, and runs on Claude Sonnet (players on low effort).
+
 ## Testing without a real audience
 
 ```sh
