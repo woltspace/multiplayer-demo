@@ -69,7 +69,7 @@ body:has(#stage):after{content:"";position:fixed;inset:0;pointer-events:none;z-i
 body:has(section[data-part]){background:radial-gradient(ellipse at 50% 30%,#22121c 0,#0b0710 75%),#0b0710;color:#fff3dc}
 body:has(section[data-part]) .top{background:#000;border-bottom:5px solid var(--glow);box-shadow:0 0 30px #ff8a3d44}
 body:has(section[data-part]) .top .part-body>h1{font:400 32px/1.15 Pixel;color:var(--glow);text-shadow:4px 4px 0 #3a1a08,0 0 18px #ff8a3d99}
-body:has(section[data-part]) .top small,body:has(section[data-part]) .top p{font:400 20px VT;color:var(--neon);letter-spacing:1px;text-transform:uppercase;opacity:1}
+body:has(section[data-part]) .top .part-body>small,body:has(section[data-part]) .top .part-body>p{font:400 20px VT;color:var(--neon);letter-spacing:1px;text-transform:uppercase;opacity:1}
 section[data-part]{border:4px solid #000;border-radius:0;box-shadow:0 0 0 4px var(--m),0 0 28px color-mix(in srgb,var(--m) 45%,transparent)}
 section[data-part] .owner{background:#000;color:#fff3dc;border-bottom:4px solid var(--m);border-radius:0;font:400 19px VT;letter-spacing:1px;text-transform:uppercase}
 section[data-part] .owner b{font:400 13px Pixel;color:var(--m);text-shadow:0 0 8px var(--m)}
