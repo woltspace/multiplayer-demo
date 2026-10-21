@@ -51,7 +51,8 @@ button:disabled{opacity:.5}
 .waking .av{animation:hop .9s infinite}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--cream);border-top:2px solid var(--ink);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
 .bar form{max-width:520px;margin:0 auto;padding:0;display:flex;gap:8px;align-items:flex-end}
-.bar textarea{min-height:48px;max-height:120px;resize:none;padding:11px}
+.bar textarea{min-height:48px;max-height:40vh;resize:none;padding:11px;font-size:16px;line-height:1.35;overflow-y:auto}
+.bar .count{position:absolute;right:110px;top:-20px;font:700 11px JB;color:var(--muted)}.bar{position:fixed}
 .bar button{flex:none}
 .taken{padding:22px;text-align:center}
 .skipb{display:block;width:100%;margin:0 0 14px;padding:10px;font:700 16px JB;background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink)}
@@ -63,9 +64,9 @@ button:disabled{opacity:.5}
 <body>
 <main id="app"></main>
 <div class="bar" id="bar" hidden>
-  <form id="sayf"><textarea id="say" maxlength="280" rows="1" placeholder="tell your wolt what to build…"></textarea><button id="send">Send</button></form>
+  <form id="sayf"><textarea id="say" maxlength="800" rows="1" enterkeyhint="enter" placeholder="tell your wolt what to build…"></textarea><button id="send">Send</button></form><span class="count" id="count" hidden></span>
 </div>
 <script src="../static/sprites.js?v=2"></script>
-<script src="../static/player.js?v=13"></script>
+<script src="../static/player.js?v=14"></script>
 </body>
 </html>

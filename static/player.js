@@ -119,7 +119,7 @@ $("sayf").onsubmit = async (e) => {
   $("send").disabled = true;
   const r = await fetch(API + "/say", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({text})});
   $("send").disabled = false;
-  if (r.ok) { $("say").value = ""; load(); } else { const d = await r.json().catch(() => ({})); $("say").placeholder = d.detail || "try again"; }
+  if (r.ok) { $("say").value = ""; grow(); load(); } else { const d = await r.json().catch(() => ({})); $("say").placeholder = d.detail || "try again"; }
 };
 // Live typing: send the draft (throttled) so the big screen can show it in this wolt's terminal as it's typed.
 let draftT = null, draftSent = "";
@@ -128,8 +128,18 @@ $("say").addEventListener("input", () => {
   draftT = setTimeout(async () => {
     draftT = null; const text = $("say").value;
     if (text === draftSent) return; draftSent = text;
-    fetch(API + "/draft", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({text: text.slice(0, 280)})}).catch(() => {});
+    fetch(API + "/draft", {method: "POST", headers: {"content-type": "application/json"}, body: JSON.stringify({text: text.slice(0, 800)})}).catch(() => {});
   }, 300);
 });
-$("say").addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("sayf").requestSubmit(); } });
+// Long messages on a phone: the box grows with the text (up to 40% of the screen, then it scrolls), the chat keeps
+// clear of it, and a counter shows near the limit. On a phone, Return is a new line and Send sends; with a keyboard,
+// Enter sends and Shift+Enter is a new line.
+function grow() {
+  const t = $("say"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight + 4, innerHeight * 0.4) + "px";
+  const left = t.maxLength - t.value.length, c = $("count"); c.hidden = left > 150; c.textContent = left + " left";
+  $("app").style.paddingBottom = ($("bar").offsetHeight + 24) + "px";
+}
+$("say").addEventListener("input", grow);
+const touch = matchMedia("(pointer: coarse)").matches;
+$("say").addEventListener("keydown", (e) => { if (!touch && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("sayf").requestSubmit(); } });
 load(); if (!T) setInterval(load, 1500);

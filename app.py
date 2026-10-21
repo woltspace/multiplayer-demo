@@ -67,7 +67,7 @@ OWNER_EMAIL = os.environ.get("SHOW_OWNER_EMAIL", "")  # their Cloudflare Access 
 _host_file = DATA / "host_player.txt"
 HOST_PLAYER = _host_file.read_text().strip() if _host_file.exists() else HOST_PLAYER_DEFAULT
 REPLY_CMD = os.environ.get("SHOW_REPLY_CMD", "show-reply")
-SAY_MAX = 280
+SAY_MAX = 800  # a phone message: room for a real idea, still one paste into the wolt
 COOLDOWN = 3.0  # seconds between messages per player
 
 DATA.mkdir(parents=True, exist_ok=True)
@@ -672,7 +672,7 @@ drafts: dict[str, tuple[str, float]] = {}
 
 
 class Draft(BaseModel):
-    text: str = Field(max_length=280)
+    text: str = Field(max_length=800)
 
 
 @app.post("/api/p/{token}/draft")
