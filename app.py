@@ -579,6 +579,11 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 @app.middleware("http")
 async def headers(request: Request, call_next):
+    # Cloudflare Access matches paths as sent; the app decodes them. /api%2Fadmin would slip past an Access path rule
+    # and still route to /api/admin here, so encoded slashes and backslashes are refused outright.
+    raw = request.scope.get("raw_path", b"").lower()
+    if b"%2f" in raw or b"%5c" in raw:
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
