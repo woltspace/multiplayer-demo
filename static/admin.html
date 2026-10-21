@@ -34,7 +34,7 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
   <h1>Lodge Show · backstage</h1>
   <p class="sub">In show order, left to right. Each player QR works for the first phone only.</p>
   <div class="show card-ish"><span class="ph" id="ph">…</span>
-    <button class="go" id="start">▶ Start the show</button><button class="go" id="game">⚡ Start the game</button><button id="skip">⏭ Skip turn</button><button id="stop">▣ Show the board</button><button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
+    <button class="go" id="start">▶ Start the show</button><button class="go" id="game">⚡ Start the game</button><button id="stop">▣ Show the board</button><button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
     <span class="msg" id="msg" role="status"></span></div>
   <div class="show card-ish"><span class="ph" id="pub">checking the public address…</span>
     <button id="pubon">🌍 Make public</button><button id="puboff">🔒 Make private</button>
@@ -82,7 +82,6 @@ async function act(path, msg) {
   load();
 }
 document.getElementById("start").onclick = () => act("api/admin/phase/live", "starting…");
-document.getElementById("skip").onclick = () => act("api/admin/turn/skip", "skipping…");
 document.getElementById("kill").onclick = () => {
   if (!confirm("Kill switch?\n\nStops every wolt now, puts the board up and locks the players' phones. Nothing is deleted: Reset everything starts a fresh show.")) return;
   act("api/admin/kill", "stopping everything…");
