@@ -80,12 +80,12 @@
 .tk .plan small{font:500 20px/1.25 'JetBrains Mono',monospace;color:#5c4d3c}
 .demo .room{position:absolute;left:90px;top:830px;padding:10px 22px 10px 10px}
 .demo .room .qr img,.demo .room .qr canvas{width:120px!important;height:120px!important}
-.demo .phone{position:absolute;left:1120px;top:40px;width:350px;margin:0;background:none!important;border:0!important;padding:0!important}
+.demo .phone{position:absolute;left:1130px;top:60px;width:390px;margin:0;background:none!important;border:0!important;padding:0!important}
 .demo .phone figcaption{background:none!important;padding:0!important;border:0!important;text-align:center;color:var(--amber);font:400 30px/1 var(--display);margin-bottom:16px;animation:press 1.4s steps(1) infinite}
 @keyframes press{50%{opacity:.35}}
 .demo .phone .frame{position:relative;padding:14px;background:#18100a;border-radius:46px;box-shadow:10px 10px 0 var(--terra),0 0 0 3px #3a2a1e}
 .demo .phone .frame::before{content:"";position:absolute;left:50%;top:22px;translate:-50% 0;width:90px;height:22px;border-radius:12px;background:#18100a;z-index:2}
-.demo .phone img{display:block;width:100%;height:auto;border-radius:34px}
+.demo .phone img{display:block;width:100%;height:auto;-webkit-mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent),linear-gradient(transparent,#000 2%,#000 98%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent),linear-gradient(transparent,#000 2%,#000 98%,transparent);mask-composite:intersect}
 /* The point to say out loud: it's all on this laptop. */
 .demo .local{position:absolute;left:560px;top:860px;margin:0;padding:12px 20px;background:var(--ink);border:3px solid var(--amber);color:var(--amber);font:700 26px 'JetBrains Mono',monospace;box-shadow:6px 6px 0 #0c0805}
 
