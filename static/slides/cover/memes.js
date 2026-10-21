@@ -3,7 +3,7 @@
   const line = document.querySelector('.meme-line');
   const spin = document.querySelector('.meme-spin');
   if (!line) return;
-  const memes = ["there's no place like localhost", 'it works on my machine', 'how much wolt could a wolt chuck chuck', 'beavers love to give a dam'];
+  const memes = ["there's no place like localhost", 'building at the speed of thought', 'it works on my machine', 'how much wolt could a wolt chuck chuck', 'beavers love to give a dam'];
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   // One meme at a time: type it, hold, erase, then the next. No two lines on screen at once.
