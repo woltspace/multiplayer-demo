@@ -71,7 +71,7 @@ function render() {
   document.getElementById("curtain").hidden = (state.phase || "live") === "live";
   drawBoard(state.events.some((e) => e.type === "ship"));
   const sb = document.getElementById("bstart"); sb.disabled = false;
-  sb.textContent = state.game_at ? "▶ Back to the game" : "▶ Start the game";
+  sb.textContent = state.game_at ? "▶ BACK TO THE GAME" : "▶ START THE GAME";
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
@@ -118,11 +118,8 @@ document.getElementById("turns").addEventListener("click", async (e) => {
   await fetch("api/admin/turn/skip", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
 });
 
-// The board (while the show isn't live): the game's start screen, a big QR to /play. The slides are their own
+// The board (while the show isn't live): the game's start screen, PRESS START style. The slides are their own
 // deck at /slides, in their own window.
-document.getElementById("burl").textContent = SHORT;
-if (window.QRCode) new QRCode(document.getElementById("bqr"), {text: ROOM.href, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M});
 function drawBoard(shipped) {
-  document.getElementById("bgo").textContent = shipped ? "▶ PLAY IT NOW" : "SCAN TO PLAY";
   document.getElementById("bsub").textContent = shipped ? "built live by 3 humans · 3 wolts" : "3 humans · 3 wolts · 1 game";
 }
