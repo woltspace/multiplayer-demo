@@ -539,8 +539,9 @@ async def headers(request: Request, call_next):
 
 
 def admin(request: Request) -> None:
+    """The key, or the owner's session (their Cloudflare login, or this Mac): no key in a URL on a shared screen."""
     key = request.headers.get("x-admin-key") or request.query_params.get("k") or ""
-    if not secrets.compare_digest(key, ADMIN_KEY):
+    if not secrets.compare_digest(key, ADMIN_KEY) and not owner_session(request):
         raise HTTPException(403, "admin only")
 
 

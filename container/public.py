@@ -126,6 +126,10 @@ def setup():
     tid = tunnel_id()
     # The lock first: nothing is reachable before both Access apps stand.
     ensure_app(ROOT_APP, [HOST])
+    for name, app_ in access_apps().items():  # earlier layouts first: their paths would clash with the new list
+        if name in OLD_APPS:
+            cf("DELETE", acct(f"/access/apps/{app_['id']}"))
+            print(f"  removed old Access app '{name}'")
     back = ensure_app(BACKSTAGE_APP, [f"{HOST}/{p}" for p in BACKSTAGE])
     want = sorted(f"{HOST}/{p}" for p in BACKSTAGE)
     if sorted(back.get("self_hosted_domains") or []) != want:  # the list changed since the app was made
@@ -134,10 +138,6 @@ def setup():
         print(f"  Access app '{BACKSTAGE_APP}': paths updated ({len(want)})")
     apps = access_apps()
     assert ROOT_APP in apps and BACKSTAGE_APP in apps
-    for name in OLD_APPS:
-        if name in apps:
-            cf("DELETE", acct(f"/access/apps/{apps[name]['id']}"))
-            print(f"  removed old Access app '{name}'")
     zid = zone_id()
     if not cf("GET", f"/zones/{zid}/dns_records?name={HOST}"):
         cf("POST", f"/zones/{zid}/dns_records", {"type": "CNAME", "name": HOST, "content": f"{tid}.cfargotunnel.com",
