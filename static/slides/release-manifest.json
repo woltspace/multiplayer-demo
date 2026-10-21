@@ -48,7 +48,7 @@
     {
       "id": "thanks",
       "number": 7,
-      "title": "Thank you",
+      "title": "Your turn",
       "url": "candidates/index.html#thanks",
       "when": "before"
     }
