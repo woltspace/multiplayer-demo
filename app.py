@@ -212,10 +212,9 @@ def start_game(by: str) -> bool:
     if MODE == "lodge" and host and host.get("session"):
         who = ", ".join(wolts) or "the players' wolts (none has joined yet: send it to each one as it joins)"
         if WORLD:
-            at = " ".join("@" + w for w in wolts) or "everyone"
             body = (f"[lodge-show app, automatic] {HOST_PLAYER} just started the game: one turn at a time, {HOST_PLAYER} first. "
-                    f"Post the kickoff now, one line, e.g. \"⚡ The game is on! {at}: one shared page, one turn at a time. "
-                    f"{HOST_PLAYER} goes first.\"\n{post_how('host')}")
+                    f"Post ONE welcome line now, no @mentions and no question (nobody answers it), e.g. "
+                    f"\"⚡ Welcome to {TITLE}! One turn at a time, {HOST_PLAYER} goes first.\" Then wait for {HOST_PLAYER}.\n{post_how('host')}")
         else:
             body = (f"[lodge-show app, automatic] {HOST_PLAYER} just started the game. Send the kickoff now, over IWCL, to "
                     f"{who}: one short line each, e.g. \"⚡ The game is on! Ask your player what game to build, then build it "
@@ -679,13 +678,8 @@ def create_wolt(token: str, c: Create, request: Request, response: Response):
         s["player"], s["wolt"] = player, {"name": name, "creature": c.creature, "harness": harness, "model": model, "session": session}
         save_slots()
     record({"type": "join", "slot": sid, "player": player, "wolt": name, "creature": c.creature, "harness": harness})
-    host = slots["host"]["wolt"]
-    if MODE == "lodge" and host.get("session"):
-        # An automatic note from the show app (not a human): the host welcomes the new wolt itself.
-        note = (f"[lodge-show app, automatic] {player} just created {name} ({c.creature}, {harness}, session {session}). "
-                f"It owns {PART_OF[sid]}, the {SIDE_OF[sid]} section of the page (it already knows). "
-                + (f"Welcome @{name} in #lodge in one line (see SHOW.md).\n{post_how('host')}" if WORLD else "Welcome it over IWCL (see SHOW.md)."))
-        threading.Thread(target=driver.deliver, args=(host["session"], note), daemon=True).start()
+    # No automatic message on join (jerpint, 2026-10-20: be intentional with automatic messages): #lodge shows
+    # "<player> joined with <wolt>", and every wolt already knows the show from its brief.
     return {"ok": True}
 
 

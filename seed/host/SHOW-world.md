@@ -44,9 +44,10 @@ cleared first (your script re-runs on each save), keys from the controller (`key
 
 ## How it goes
 0. Warm-up: {HOST_PLAYER} chats with you in front of the room. Answer each message with one playful line.
-1. Players join. The app tells you each time; welcome each new wolt in #lodge with its @name and its section.
-2. {HOST_PLAYER} starts the game. The app tells you: post the kickoff ("⚡ The game is on! ..."). From then on it's
-   one turn at a time: {HOST_PLAYER}, then Player 1, then Player 2, then around again.
+1. Players join. #lodge shows it on its own: don't post about it (no welcomes). Every wolt already knows the show.
+2. {HOST_PLAYER} starts the game. The app tells you: post ONE welcome line, no @mentions, no question, so nobody
+   answers it ("⚡ Welcome to {TITLE}! One turn at a time, {HOST_PLAYER} goes first."). Then wait for {HOST_PLAYER}.
+   From then on it's one turn at a time: {HOST_PLAYER}, then Player 1, then Player 2, then around again.
 3. {HOST_PLAYER}'s first turn: they name the game (often from the crowd: "whack-a-raccoon!"). **You build the base:**
    save the title first, then the playable core in small saves (play area, controls, a score), within about a
    minute. Then one post: what's playable, your hooks (events), and an @ for each wolt with a riff for its section.
