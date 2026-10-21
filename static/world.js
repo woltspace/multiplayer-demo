@@ -51,7 +51,7 @@ function turns() {
   const order = SLOTS.filter(joined);
   return `turn ▸ ` + order.map((sid) => { const c = bySlot(sid), now = sid === state.turn;
     return `<span class="turn${now ? " now" : ""}${now && state.turn_busy ? " busy" : ""}" data-c=${sid}>👤 ${esc(c.player)}${now ? (state.turn_busy ? " · wolts working" : " · your turn") : ""}</span>`; })
-    .join(`<span class=arrow>→</span>`);
+    .join(`<span class=arrow>→</span>`) + `<button class=skip id=skip title="Skip this turn">⏭ skip</button>`;
 }
 
 function term(sid) {
@@ -104,7 +104,12 @@ for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
   e.preventDefault();
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
 });
-// No controls here: the big screen is a display. Every host control is in backstage (/admin).
+// One control here, during the game: ⏭ skip the current turn (this page is owner-only; the rest is in backstage).
+document.getElementById("turns").addEventListener("click", async (e) => {
+  const b = e.target.closest("#skip"); if (!b) return;
+  b.disabled = true; b.textContent = "skipping…";
+  await fetch("api/admin/turn/skip", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+});
 
 // The board (while the show isn't live): the game's start screen, a big QR to /play. The slides are their own
 // deck at /slides, in their own window.

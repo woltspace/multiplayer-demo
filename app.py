@@ -1204,7 +1204,7 @@ def mock_start(request: Request):
 @app.get("/world")
 def world_page(request: Request):
     """The big screen for the shared world: #lodge chat, the woltPhone, three terminals, turns, the clock.
-    A display only: every host control is in backstage."""
+    A display, plus ⏭ skip in the turn bar during the game; every other host control is in backstage."""
     viewer(request)
     return FileResponse(HERE / "static" / "world.html")
 
