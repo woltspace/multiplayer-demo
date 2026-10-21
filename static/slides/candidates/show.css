@@ -34,7 +34,7 @@
 .hello .txt h1{font-size:120px}
 .hello .talk{position:absolute;left:720px;top:110px;width:790px;aspect-ratio:16/9;border:6px solid var(--ink);box-shadow:12px 12px 0 var(--terra);background:#000;display:block}
 .hello .talk img{width:100%;height:100%;object-fit:cover;display:block}
-.hello .talk .play{position:absolute;right:22px;bottom:22px;width:84px;height:84px;font-size:38px!important;display:grid;place-items:center;background:#ff0033;color:#fff;font-size:50px;border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
+.hello .talk .play{position:absolute;right:22px;top:22px;width:84px;height:84px;font-size:38px!important;display:grid;place-items:center;background:#ff0033;color:#fff;font-size:50px;border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
 .hello .blog{position:absolute;left:720px;top:700px}
 
 /* IWCL: three wolts on three providers, each connected to the other two (a hint at the demo's setup). */
@@ -120,7 +120,7 @@
   .demo .phone{max-width:260px;margin:0 auto}.demo .phone figcaption{font-size:20px}
   .tk .kick{font-size:12px}.tk .txt p{font-size:16px}
   .hello .talk{width:100%!important;box-shadow:6px 6px 0 var(--terra)}
-  .hello .talk .play{width:44px;height:44px;font-size:20px!important;right:10px;bottom:10px}
+  .hello .talk .play{width:44px;height:44px;font-size:20px!important;right:10px;top:10px}
   .tk .code{gap:14px;padding:10px 14px 10px 10px}.tk .code .qr img,.tk .code .qr canvas{width:96px!important;height:96px!important}
   .tk .code b{font-size:24px}.tk .code small{font-size:13px}
   .tk .tri{height:420px!important;margin:10px 0}
