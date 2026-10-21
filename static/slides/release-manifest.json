@@ -39,10 +39,10 @@
       "when": "before"
     },
     {
-      "id": "tmux",
+      "id": "open",
       "number": 6,
-      "title": "Just tmux",
-      "url": "candidates/index.html#tmux",
+      "title": "Open source",
+      "url": "candidates/index.html#open",
       "when": "before"
     },
     {
