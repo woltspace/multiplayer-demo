@@ -41,6 +41,8 @@ function line(e) {
   if (e.type === "game") return `<div class="sys go">⚡ the game is on · one turn at a time</div>`;
   if (e.type === "turn") return `<div class=sys>▸ ${esc(e.player || e.slot)}'s turn</div>`;
   if (e.type === "timeup") return `<div class="sys go">⏱ time's up</div>`;
+  if (e.type === "pause") return `<div class=sys>⏸ paused</div>`;
+  if (e.type === "resume") return `<div class="sys go">▶ back on</div>`;
   if (e.type === "ship") return `<div class="sys go">✓ shipped</div>`;
   return "";
 }
@@ -51,7 +53,7 @@ function turns() {
   const order = SLOTS.filter(joined);
   return `turn ▸ ` + order.map((sid) => { const c = bySlot(sid), now = sid === state.turn;
     return `<span class="turn${now ? " now" : ""}${now && state.turn_busy ? " busy" : ""}" data-c=${sid}>👤 ${esc(c.player)}${now ? (state.turn_busy ? " · wolts working" : " · your turn") : ""}</span>`; })
-    .join(`<span class=arrow>→</span>`) + `<button class=skip id=skip title="Skip this turn">⏭ skip</button>`;
+    .join(`<span class=arrow>→</span>`) + (state.paused ? "" : `<button class=skip id=skip title="Skip this turn">⏭ skip</button>`);
 }
 
 function term(sid) {
@@ -68,10 +70,17 @@ function term(sid) {
 }
 
 function render() {
-  document.getElementById("curtain").hidden = (state.phase || "live") === "live";
+  // Three states, no curtain: ready (after a reset) = the start screen; live and paused = the game, as it is.
+  document.getElementById("curtain").hidden = state.phase !== "ready";
   drawBoard(state.events.some((e) => e.type === "ship"));
-  const sb = document.getElementById("bstart"); sb.disabled = false;
-  sb.textContent = state.game_at ? "▶ BACK TO THE GAME" : "▶ START THE GAME";
+  const sb = document.getElementById("bstart"); if (sb.textContent !== "starting…") sb.disabled = false;
+  if (state.phase === "ready") sb.textContent = "▶ START THE GAME";
+  // ⏸ / ▶ next to the clock while a game is on; after the kill switch the game is frozen and stays that way.
+  const pb = document.getElementById("pause"), on = !!state.game_at && !state.turn_over && state.phase !== "ready";
+  pb.hidden = !on; pb.disabled = false;
+  pb.textContent = state.paused ? "▶ resume" : state.phase === "paused" ? "⛔ stopped" : "⏸ pause";
+  if (state.phase === "paused" && !state.paused) pb.disabled = true;
+  pb.classList.toggle("on", !!state.paused);
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
@@ -85,10 +94,11 @@ let clockAt = 0;
 function tick() {
   const el = document.getElementById("clock");
   if (!state || !state.game_at || !state.game_seconds) { el.hidden = true; return; }
-  const left = Math.ceil(state.game_seconds - (state.now - state.game_at) - (Date.now() - clockAt) / 1000);
+  // Paused: the clock holds (the server already moved game_at by the time spent paused).
+  const left = Math.ceil(state.game_seconds - (state.now - state.game_at) - (state.paused ? 0 : (Date.now() - clockAt) / 1000));
   const shipped = state.events.some((e) => e.type === "ship");
-  el.hidden = false; el.classList.toggle("late", left <= 30 && !shipped);
-  put(el, `<small>build time</small><b>${shipped ? "✓ done" : left <= 0 ? "TIME!" : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`}</b>`);
+  el.hidden = false; el.classList.toggle("late", left <= 30 && !shipped); el.classList.toggle("held", !!state.paused);
+  put(el, `<small>${state.paused ? "⏸ paused" : "build time"}</small><b>${shipped ? "✓ done" : left <= 0 ? "TIME!" : `${Math.floor(left / 60)}:${String(left % 60).padStart(2, "0")}`}</b>`);
 }
 setInterval(tick, 250);
 
@@ -106,11 +116,17 @@ for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
   e.preventDefault();
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
 });
-// The game's controls live here (this page is owner-only): ▶ start the game on the board (it also brings the board
-// down; after a pause, back to the game), and ⏭ skip the current turn in the turn bar. Setup is in backstage.
+// The game's controls (inner game) live here, owner-only: ▶ start on the start screen, ⏸ pause / ▶ resume next to
+// the clock, ⏭ skip in the turn bar. Outer game (reset, public/private, seats, kill switch) is in backstage.
 document.getElementById("bstart").addEventListener("click", async (e) => {
   const b = e.currentTarget; b.disabled = true; b.textContent = "starting…";
-  await fetch(state && state.game_at ? "api/admin/phase/live" : "api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  b.textContent = "▶ START THE GAME"; poll();
+});
+document.getElementById("pause").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true;
+  await fetch(state && state.paused ? "api/admin/resume" : "api/admin/pause", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  poll();
 });
 document.getElementById("turns").addEventListener("click", async (e) => {
   const b = e.target.closest("#skip"); if (!b) return;

@@ -34,7 +34,7 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
   <h1>Lodge Show · backstage</h1>
   <p class="sub">In show order, left to right. Each player QR works for the first phone only.</p>
   <div class="show card-ish"><span class="ph" id="ph">…</span>
-    <button class="go" id="start">▶ Start the show</button><button class="go" id="game">⚡ Start the game</button><button id="stop">▣ Show the board</button><button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
+    <button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
     <span class="msg" id="msg" role="status"></span></div>
   <div class="show card-ish"><span class="ph" id="pub">checking the public address…</span>
     <button id="pubon">🌍 Make public</button><button id="puboff">🔒 Make private</button>
@@ -50,7 +50,7 @@ const KEY = new URLSearchParams(location.search).get("k") || "", H = {"X-Admin-K
 document.getElementById("world").href = "world";  // read-only, no key in the URL (safe to project)
 async function load() {
   const d = await (await fetch("api/admin", {headers: H, cache: "no-store"})).json();
-  phase(d.phase); game(d.game);
+  phase(d.phase, d.game);
   const grid = document.getElementById("grid"), key = JSON.stringify(d.slots);
   if (grid._key === key) return; grid._key = key; grid.innerHTML = "";  // redraw the QRs only when a slot changed
   for (const s of d.slots) {
@@ -64,15 +64,11 @@ async function load() {
     grid.append(el);
   }
 }
-const PH = {ready: "board up · players can create their wolts", live: "● live", paused: "board up · players can create, not send"};
-function phase(p) {
-  const el = document.getElementById("ph"); el.textContent = PH[p] || p; el.className = "ph " + p;
-  document.getElementById("start").textContent = p === "paused" ? "▶ Back to the show" : "▶ Start the show";
-  document.getElementById("start").disabled = p === "live"; document.getElementById("stop").disabled = p !== "live";
-  document.getElementById("start").hidden = p !== "paused";  // "Start the game" also brings the board down
-}
-function game(on) {
-  const g = document.getElementById("game"); g.disabled = !!on; g.textContent = on ? "⚡ game on (players can type)" : "⚡ Start the game";
+// Outer game only. The game itself (start, pause/resume, skip) is run from the big screen.
+const PH = {ready: "ready · start the game on the big screen", live: "● playing", paused: "⏸ paused"};
+function phase(p, on) {
+  const el = document.getElementById("ph"); el.className = "ph " + p;
+  el.textContent = p === "paused" && !on ? "⛔ stopped (kill switch) · reset to start over" : PH[p] || p;
 }
 async function act(path, msg) {
   const m = document.getElementById("msg"); m.textContent = msg;
@@ -81,13 +77,10 @@ async function act(path, msg) {
   m.textContent = r.ok ? "" : (d.detail || "that didn't work");
   load();
 }
-document.getElementById("start").onclick = () => act("api/admin/phase/live", "starting…");
 document.getElementById("kill").onclick = () => {
-  if (!confirm("Kill switch?\n\nStops every wolt now, puts the board up and locks the players' phones. Nothing is deleted: Reset everything starts a fresh show.")) return;
+  if (!confirm("Kill switch?\n\nStops every wolt now, freezes the game on screen and locks the players' phones. Nothing is deleted: Reset everything starts a fresh show.")) return;
   act("api/admin/kill", "stopping everything…");
 };
-document.getElementById("game").onclick = () => act("api/admin/game/start", "starting the game…");
-document.getElementById("stop").onclick = () => act("api/admin/phase/paused", "board going up…");
 document.getElementById("resetall").onclick = () => {
   if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh hostie.")) return;
   if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;

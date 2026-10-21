@@ -10,13 +10,14 @@ let st = null, creature = "beaver", drawn = "";
 function view() {
   const app = $("app");
   document.body.dataset.c = st.slot;
-  // Creating a wolt is always open. Players type once the host starts the game (and not while the board is up).
+  // Creating a wolt is always open. Players type once the host starts the game (and not while it's paused).
   // The host can always type. The host's controls (start, skip, board…) are all in backstage, not here.
   const held = st.slot !== "host" && st.phase && st.phase !== "live";
   // Shared world: one turn at a time. A player types on their turn, until their wolt has posted.
   const myTurn = !st.world || !st.game || st.slot === "host" || (!st.turn_over && st.turn === st.slot && !st.turn_busy);
   const wait = held || (st.slot !== "host" && st.game === false) || !myTurn;
-  const note = held ? `<div class=paused>The show continues in a moment. You can already create your wolt.</div>`
+  const note = held && st.phase === "paused" && st.game ? `<div class=paused>⏸ Paused. Back in a moment!</div>`
+    : held ? `<div class=paused>⏳ The game starts in a moment. You can already create your wolt.</div>`
     : st.slot !== "host" && st.game === false ? `<div class=paused>⏳ The game starts in a moment. Get your idea ready!</div>`
     : st.turn_over && st.slot !== "host" ? `<div class=paused>⏱ Time's up! Thanks for building. Play the game on the big screen.</div>`
     : !myTurn ? `<div class=paused>${st.turn === st.slot ? "🛠 The wolts are on it…" : `⏳ ${esc(st.turn_player || "someone")}'s turn. You're next soon!`}</div>`

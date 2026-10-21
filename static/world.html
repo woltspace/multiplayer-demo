@@ -29,6 +29,9 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .clock[hidden]{display:none}.clock small{font:400 16px VT;color:var(--tan);letter-spacing:2px;text-transform:uppercase}
 .clock b{font:400 34px Pixel;color:var(--neon);font-weight:400}
 .clock.late{border-color:#ff5a4a}.clock.late b{color:#ff5a4a}
+.clock.held{border-color:#ffca4e}.clock.held b{color:#ffca4e;animation:breathe 2s ease-in-out infinite}
+.pausebtn{flex:none;font:400 18px Pixel;color:#fff;background:#3a2a20;border:3px solid #ffca4e;padding:14px 18px;cursor:pointer;box-shadow:4px 4px 0 #000}
+.pausebtn[hidden]{display:none}.pausebtn:hover{background:#5a3a24}.pausebtn.on{background:#c4531e;border-color:#fff}.pausebtn:disabled{opacity:.6;cursor:default}
 /* the shared world: #lodge chat left, the woltPhone in the middle, the three terminals right */
 .turns{flex:1;min-width:0;display:flex;align-items:center;gap:12px;font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
 .turn{display:flex;align-items:center;gap:8px;padding:6px 12px;border:2px solid #2a2030;color:#7a6a5c;white-space:nowrap}
@@ -89,7 +92,7 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .start .startb{margin-top:56px;font:400 clamp(26px,2.6vw,42px) Pixel;color:#fff;background:#c4531e;border:5px solid #18100a;padding:22px 40px;cursor:pointer;text-shadow:3px 3px 0 #6a2a0e;box-shadow:8px 8px 0 #18100a,0 0 24px #ff8a3d88;animation:startglow 1.6s ease-in-out infinite alternate}
 @keyframes startglow{from{scale:1;box-shadow:8px 8px 0 #18100a,0 0 8px #ff8a3d33}to{scale:1.04;box-shadow:8px 8px 0 #18100a,0 0 30px #ff8a3d,0 0 70px #ffca4e77}}
 .start .startb:hover{background:#e0682c}.start .startb:active{translate:4px 4px;box-shadow:4px 4px 0 #18100a}.start .startb:disabled{animation:none;opacity:.6}
-/* the placeholder board (cards in static/board.js), after a reset and on "Show the board" */
+/* the start screen, after a reset (phase ready) */
 .curtain{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#2a1420 0,#0b0710 75%)}
 .curtain[hidden]{display:none}
 .cbox{display:flex;align-items:center;justify-content:space-between;gap:80px;width:1560px;min-height:600px;background:var(--panel);border:6px solid #000;box-shadow:0 0 0 6px var(--glow),0 0 0 12px #000,0 0 80px #ff8a3d55;padding:60px 80px}
@@ -108,6 +111,7 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
     <div class="t">Lodge Show</div>
     <div class="turns" id="turns"></div>
     <div class="clock" id="clock" hidden></div>
+    <button class="pausebtn" id="pause" hidden>⏸ pause</button>
     <div class="qr"><div id="jqr"></div><div>scan to watch<br><span id="jurl"></span></div></div>
   </div>
   <div class="main">
@@ -124,6 +128,6 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=10"></script>
+<script src="static/world.js?v=11"></script>
 </body>
 </html>

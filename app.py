@@ -107,9 +107,10 @@ def default_slots() -> dict:
 slots = json.loads(SLOTS.read_text()) if SLOTS.exists() else default_slots()
 
 
-# The show's phase: ready (after a reset) and paused both put the placeholder board on the big screen; live shows
-# the show. Players can create their wolt in any phase but only send while live; the wolts keep running behind the
-# board. The host slot can always type, to brief its wolt.
+# The show's phase, three states and no curtain: ready (after a reset: the start screen), live (playing) and paused
+# (nothing moves, everything stays on screen: phones can't send, the build clock and the turn hold; resume picks up
+# where it left off). Players can create their wolt in any phase but only send while live. The host slot can always
+# type, to brief its wolt.
 PHASE_FILE = DATA / "phase.txt"
 PHASES = ("ready", "live", "paused")
 phase = PHASE_FILE.read_text().strip() if PHASE_FILE.exists() else "ready"
@@ -157,12 +158,35 @@ game_on = GAME_FILE.exists()
 GAME_SECONDS = int(os.environ.get("SHOW_GAME_SECONDS", "180"))
 game_at = float(GAME_FILE.read_text().split("|")[-1]) if game_on and "|" in GAME_FILE.read_text() else None
 _clock: dict = {"timer": None}
+# Time spent paused this game (the clock and the turn timer skip it), kept in pause.json across restarts.
+PAUSE_FILE = DATA / "pause.json"
+pause = {"total": 0.0, "at": None, **(json.loads(PAUSE_FILE.read_text()) if PAUSE_FILE.exists() else {})}
+
+
+def save_pause(total: float = None, at: float | None = ...) -> None:
+    if total is not None:
+        pause["total"] = total
+    if at is not ...:
+        pause["at"] = at
+    PAUSE_FILE.write_text(json.dumps(pause))
+
+
+def arm_clock() -> None:
+    """(Re)start the timer for what's left on the build clock (after a start, or a resume)."""
+    if _clock["timer"]:
+        _clock["timer"].cancel()
+    if not game_on or not game_at or GAME_SECONDS <= 0:
+        return
+    left = GAME_SECONDS - (time.time() - game_at - pause["total"])
+    _clock["timer"] = threading.Timer(max(left, 0), times_up)
+    _clock["timer"].daemon = True
+    _clock["timer"].start()
 
 
 def times_up() -> None:
     """The build clock hit zero: ask the host to wrap up and ship (once, and only if the game is still on)."""
     host = slots["host"]["wolt"]
-    if not game_on or any(e["type"] == "ship" for e in events):
+    if not game_on or phase == "paused" or any(e["type"] in ("ship", "timeup") for e in events):
         return
     record({"type": "timeup"})
     if MODE == "lodge" and host and host.get("session"):
@@ -172,7 +196,23 @@ def times_up() -> None:
 
 
 def set_phase(p: str) -> None:
+    """Changing phase also holds and releases the clock and the turn timer around a pause."""
     global phase
+    now = time.time()
+    if p == "paused" and pause["at"] is None:
+        save_pause(at=now)
+        if _clock["timer"]:
+            _clock["timer"].cancel()
+    elif p != "paused" and pause["at"] is not None:
+        held = now - pause["at"]
+        save_pause(total=pause["total"] + held, at=None)
+        if turn["spoke_at"]:
+            turn["held"] = turn.get("held", 0) + held  # the speaker's wolt gets its full time back
+        else:
+            turn["since"] += held
+        phase = p
+        if p == "live":
+            arm_clock()
     phase = p
     PHASE_FILE.write_text(p)
     showlog("phase", phase=p)
@@ -180,8 +220,10 @@ def set_phase(p: str) -> None:
 
 def open_for(sid: str) -> None:
     """Players can send only while the show is live and the game has started. Creating a wolt is always open."""
+    if sid != "host" and phase == "paused" and game_on:
+        raise HTTPException(423, "⏸ paused: back in a moment")
     if sid != "host" and phase != "live":
-        raise HTTPException(423, "the show continues in a moment")
+        raise HTTPException(423, "the game starts in a moment")
     if sid != "host" and not game_on:
         raise HTTPException(423, "the game starts in a moment")
     if WORLD and sid != "host":
@@ -202,12 +244,13 @@ def start_game(by: str) -> bool:
             return False
         game_on, game_at = True, time.time()
         GAME_FILE.write_text(f"{by}|{game_at}")
-        turn.update(sid="host", spoke_at=None, since=time.time())
+        save_pause(total=0.0, at=None)
+        turn.update(sid="host", spoke_at=None, since=time.time(), held=0)
         wolts = [x["wolt"]["name"] for k, x in slots.items() if k != "host" and x["wolt"]]
         host = slots["host"]["wolt"]
     record({"type": "game", "by": by})
     if phase != "live":
-        set_phase("live")  # one press: the board comes down as the game starts
+        set_phase("live")
     _room["body"] = None
     if MODE == "lodge" and host and host.get("session"):
         who = ", ".join(wolts) or "the players' wolts (none has joined yet: send it to each one as it joins)"
@@ -220,16 +263,17 @@ def start_game(by: str) -> bool:
                     f"{who}: one short line each, e.g. \"⚡ The game is on! Ask your player what game to build, then build it "
                     f"in small saves.\" Their players can type from now on.")
         threading.Thread(target=driver.deliver, args=(host["session"], body), daemon=True).start()
-    if GAME_SECONDS > 0:
-        _clock["timer"] = threading.Timer(GAME_SECONDS, times_up)
-        _clock["timer"].daemon = True
-        _clock["timer"].start()
+    arm_clock()
     return True
 
 
 def clock() -> dict:
-    """For the big screen: when the game started, how long it lasts, and the server's now (so screens don't drift)."""
-    return {"game_at": game_at, "game_seconds": GAME_SECONDS, "now": time.time()}
+    """For the big screen: when the game started (moved later by the time spent paused, so the clock just counts
+    from it), how long it lasts, the server's now (so screens don't drift), and whether it's paused (frozen)."""
+    now = time.time()
+    held = pause["total"] + (now - pause["at"] if pause["at"] else 0)
+    return {"game_at": game_at + held if game_at else None, "game_seconds": GAME_SECONDS, "now": now,
+            "paused": phase == "paused" and game_on}
 
 
 # ---------------------------------------------------------------- the shared world
@@ -257,12 +301,14 @@ def turn_state() -> dict:
     if any(e["type"] in ("timeup", "ship") for e in events[-200:]):  # the clock ran out or we shipped: no more turns
         return {"turn": None, "turn_player": None, "turn_busy": False, "turn_over": True}
     sid, at = turn["sid"], turn["spoke_at"]
+    if phase == "paused":  # the turn holds
+        return {"turn": sid, "turn_player": slots[sid]["player"], "turn_busy": bool(at)}
     posted = at and any(e["type"] == "post" and e.get("slot") == sid and e["ts"] > at for e in events[-80:])
-    if posted or (at and time.time() - at > TURN_MAX) or (not at and TURN_IDLE and time.time() - turn["since"] > TURN_IDLE):
+    if posted or (at and time.time() - at - turn.get("held", 0) > TURN_MAX) or (not at and TURN_IDLE and time.time() - turn["since"] > TURN_IDLE):
         order = seated() or ["host"]
         prev_since = turn["since"]
         nxt = order[(order.index(sid) + 1) % len(order)] if sid in order else order[0]
-        turn.update(sid=nxt, spoke_at=None, since=time.time())
+        turn.update(sid=nxt, spoke_at=None, since=time.time(), held=0)
         record({"type": "turn", "slot": nxt, "player": slots[nxt]["player"]})
         sid = nxt
         if nxt == "host":  # the host already spoke during the last turn (a twist, a steer): that was their go
@@ -276,10 +322,12 @@ def skip_turn(by: str) -> dict:
     """The host passes the turn on (someone froze, a phone died): to the next seat, now."""
     if not (WORLD and game_on):
         raise HTTPException(409, "no game on")
+    if phase == "paused":
+        raise HTTPException(409, "paused: resume first")
     order = seated() or ["host"]
     sid = turn["sid"]
     nxt = order[(order.index(sid) + 1) % len(order)] if sid in order else order[0]
-    turn.update(sid=nxt, spoke_at=None, since=time.time())
+    turn.update(sid=nxt, spoke_at=None, since=time.time(), held=0)
     record({"type": "turn", "slot": nxt, "player": slots[nxt]["player"], "skipped": sid, "by": by})
     _room["body"] = None
     return turn_state()
@@ -760,8 +808,8 @@ def host_skip(token: str, request: Request):
 
 @app.post("/api/admin/kill")
 def kill_switch(request: Request):
-    """Stop everything, now: every wolt session in the lodge stops, the board goes up, the players' phones lock.
-    Deletes nothing (Reset everything starts a fresh show)."""
+    """The emergency button (someone got in): every wolt session in the lodge stops, the game freezes on screen, the
+    players' phones lock. Deletes nothing (Reset everything starts a fresh show)."""
     admin(request)
     global game_on
     set_phase("paused")
@@ -786,6 +834,32 @@ def kill_switch(request: Request):
     record({"type": "kill", "stopped": stopped})
     _room["body"] = None
     return {"ok": True, "stopped": stopped, "phase": phase}
+
+
+@app.post("/api/admin/pause")
+def admin_pause(request: Request):
+    """⏸ on the big screen: nothing moves, everything stays on screen."""
+    admin(request)
+    if not game_on:
+        raise HTTPException(409, "no game on")
+    if phase != "paused":
+        set_phase("paused")
+        record({"type": "pause"})
+    _room["body"] = None
+    return {"ok": True, "phase": phase}
+
+
+@app.post("/api/admin/resume")
+def admin_resume(request: Request):
+    """▶ on the big screen: back where it was."""
+    admin(request)
+    if not game_on:
+        raise HTTPException(409, "the game was stopped: Reset everything (backstage) starts a fresh one")
+    if phase != "live":
+        set_phase("live")
+        record({"type": "resume"})
+    _room["body"] = None
+    return {"ok": True, "phase": phase}
 
 
 @app.post("/api/admin/turn/skip")
@@ -1184,7 +1258,8 @@ def reset_all(request: Request, host_player: str = ""):
             VOTES_FILE.unlink(missing_ok=True)
         game_on, game_at = False, None
         GAME_FILE.unlink(missing_ok=True)
-        turn.update(sid="host", spoke_at=None, since=time.time())
+        save_pause(total=0.0, at=None)
+        turn.update(sid="host", spoke_at=None, since=time.time(), held=0)
         if _clock["timer"]:
             _clock["timer"].cancel()
         _screens.clear()
