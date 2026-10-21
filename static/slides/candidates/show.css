@@ -38,10 +38,10 @@
 .hello .blog{position:absolute;left:720px;top:700px}
 
 /* The idea: three words, defined. */
-.tk .defs{margin:40px 0 0;display:grid;grid-template-columns:auto 1fr;gap:26px 30px;align-items:baseline}
-.tk .defs dt{font:400 84px/1 var(--display);color:var(--amber);text-shadow:4px 4px var(--ink)}
-.tk .defs dd{margin:0;font:500 28px/1.3 var(--mono);color:#e6dccb;white-space:nowrap}
-#iwcl .txt{width:680px}
+.tk .defs{margin:10px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:22px}
+.tk .defs li{display:flex;flex-direction:column;gap:4px;padding-left:20px;border-left:5px solid var(--amber);font:500 28px/1.3 var(--mono);color:#e6dccb}
+.tk .defs b{font:400 44px/1 var(--display);color:var(--amber)}
+#iwcl .txt{width:640px;top:150px}
 /* The lodge in the middle of the triangle: where the three wolts live. */
 .tri .lodge-mid{position:absolute;left:50%;top:59%;translate:-50% -50%;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:2}
 .tri .lodge-mid b{font:700 20px 'JetBrains Mono',monospace;color:var(--cream);text-shadow:2px 2px var(--ink)}
@@ -138,7 +138,7 @@
   .tk .tri{height:420px!important;margin:10px 0}
   .tri .tk-card{width:120px;padding:10px}.tri .tk-card i{height:60px}.tri .tk-card i svg{width:60px}.tri .tk-card b{font-size:13px}
   .tri .ping{font-size:15px;padding:4px 8px}
-  .tk .defs{gap:10px 16px}.tk .defs dt{font-size:36px}.tk .defs dd{font-size:15px}
+  .tk .defs{gap:12px}.tk .defs li{font-size:15px;padding-left:12px}.tk .defs b{font-size:26px}
   .tri .lodge-px{width:70px;height:56px}.tri .lodge-mid b{font-size:12px}
   .tk .cast{display:flex;flex-wrap:wrap;gap:12px}.tk .cast .tk-card{width:auto;flex:1;min-width:90px;padding:10px}
   .tk .cast .tk-card i{height:60px}.tk .cast .tk-card i svg{width:60px}.tk .cast .tk-card b{font-size:14px}
