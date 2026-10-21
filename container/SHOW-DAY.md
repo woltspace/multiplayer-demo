@@ -3,15 +3,15 @@
 Why: anything in the show container can reach this Mac's localhost. With no lodge answering there, a player who
 talks a show wolt into misbehaving can't reach your real wolts (they run as you, with your files).
 
-## Before the show (about 15 minutes ahead)
+Once per machine: `container/up.sh` (makes the container), `container/public.py setup` (Cloudflare), and
+`container/.env` with `SHOW_DATA=<the show data folder>`.
 
-1. `container/tunnel-alone.sh start` (from this folder): the Cloudflare tunnel, without the lodge.
-2. Stop every lodge on this Mac:
-   - yours: `woltspace stop`
-   - the woltspace user's (port 7778), however you normally stop it
-3. Check nothing answers: `lsof -nP -iTCP:7777 -iTCP:7778 -sTCP:LISTEN` prints nothing, and
-   https://multiplayer.woltspace.app/admin still opens after your Cloudflare login.
-4. Backstage: ↺ Reset everything (fresh wolts with the house rules), then 🌍 Make public when the room is ready.
+## Before the show (also right after a reboot)
+
+1. Stop every lodge on this Mac: yours with `woltspace stop`, and the woltspace user's (port 7778).
+2. `container/show-on.sh`: Docker, the container, the app, the public/private switch, the tunnel alone. It warns
+   if a lodge still answers on 7777 or 7778, and prints the links.
+3. Backstage: ↺ Reset everything (fresh wolts with the house rules), then 🌍 Make public when the room is ready.
 
 ## The show
 
@@ -23,8 +23,6 @@ Emergency, in this order: 🔒 Make private (or `uv run --no-project python cont
 
 ## After the show
 
-1. 🔒 Make private.
-2. `docker stop show-lodge`
-3. Start the lodges again: `woltspace start` (yours), then the woltspace user's.
-4. `container/tunnel-alone.sh stop` (the lodge runs its own tunnel again).
-5. Rotate the show's admin key before the next public run.
+1. `container/show-off.sh`: private, container stopped, switch stopped.
+2. Start your lodges again (`woltspace start`), then `container/tunnel-alone.sh stop`.
+3. Rotate the show's admin key before the next public run.
