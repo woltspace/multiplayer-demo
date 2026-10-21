@@ -32,7 +32,7 @@ addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,
 </head>
 <body>
 <header class="top" id="host" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
-<script>if (new URLSearchParams(location.search).get("phone") || location.pathname.replace(/\/+$/, "") === "") document.querySelector("header.top .part-body").innerHTML = '<div class="splash"><div class="k">★ LODGE SHOW ★</div><h2>Dam Builders</h2><p>3 humans · 3 wolts · 1 game</p><p class="live">built live, right here</p><p class="hint">watch the big screen</p></div>';</script>
+<script>if (new URLSearchParams(location.search).get("phone") || location.pathname.replace(/\/+$/, "") === "") document.querySelector("header.top .part-body").innerHTML = '<div class="splash"><div class="k">★ LODGE SHOW ★</div><h2>Dam Builders</h2><p>3 humans · 3 wolts · 1 game</p><div class="wait">WAITING FOR THE GAME<i>.</i><i>.</i><i>.</i></div><p class="hint">built live, right here · watch the big screen</p></div>';</script>
 <div class="grid">
   <section class="empty" id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
   <section class="empty" id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
@@ -78,7 +78,12 @@ html.only .waiting{font-size:13px!important;line-height:1.8!important;padding:30
 html.phone section[data-part].empty{display:none}
 html.phone .splash{min-height:calc(100vh - 160px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 12px}
 html.phone .splash .k{font:400 12px Pixel,monospace;color:#c4531e;letter-spacing:2px}
-html.phone .splash h2{margin:0;font:400 34px/1.15 Pixel,monospace;color:#c4531e;text-shadow:3px 3px 0 #18100a22}
+html.phone .splash h2{margin:0;font:400 34px/1.15 Pixel,monospace;color:#c4531e;animation:titleglow 1.6s ease-in-out infinite alternate}
+@keyframes titleglow{from{text-shadow:3px 3px 0 #18100a22,0 0 0 #ff8a3d00;scale:1}to{text-shadow:3px 3px 0 #18100a22,0 0 18px #ff8a3d99;scale:1.03}}
+html.phone .splash .wait{margin-top:10px;padding:12px 16px;background:#c4531e;color:#fff;border:3px solid #18100a;box-shadow:5px 5px 0 #18100a;font:400 12px Pixel,monospace;letter-spacing:1px;animation:waitglow 1.6s ease-in-out infinite alternate}
+@keyframes waitglow{from{box-shadow:5px 5px 0 #18100a,0 0 4px #ff8a3d33}to{box-shadow:5px 5px 0 #18100a,0 0 22px #ff8a3d}}
+html.phone .splash .wait i{font-style:normal;animation:dot 1.2s infinite}html.phone .splash .wait i:nth-child(2){animation-delay:.2s}html.phone .splash .wait i:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,20%{opacity:0}40%,100%{opacity:1}}
 html.phone .splash p{margin:0!important;font:15px/1.4 DMSans,sans-serif!important;color:#18100a!important;text-transform:none!important;letter-spacing:0!important}
 html.phone .splash .live{font:400 13px Pixel,monospace;color:#18100a;animation:breathe 1.6s ease-in-out infinite alternate}
 html.phone .splash .hint{font:700 13px JB,monospace;color:#8a7a68}
