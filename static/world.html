@@ -23,7 +23,12 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .host .tag{color:#000;background:var(--glow);padding:2px 8px;font:400 20px VT;white-space:nowrap}
 .host .tag.ship{background:var(--neon)}
 .qr{display:flex;align-items:center;gap:12px;font:400 20px VT;color:var(--neon);text-transform:uppercase;white-space:nowrap}
-#jqr{background:#fff;padding:4px;line-height:0}
+/* the one public link, big, at the foot of the chat: readable from the back of the room, so people can type it */
+.join{flex:none;display:grid;grid-template-columns:150px 1fr;column-gap:18px;row-gap:8px;align-items:center;padding:16px 16px 12px;border-top:4px solid var(--glow);background:#000}
+#jqr{background:#fff;padding:6px;line-height:0;box-shadow:5px 5px 0 #c4531e}
+.join .jt b{display:block;font:400 22px Pixel;color:#fff;margin-bottom:10px}
+.join .jt span{font:400 24px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
+.join .jurl{grid-column:1/-1;font:400 44px/1 VT;color:#ffca4e;letter-spacing:1px;white-space:nowrap}
 /* the build clock, from ⚡ Start the game: neon, red for the last 30 seconds, TIME! at zero */
 .clock{display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 16px;border:3px solid var(--neon);background:#000;min-width:190px}
 .clock[hidden]{display:none}.clock small{font:400 16px VT;color:var(--tan);letter-spacing:2px;text-transform:uppercase}
@@ -112,10 +117,10 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
     <div class="turns" id="turns"></div>
     <div class="clock" id="clock" hidden></div>
     <button class="pausebtn" id="pause" hidden>⏸ pause</button>
-    <div class="qr"><div id="jqr"></div><div>scan to watch<br><span id="jurl"></span></div></div>
   </div>
   <div class="main">
-    <section class="box" data-c="host"><div class="bh"><b>#lodge</b><span id="who">· everyone</span><span class="r">live</span></div><div class="chat" id="chat"></div></section>
+    <section class="box" data-c="host"><div class="bh"><b>#lodge</b><span id="who">· everyone</span><span class="r">live</span></div><div class="chat" id="chat"></div>
+      <div class="join"><div id="jqr"></div><div class="jt"><b>📱 play along</b><span>on your phone: scan, or type</span></div><div class="jurl" id="jurl"></div></div></section>
     <div class="world"><div class="wtitle">★ the woltPhone ★</div>
       <div class="phone"><div class="screen"><iframe sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1"></iframe></div><div class="brand"><span id="wbv"></span><span><b>w</b>Phone</span></div></div></div>
     <div class="terms" id="terms"></div>
@@ -128,6 +133,6 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=11"></script>
+<script src="static/world.js?v=12"></script>
 </body>
 </html>

@@ -15,7 +15,7 @@ addEventListener("resize", fit); fit();
 const ROOM = new URL("./", location.href), SHORT = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
 document.getElementById("jurl").textContent = SHORT;
 if (window.QRCode) {
-  new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});
+  new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 138, height: 138, correctLevel: QRCode.CorrectLevel.M});
 }
 document.getElementById("wbv").innerHTML = woltSpriteAvatar("beaver", 26);
 
