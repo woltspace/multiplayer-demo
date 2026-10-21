@@ -537,6 +537,9 @@ async def headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "no-referrer"
     if request.url.path.startswith("/static/"):  # the stage runs in a sandboxed iframe (no origin): fonts need this
         response.headers["Access-Control-Allow-Origin"] = "*"
+    # Pages and their scripts change between rehearsals: browsers re-check them every time (a quick 304), so an open
+    # tab never runs yesterday's big screen.
+    response.headers.setdefault("Cache-Control", "no-cache")
     return response
 
 
