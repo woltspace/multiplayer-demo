@@ -55,6 +55,7 @@
 .tri > svg path{fill:none;stroke:#ffca4e55;stroke-width:4;stroke-dasharray:12 10;vector-effect:non-scaling-stroke}
 .tri > svg path.on{stroke:var(--amber);stroke-width:6}
 .tri .v{position:absolute;translate:-50% -50%;padding-top:40px;z-index:2}
+.tri .v small{font:600 18px 'JetBrains Mono',monospace;color:#5c4d3c;margin-top:-4px}
 .tri .top{left:50%;top:18%}.tri .left{left:16%;top:80%}.tri .right{left:84%;top:80%}
 .tri .lg{position:absolute!important;top:-26px;left:50%;translate:-50% 0;width:52px!important;height:52px!important;display:grid!important;place-items:center;background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--amber)}
 .tri .lg svg{width:30px!important;height:30px;fill:var(--fg,#18100a)}
@@ -139,6 +140,7 @@
   .tk .tri{height:420px!important;margin:10px 0}
   .tri .tk-card{width:120px;padding:10px}.tri .tk-card i{height:60px}.tri .tk-card i svg{width:60px}.tri .tk-card b{font-size:13px}
   .tri .ping{font-size:15px;padding:4px 8px}
+  .tri .v small{font-size:10px}
   .tk .defs{gap:12px}.tk .defs li{font-size:15px;padding-left:12px}.tk .defs b{font-size:26px}
   .tri .lodge-px{width:70px;height:56px}.tri .lodge-mid b{font-size:12px}
   .tk .cast{display:flex;flex-wrap:wrap;gap:12px}.tk .cast .tk-card{width:auto;flex:1;min-width:90px;padding:10px}

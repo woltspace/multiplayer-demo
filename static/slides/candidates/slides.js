@@ -135,7 +135,7 @@ document.querySelectorAll('[data-qr]').forEach(el => {
 (function iwcl() {
   const tri = document.querySelector('#iwcl .tri'), pings = tri.querySelector('.pings');
   const P = { top: [50, 18], left: [16, 80], right: [84, 80] }; // card centres, % of the triangle box
-  const AT = { top: '@raccoon', left: '@beaver', right: '@otter' };
+  const AT = { top: '@raccoona', left: '@justinbeaver', right: '@lottery' };
   const EDGE = { 'top|left': 0, 'left|right': 1, 'right|top': 2 };
   const edgeOf = (a, b) => EDGE[`${a}|${b}`] ?? EDGE[`${b}|${a}`];
   const busy = new Set();
