@@ -140,6 +140,13 @@ function grow() {
   $("app").style.paddingBottom = ($("bar").offsetHeight + 24) + "px";
 }
 $("say").addEventListener("input", grow);
+// The keyboard: Android Chrome shrinks the page for it (interactive-widget in the viewport tag). iPhones don't, so
+// there the box rides on top of the keyboard using the visual viewport (what's actually visible above it).
+if (window.visualViewport) {
+  const ride = () => { const vv = visualViewport, under = Math.max(0, innerHeight - vv.height - vv.offsetTop);
+    $("bar").style.transform = under ? `translateY(${-under}px)` : ""; };
+  visualViewport.addEventListener("resize", ride); visualViewport.addEventListener("scroll", ride);
+}
 const touch = matchMedia("(pointer: coarse)").matches;
 $("say").addEventListener("keydown", (e) => { if (!touch && e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("sayf").requestSubmit(); } });
 load(); if (!T) setInterval(load, 1500);
