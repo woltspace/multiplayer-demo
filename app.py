@@ -1217,7 +1217,7 @@ def world_page(request: Request):
 @app.get("/slides")
 def slides_page():
     """The deck on its own (the talk's slide template): ← → or a clicker, ⛶ for full screen. The board shows it too."""
-    return RedirectResponse("static/slides/candidates/index.html#hello")
+    return RedirectResponse("static/slides/candidates/index.html#cover")
 
 
 @app.get("/lanes")

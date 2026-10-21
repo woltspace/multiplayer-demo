@@ -3,12 +3,14 @@
 <!-- The Lodge Show deck: the talk's slide template (the Book of Wolt), new content. One <section id> per slide,
      listed in ../release-manifest.json. /slides opens it; the big screen's board shows it in a frame. -->
 <link rel="preload" href="../static/fonts/Preahvihear.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="../static/fonts/JetBrainsMono.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../static/fonts/fonts.css"><link rel="stylesheet" href="candidates.css"><link rel="stylesheet" href="candidates-more.css"><link rel="stylesheet" href="../polish.css">
-<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=2">
+<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=3">
 <script src="../presenter-keys.js" defer></script><script src="../book-nav.js" defer></script>
 </head><body><main>
 
 <!-- Each slide draws on a fixed 1600×1000 canvas (.cv), scaled to fit the screen (slides.js), so nothing moves
      or overlaps between a laptop, the big screen and a projector. On a phone the canvas becomes one column. -->
+<section class="candidate tk cover" id="cover"><div class="cv"><iframe class="coverf" src="../cover/index.html" title="jerpint" tabindex="-1"></iframe></div></section>
+
 <section class="candidate tk hello" id="hello"><div class="cv">
   <div class="txt"><span class="kick">AI TINKERERS · THE LODGE SHOW</span><h1>jerpint</h1>
     <p>[who I am, one line]</p><p>Building woltspace 🦫, where coding agents live, work and talk to each other.</p></div>
