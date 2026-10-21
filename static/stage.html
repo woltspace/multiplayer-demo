@@ -76,7 +76,7 @@ html.only .waiting{font-size:13px!important;line-height:1.8!important;padding:30
 /* The phone: a player's box shows only once their wolt has put something in it (no empty "Player 1" boxes to
    scroll past). Before the game, one start screen fills the phone. */
 html.phone section[data-part].empty{display:none}
-html.phone .splash{min-height:calc(100vh - 140px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 12px}
+html.phone .splash{min-height:calc(100vh - 160px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 12px}
 html.phone .splash .k{font:400 12px Pixel,monospace;color:#c4531e;letter-spacing:2px}
 html.phone .splash h2{margin:0;font:400 34px/1.15 Pixel,monospace;color:#c4531e;text-shadow:3px 3px 0 #18100a22}
 html.phone .splash p{margin:0!important;font:15px/1.4 DMSans,sans-serif!important;color:#18100a!important;text-transform:none!important;letter-spacing:0!important}
@@ -92,6 +92,7 @@ html.phone .splash .hint{font:700 13px JB,monospace;color:#8a7a68}
 html,body{height:100%}
 body{display:flex;flex-direction:column}
 #lscroll{flex:1;min-height:0;overflow-y:auto}
+html.phone #lscroll{overflow:hidden}
 .lpad{flex:none;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 8px;background:#18100a}
 .lpad .dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,34px);gap:3px}
 .lpad button{font:20px sans-serif;color:#18100a;background:#fff8e6;border:3px solid #000;border-radius:10px;box-shadow:0 4px 0 #c4531e;touch-action:manipulation;user-select:none;-webkit-user-select:none;padding:0}
@@ -103,9 +104,20 @@ body{display:flex;flex-direction:column}
 </style>
 <script>
 // Everything above the controller goes into one scroll area, so the controller never covers the game.
-(() => { const sc = document.createElement("div"); sc.id = "lscroll"; const pad = document.getElementById("lpad");
-  [...document.body.children].filter((el) => el !== pad && el.tagName !== "SCRIPT" && el.tagName !== "STYLE").forEach((el) => sc.append(el));
+(() => { const sc = document.createElement("div"); sc.id = "lscroll"; const fit = document.createElement("div"); fit.id = "lfit";
+  const pad = document.getElementById("lpad"); sc.append(fit);
+  [...document.body.children].filter((el) => el !== pad && el !== sc && el.tagName !== "SCRIPT" && el.tagName !== "STYLE").forEach((el) => fit.append(el));
   document.body.insertBefore(sc, pad); })();
+// On a phone the game is ONE screen: no scrolling. Whatever the wolts build, if it comes out taller than the space
+// above the controller, the whole page shrinks to fit (the brief asks them for ~600 px; this makes sure of it).
+function fitScreen() {
+  if (!document.documentElement.classList.contains("phone")) return;
+  const sc = document.getElementById("lscroll"), fit = document.getElementById("lfit");
+  fit.style.zoom = 1;
+  const need = fit.scrollHeight, have = sc.clientHeight;
+  fit.style.zoom = need > have ? Math.max(0.4, have / need) : 1;
+}
+addEventListener("resize", fitScreen); setInterval(fitScreen, 1000);
 document.querySelectorAll("#lpad button").forEach((b) => {
   const send = (type) => document.body.dispatchEvent(new KeyboardEvent(type, {key: b.dataset.k, code: b.dataset.k === " " ? "Space" : b.dataset.k, bubbles: true}));
   b.addEventListener("pointerdown", (e) => { e.preventDefault(); b.classList.add("on"); send("keydown"); });
@@ -137,6 +149,7 @@ async function poll() {
     if (seen[sid] === p.v) continue;
     seen[sid] = p.v;
     Presence.apply(el, p.html, {name: p.wolt || "commie", slot: sid});
+    requestAnimationFrame(fitScreen);
     clearTimeout(el._t); el._t = setTimeout(() => delete el.dataset.editing, 1500);
   }
 }
