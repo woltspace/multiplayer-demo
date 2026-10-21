@@ -66,8 +66,8 @@
 .tk .plan small{font:500 20px/1.25 'JetBrains Mono',monospace;color:#5c4d3c}
 .demo .room{position:absolute;left:90px;top:790px;padding:10px 22px 10px 10px}
 .demo .room .qr img,.demo .room .qr canvas{width:120px!important;height:120px!important}
-.demo .phone{position:absolute;left:1090px;top:50px;width:400px;margin:0}
-.demo .phone figcaption{background:none;padding:0;text-align:center;color:var(--amber);font:400 30px/1 var(--display);margin-bottom:16px;animation:press 1.4s steps(1) infinite}
+.demo .phone{position:absolute;left:1090px;top:50px;width:400px;margin:0;background:none!important;border:0!important;padding:0!important}
+.demo .phone figcaption{background:none!important;padding:0!important;border:0!important;text-align:center;color:var(--amber);font:400 30px/1 var(--display);margin-bottom:16px;animation:press 1.4s steps(1) infinite}
 @keyframes press{50%{opacity:.35}}
 .demo .phone img{display:block;width:100%;height:auto;filter:drop-shadow(10px 10px 0 #c4531e)}
 
@@ -133,6 +133,9 @@
   .tk .steps b{font-size:24px}.tk .steps small{font-size:13px}.tk .steps li>i{width:40px;height:40px;font-size:20px}
   #tmux .codes{flex-direction:column;gap:16px}
 }
+
+/* The top bar: no "01 / 06" under the title (the chapter buttons already show where you are). */
+.book-progress{display:none!important}
 
 /* On the big screen's board: the board drives the deck, so no nav bar or pager; the slide fills the screen. */
 .on-board .book-nav,.on-board .mobile-pager{display:none!important}

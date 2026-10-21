@@ -137,3 +137,4 @@ document.querySelectorAll('[data-qr]').forEach(el => {
   }
   (function loop() { send(); setTimeout(loop, 250 + Math.random() * 450); })();
 })();
+
