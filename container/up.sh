@@ -11,7 +11,8 @@
 # token, marks the lodge throwaway, starts the app, resets the show (hostie wakes up) and prints the links.
 # Settings (environment): SHOW_WOLTSPACE_VERSION (0.5.21), SHOW_NAME (show-lodge), SHOW_LODGE_PORT (47991),
 # SHOW_DATA (./show-data), SHOW_TOKEN_FILE (~/.woltspace/.env.docker), SHOW_HOST_PLAYER (jerpint),
-# SHOW_APP_PORT (47992: the app alone on the host's loopback, for a tunnel; the lodge stays private).
+# SHOW_APP_PORT (47992: the app alone on the host's loopback, for a tunnel; the lodge stays private),
+# SHOW_OWNER_EMAIL (your Cloudflare Access email: your login opens the big screen and backstage through the tunnel).
 # Tear down: container/down.sh (data kept) or container/down.sh --wipe.
 set -eu
 cd "$(dirname "$0")/.."
@@ -48,7 +49,7 @@ if [ ! -d "$DATA/wolts/apps/lodge-show/.git" ]; then
 else
   git -C "$DATA/wolts/apps/lodge-show" pull -q --ff-only
 fi
-printf 'SHOW_HOST_PLAYER=%s\nSHOW_BIND=0.0.0.0\n' "${SHOW_HOST_PLAYER:-jerpint}" > "$DATA/wolts/apps/lodge-show/.env"
+printf 'SHOW_HOST_PLAYER=%s\nSHOW_BIND=0.0.0.0\nSHOW_OWNER_EMAIL=%s\n' "${SHOW_HOST_PLAYER:-jerpint}" "${SHOW_OWNER_EMAIL:-}" > "$DATA/wolts/apps/lodge-show/.env"
 [ -f "$DATA/wolts/woltspace.json" ] || printf '{\n  "claude": {"default_wolt": "hostie"}\n}\n' > "$DATA/wolts/woltspace.json"
 
 say "starting container $NAME (woltspace $V, lodge on 127.0.0.1:$PORT, app alone on 127.0.0.1:$APP_PORT, no public tunnel)"

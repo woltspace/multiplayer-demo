@@ -554,7 +554,7 @@ def owner_session(request: Request) -> bool:
     """On the Mac (not through the tunnel), or through Cloudflare with the owner's Access login (the email header)."""
     if not request.headers.get("cf-connecting-ip"):
         return True
-    return request.headers.get("cf-access-authenticated-user-email", "").lower() == OWNER_EMAIL.lower()
+    return bool(OWNER_EMAIL) and request.headers.get("cf-access-authenticated-user-email", "").lower() == OWNER_EMAIL.lower()
 
 
 def viewer(request: Request) -> None:

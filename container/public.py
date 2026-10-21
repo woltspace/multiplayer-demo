@@ -94,6 +94,8 @@ def owner_policy(app_id):
 
 
 def ensure_app(name, domains):
+    if not OWNER:
+        sys.exit("Set SHOW_OWNER_EMAIL (the email you log in to Cloudflare Access with)")
     apps = access_apps()
     if name in apps:
         return apps[name]
