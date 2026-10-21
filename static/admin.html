@@ -57,7 +57,7 @@ async function load() {
     const url = new URL("p/" + s.token, location.href).href;
     const el = document.createElement("div"); el.className = "slot"; el.dataset.c = s.slot;
     el.innerHTML = `<h2>${s.label}</h2><div class=qr></div>
-      <div class="st${s.claimed ? " on" : ""}">${s.claimed ? "claimed" : "not scanned yet"}${s.player ? " · player: " + esc(s.player) : ""}${s.wolt ? " · wolt: " + esc(s.wolt) : ""}${s.slot === "host" ? " · your slot" : ""}</div>
+      <div class="st${s.claimed ? " on" : ""}">${s.claimed ? (s.wolt ? "taken" : "creating a wolt…") : "open"}${s.player ? " · player: " + esc(s.player) : ""}${s.wolt ? " · wolt: " + esc(s.wolt) : ""}${s.slot === "host" ? " · your slot" : ""}</div>
       <a class=url href="${url}" target="_blank" rel="noopener">${url}</a><button>Reset (new QR)</button>`;
     new QRCode(el.querySelector(".qr"), {text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});
     el.querySelector("button").onclick = async () => { if (confirm("New QR for " + s.label + "? The old one stops working.")) { await fetch("api/admin/reset/" + s.slot, {method: "POST", headers: H}); load(); } };

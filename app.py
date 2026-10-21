@@ -30,7 +30,7 @@ from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -593,7 +593,9 @@ def public_slots() -> list[dict]:
 def player_page(token: str, request: Request):
     sid, s = slot_for(token)
     response = FileResponse(HERE / "static" / "player.html")
-    if not s["claimed"]:
+    # A player's seat is taken when their wolt is created (create_wolt), not when the QR is scanned: someone who
+    # scans and backs out leaves it free. The host's seat (its wolt already exists) is taken by the first phone.
+    if sid == "host" and not s["claimed"]:
         seat = secrets.token_urlsafe(12)
         with lock:
             s["claimed"] = seat
@@ -631,7 +633,7 @@ class Create(BaseModel):
 
 
 @app.post("/api/p/{token}/create")
-def create_wolt(token: str, c: Create, request: Request):
+def create_wolt(token: str, c: Create, request: Request, response: Response):
     sid, s = owner(request, token)
     if s["wolt"]:
         raise HTTPException(409, "you already have a wolt")
@@ -641,13 +643,34 @@ def create_wolt(token: str, c: Create, request: Request):
     taken = {x["wolt"]["name"].lower() for x in slots.values() if x["wolt"]}
     if name.lower() in taken:
         raise HTTPException(409, "that name is taken, pick another")
+    # Take the seat now (the first phone to press Create wins); give it back if creating the wolt fails.
+    seat = None
+    with lock:
+        if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
+            raise HTTPException(409, "this player spot is already taken")
+        if not s["claimed"]:
+            seat = s["claimed"] = secrets.token_urlsafe(12)
+            save_slots()
+    if seat:
+        record({"type": "claim", "slot": sid})
+        response.set_cookie(f"seat_{sid}", seat, max_age=2 * 86400, httponly=True, samesite="lax")
+
+    def give_back():
+        if seat:
+            with lock:
+                if s["claimed"] == seat and not s["wolt"]:
+                    s["claimed"] = None
+                    save_slots()
+            record({"type": "reset", "slot": sid})
     harness, model = engine_for(sid)
     if MODE == "lodge":
         try:
             res = driver.create(name, c.creature, player, harness, model, sid)
         except FileExistsError as e:
+            give_back()
             raise HTTPException(409, str(e))
         except Exception as e:  # the lodge says why (engine missing...)
+            give_back()
             raise HTTPException(502, f"the lodge said no: {e}")
         session = res.get("name")
     else:
