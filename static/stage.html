@@ -32,10 +32,10 @@ addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,
 </head>
 <body>
 <header class="top" id="host" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
-<script>if (new URLSearchParams(location.search).get("phone") || location.pathname.replace(/\/+$/, "") === "") document.querySelector("header.top .part-body").innerHTML = "<h1>Dam Builders</h1><small>the woltPhone · 3 humans · 3 wolts · one page. Waiting for the game…</small>";</script>
+<script>if (new URLSearchParams(location.search).get("phone") || location.pathname.replace(/\/+$/, "") === "") document.querySelector("header.top .part-body").innerHTML = '<div class="splash"><div class="k">★ LODGE SHOW ★</div><h2>Dam Builders</h2><p>3 humans · 3 wolts · 1 game</p><p class="live">built live, right here</p><p class="hint">watch the big screen</p></div>';</script>
 <div class="grid">
-  <section id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
-  <section id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
+  <section class="empty" id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
+  <section class="empty" id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
 </div>
 <script>
 // ?only=p1 (or p2): just that player's game, edge to edge, for its lane on the big screen. No header, no owner bar.
@@ -73,6 +73,16 @@ html.phone section[data-part]{min-height:0!important;margin:0 0 6px}
 html.phone .part-body{padding:8px 18px}
 html.phone .waiting{padding:18px 10px!important}
 html.only .waiting{font-size:13px!important;line-height:1.8!important;padding:30vh 16px!important;white-space:normal}
+/* The phone: a player's box shows only once their wolt has put something in it (no empty "Player 1" boxes to
+   scroll past). Before the game, one start screen fills the phone. */
+html.phone section[data-part].empty{display:none}
+html.phone .splash{min-height:calc(100vh - 140px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 12px}
+html.phone .splash .k{font:400 12px Pixel,monospace;color:#c4531e;letter-spacing:2px}
+html.phone .splash h2{margin:0;font:400 34px/1.15 Pixel,monospace;color:#c4531e;text-shadow:3px 3px 0 #18100a22}
+html.phone .splash p{margin:0;font:15px/1.4 DMSans,sans-serif;color:#18100a}
+html.phone .splash .live{font:400 13px Pixel,monospace;color:#18100a;animation:breathe 1.6s ease-in-out infinite alternate}
+html.phone .splash .hint{font:700 13px JB,monospace;color:#8a7a68}
+@keyframes breathe{from{opacity:.45}to{opacity:1}}
 </style>
 <!-- The built-in controller: a d-pad and an A button, stuck to the bottom of every copy of the page. They send the
      same keys as a keyboard (arrows, space), so games only handle keys, and the big screen plays them too. -->
@@ -120,7 +130,11 @@ async function poll() {
       const nm = el.querySelector(".nm"), label = `${p.wolt} · ${p.player}'s wolt · ${engine(p.harness, p.model)}`;
       if (nm.textContent !== label) { nm.innerHTML = ""; const b = document.createElement("b"); b.textContent = p.wolt; nm.append(b, ` · ${p.player}'s wolt · ${engine(p.harness, p.model)}`); }
     }
-    if (!p.v || seen[sid] === p.v) continue;
+    const body = el.querySelector(".part-body"); if (!("orig" in el.dataset)) el.dataset.orig = body.innerHTML;
+    // Nothing in this box (before the game, or after a reset): back to its placeholder (or hidden on the phone).
+    if (!p.v || !p.html) { if (seen[sid]) { body.innerHTML = el.dataset.orig; delete seen[sid]; } el.classList.toggle("empty", sid !== "host"); continue; }
+    el.classList.remove("empty");
+    if (seen[sid] === p.v) continue;
     seen[sid] = p.v;
     Presence.apply(el, p.html, {name: p.wolt || "commie", slot: sid});
     clearTimeout(el._t); el._t = setTimeout(() => delete el.dataset.editing, 1500);
