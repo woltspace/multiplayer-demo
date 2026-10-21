@@ -85,9 +85,10 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .curtain .watch #bqr{background:#fff;padding:8px;line-height:0;box-shadow:6px 6px 0 #c4531e}
 .curtain .watch b{display:block;font:400 18px Pixel;color:#fff;margin-bottom:10px}
 .curtain .watch span{font:400 30px VT;color:#ffca4e}
-/* the arcade's PRESS START: one big button, blinking */
-.start .startb{margin-top:60px;font:400 clamp(28px,3vw,48px) Pixel;color:#fff;background:transparent;border:0;padding:18px 30px;cursor:pointer;text-shadow:4px 4px 0 #c4531e;animation:pressstart 1.1s steps(1) infinite}
-.start .startb:hover{color:#ffca4e;animation:none}.start .startb:disabled{animation:none;opacity:.6}
+/* the start button: a real button, glowing (a slow arcade pulse, no blinking) */
+.start .startb{margin-top:56px;font:400 clamp(26px,2.6vw,42px) Pixel;color:#fff;background:#c4531e;border:5px solid #18100a;padding:22px 40px;cursor:pointer;text-shadow:3px 3px 0 #6a2a0e;box-shadow:8px 8px 0 #18100a,0 0 24px #ff8a3d88;animation:startglow 2.4s steps(6) infinite alternate}
+@keyframes startglow{from{box-shadow:8px 8px 0 #18100a,0 0 10px #ff8a3d44}to{box-shadow:8px 8px 0 #18100a,0 0 34px #ff8a3d,0 0 80px #ffca4e88}}
+.start .startb:hover{background:#e0682c}.start .startb:active{translate:4px 4px;box-shadow:4px 4px 0 #18100a}.start .startb:disabled{animation:none;opacity:.6}
 /* the placeholder board (cards in static/board.js), after a reset and on "Show the board" */
 .curtain{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#2a1420 0,#0b0710 75%)}
 .curtain[hidden]{display:none}
