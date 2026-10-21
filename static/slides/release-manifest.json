@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "book": "Lodge Show",
+  "note": "The deck for /slides and the big screen's board. One #id per slide in candidates/index.html. when: before = shows before the game ships, after = once it has.",
+  "chapters": [
+    {
+      "id": "cover",
+      "number": 1,
+      "title": "jerpint",
+      "url": "candidates/index.html#cover",
+      "when": "before"
+    },
+    {
+      "id": "hello",
+      "number": 2,
+      "title": "Previously",
+      "url": "candidates/index.html#hello",
+      "when": "before"
+    },
+    {
+      "id": "iwcl",
+      "number": 3,
+      "title": "The idea",
+      "url": "candidates/index.html#iwcl",
+      "when": "before"
+    },
+    {
+      "id": "scaffold",
+      "number": 4,
+      "title": "Scaffold",
+      "url": "candidates/index.html#scaffold",
+      "when": "before"
+    },
+    {
+      "id": "demo",
+      "number": 5,
+      "title": "Demo time",
+      "url": "candidates/index.html#demo",
+      "when": "before"
+    },
+    {
+      "id": "open",
+      "number": 6,
+      "title": "Where next",
+      "url": "candidates/index.html#open",
+      "when": "before"
+    },
+    {
+      "id": "thanks",
+      "number": 7,
+      "title": "Your turn",
+      "url": "candidates/index.html#thanks",
+      "when": "before"
+    }
+  ]
+}

@@ -42,28 +42,34 @@ main{max-width:640px;margin:0 auto;padding:12px 16px calc(28px + env(safe-area-i
 .build a{align-self:flex-end;font:700 13px JB;color:var(--org)}
 .phase{max-width:608px;margin:12px auto 0;background:#ffc23d;color:var(--ink);border:2px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:10px 14px;font:700 14px JB;text-align:center}
 .phase.ready{background:#f3e6c9}
+.tog{margin-left:10px;font:700 12px JB;color:#fff8e6;background:#18100a;border:2px solid #000;border-radius:999px;padding:4px 10px;text-decoration:none;white-space:nowrap}
+.vote{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--cream);border-top:3px solid var(--ink);padding:10px 16px calc(10px + env(safe-area-inset-bottom));text-align:center;font:700 14px JB}
+.vote .vb{display:flex;gap:10px;margin-top:8px}.vote button{flex:1;min-width:0;font:700 15px JB;padding:10px 8px;border:3px solid var(--ink);border-radius:12px;background:#fff;color:var(--ink);box-shadow:3px 3px 0 var(--ink)}
+.vote button.on{background:var(--org);color:#fff}.vote button small{display:block;font-weight:400;font-size:12px;margin-top:2px}
+body.voting main{padding-bottom:120px}
 @media (max-width:640px){.phase{margin:12px 16px 0}}
 .toast{position:fixed;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:608px;margin:0 auto;z-index:3;background:var(--org);color:#fff;border:2px solid var(--ink);border-radius:12px;box-shadow:4px 4px 0 var(--ink);padding:12px 14px;font:700 15px DMSans;display:flex;align-items:center;gap:10px;cursor:pointer;animation:pop .3s ease-out}
 .toast[hidden]{display:none}
 </style>
-<link rel="stylesheet" href="static/arcade.css" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
+<link rel="stylesheet" href="static/arcade.css?v=7" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
 (()=>{const F=["jb","vt","pixel"],q=new URLSearchParams(location.search).get("font");let f=q;try{f=f||localStorage.getItem("show-font")}catch(e){}
 document.documentElement.dataset.font=F.includes(f)?f:"pixel";
 addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,[contenteditable]"))return;const d=document.documentElement,n=F[(F.indexOf(d.dataset.font)+1)%F.length];d.dataset.font=n;try{localStorage.setItem("show-font",n)}catch(_){}});})()</script>
 </head>
 <body>
 <div class="top">
-  <div class="hd"><span class="av" id="logo"></span><div><b>Lodge Show</b><small>woltspace · multiplayer, multi-agent</small></div><span class="live">live</span></div>
+  <div class="hd"><span class="av" id="logo"></span><div><b>Lodge Show</b><small>woltspace · multiplayer, multi-agent</small></div><span class="live">live</span><a class="tog" href="./">🎮 the game</a></div>
   <div class="cast" id="cast"></div>
   <div class="tabs"><button id="t-chat" class="on">#lodge chat</button><button id="t-build" disabled>the build · live</button></div>
 </div>
 <div class="phase" id="phase" hidden></div>
 <main>
   <section id="chat"><div class="rows" id="rows"></div></section>
-  <section id="build" class="build" hidden><iframe id="frame" sandbox="allow-scripts" title="the page they built"></iframe><a id="full" href="live/" target="_blank" rel="noopener">open full screen ↗</a></section>
+  <section id="build" class="build" hidden><iframe id="frame" sandbox="allow-scripts" title="the page they built"></iframe><a id="full" href="./">open full screen ↗</a></section>
 </main>
-<div class="toast" id="toast" hidden>🎉 They shipped it. Tap to see the page they built.</div>
-<script src="static/sprites.js"></script>
-<script src="static/room.js"></script>
+<div class="toast" id="toast" hidden>🎉 Both games shipped. Tap to play them, then vote.</div>
+<div class="vote" id="vote" hidden><b>Vote for your favourite game</b><div class="vb" id="vb"></div></div>
+<script src="static/sprites.js?v=2"></script>
+<script src="static/room.js?v=4"></script>
 </body>
 </html>
