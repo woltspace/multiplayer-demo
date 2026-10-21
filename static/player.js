@@ -11,7 +11,7 @@ function view() {
   const app = $("app");
   document.body.dataset.c = st.slot;
   // Creating a wolt is always open. Players type once the host starts the game (and not while the board is up).
-  // The host can always type, and gets the ▶ Start the game button until the game is on.
+  // The host can always type. The host's controls (start, skip, board…) are all in backstage, not here.
   const held = st.slot !== "host" && st.phase && st.phase !== "live";
   // Shared world: one turn at a time. A player types on their turn, until their wolt has posted.
   const myTurn = !st.world || !st.game || st.slot === "host" || (!st.turn_over && st.turn === st.slot && !st.turn_busy);
@@ -21,8 +21,7 @@ function view() {
     : st.turn_over && st.slot !== "host" ? `<div class=paused>⏱ Time's up! Thanks for building. Play the game on the big screen.</div>`
     : !myTurn ? `<div class=paused>${st.turn === st.slot ? "🛠 The wolts are on it…" : `⏳ ${esc(st.turn_player || "someone")}'s turn. You're next soon!`}</div>`
     : st.world && st.game && st.slot !== "host" ? `<div class="paused go">▸ Your turn! Tell the wolts what to add.</div>`
-    : st.world && st.game && st.slot === "host" && st.turn && st.turn !== "host" && !st.turn_over ? `<button class=skipb id=skipb>⏭ Skip ${esc(st.turn_player || "this turn")}</button>`
-    : st.slot === "host" && st.game === false ? `<button class=startg id=startg>▶ Start the game</button>` : "";
+    : "";
   if (!st.wolt) {
     $("bar").hidden = true;
     if (drawn === "form" + wait) { const g = $("go"); if (g && !g.dataset.busy) g.disabled = false; const n = $("pnote"); if (n) n.innerHTML = note; return; }

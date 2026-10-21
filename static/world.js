@@ -104,11 +104,7 @@ for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
   e.preventDefault();
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
 });
-// Shift+G starts the game from the big screen itself (for a mirrored display, when backstage can't be on screen).
-addEventListener("keydown", async (e) => {
-  if (!(e.key === "G" && e.shiftKey)) return;
-  await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
-});
+// No controls here: the big screen is a display. Every host control is in backstage (/admin).
 
 // The board (while the show isn't live): the game's start screen, a big QR to /play. The slides are their own
 // deck at /slides, in their own window.

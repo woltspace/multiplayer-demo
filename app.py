@@ -149,7 +149,7 @@ def shipped(evs: list) -> bool:
 
 
 # The game: players can create their wolts any time, but only type to them once the host starts the game (from the
-# host phone, backstage, or Shift+G on the big screen). Starting it asks the host wolt to send the kickoff over IWCL.
+# backstage). Starting it asks the host wolt to send the kickoff over IWCL.
 GAME_FILE = DATA / "game.txt"
 game_on = GAME_FILE.exists()
 # The build clock: SHOW_GAME_SECONDS from the start (default 3 minutes), on the big screen. At zero the app tells the
@@ -774,7 +774,7 @@ def admin_skip(request: Request):
 
 @app.post("/api/admin/game/start")
 def admin_start(request: Request):
-    """Backstage, or Shift+G on the big screen."""
+    """From backstage (the only place with host controls)."""
     admin(request)
     return {"ok": True, "started": start_game("backstage"), "game": game_on}
 
@@ -1204,7 +1204,7 @@ def mock_start(request: Request):
 @app.get("/world")
 def world_page(request: Request):
     """The big screen for the shared world: #lodge chat, the woltPhone, three terminals, turns, the clock.
-    With ?k= its keyboard shortcuts work (Shift+G starts the game); without, it's read-only (the homepage)."""
+    A display only: every host control is in backstage."""
     viewer(request)
     return FileResponse(HERE / "static" / "world.html")
 
