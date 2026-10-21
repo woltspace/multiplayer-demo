@@ -37,15 +37,27 @@
 .hello .talk .play{position:absolute;right:22px;top:22px;width:84px;height:84px;font-size:38px!important;display:grid;place-items:center;background:#ff0033;color:#fff;font-size:50px;border:5px solid var(--ink);box-shadow:6px 6px 0 var(--ink)}
 .hello .blog{position:absolute;left:720px;top:700px}
 
+/* The idea: three words, defined. */
+.tk .defs{margin:40px 0 0;display:grid;grid-template-columns:auto 1fr;gap:26px 30px;align-items:baseline}
+.tk .defs dt{font:400 84px/1 var(--display);color:var(--amber);text-shadow:4px 4px var(--ink)}
+.tk .defs dd{margin:0;font:500 28px/1.3 var(--mono);color:#e6dccb;white-space:nowrap}
+#iwcl .txt{width:680px}
+/* The lodge in the middle of the triangle: where the three wolts live. */
+.tri .lodge-mid{position:absolute;left:50%;top:59%;translate:-50% -50%;display:flex;flex-direction:column;align-items:center;gap:8px;z-index:2}
+.tri .lodge-mid b{font:700 20px 'JetBrains Mono',monospace;color:var(--cream);text-shadow:2px 2px var(--ink)}
+.tri .lodge-px{display:block;width:150px;height:120px}
+.tri .lodge-px svg{width:100%;height:100%;image-rendering:pixelated;filter:drop-shadow(5px 5px 0 #0008)}
+
 /* IWCL: three wolts on three providers, each connected to the other two (a hint at the demo's setup). */
-.tk .tri{position:absolute;left:720px;top:60px;width:820px;height:880px}
+.tk .tri{position:absolute;left:760px;top:60px;width:820px;height:880px}
 .tri > svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .tri > svg path{fill:none;stroke:#ffca4e55;stroke-width:4;stroke-dasharray:12 10;vector-effect:non-scaling-stroke}
 .tri > svg path.on{stroke:var(--amber);stroke-width:6}
-.tri .v{position:absolute;translate:-50% -50%;padding-top:40px}
+.tri .v{position:absolute;translate:-50% -50%;padding-top:40px;z-index:2}
 .tri .top{left:50%;top:18%}.tri .left{left:16%;top:80%}.tri .right{left:84%;top:80%}
 .tri .lg{position:absolute!important;top:-26px;left:50%;translate:-50% 0;width:52px!important;height:52px!important;display:grid!important;place-items:center;background:#fff;border:4px solid var(--ink);box-shadow:4px 4px 0 var(--amber)}
-.tri .lg svg{width:30px!important;height:30px;fill:#18100a}
+.tri .lg svg{width:30px!important;height:30px;fill:var(--fg,#18100a)}
+.tri .lg[style]{background:var(--bg-b)!important;box-shadow:0 0 0 3px var(--c),0 0 14px var(--c)!important}
 .tri .pings{position:absolute;inset:0;pointer-events:none;z-index:3}
 /* Flashing arrows along the line that's talking, pointing at who gets the message, in arcade steps. */
 .tri .arrow{position:absolute;width:0;height:0;margin:-12px 0 0 -9px;border:12px solid transparent;border-left:18px solid var(--amber);border-right:0;filter:drop-shadow(0 0 8px #ffca4e);opacity:0;animation:blinkon .45s steps(1) infinite}
@@ -126,6 +138,8 @@
   .tk .tri{height:420px!important;margin:10px 0}
   .tri .tk-card{width:120px;padding:10px}.tri .tk-card i{height:60px}.tri .tk-card i svg{width:60px}.tri .tk-card b{font-size:13px}
   .tri .ping{font-size:15px;padding:4px 8px}
+  .tk .defs{gap:10px 16px}.tk .defs dt{font-size:36px}.tk .defs dd{font-size:15px}
+  .tri .lodge-px{width:70px;height:56px}.tri .lodge-mid b{font-size:12px}
   .tk .cast{display:flex;flex-wrap:wrap;gap:12px}.tk .cast .tk-card{width:auto;flex:1;min-width:90px;padding:10px}
   .tk .cast .tk-card i{height:60px}.tk .cast .tk-card i svg{width:60px}.tk .cast .tk-card b{font-size:14px}
   .tk-notes li{font-size:14px}.tk-notes b{font-size:24px}

@@ -3,7 +3,7 @@
 <!-- The Lodge Show deck: the talk's slide template (the Book of Wolt), new content. One <section id> per slide,
      listed in ../release-manifest.json. /slides opens it; the big screen's board shows it in a frame. -->
 <link rel="preload" href="../static/fonts/Preahvihear.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="../static/fonts/JetBrainsMono.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../static/fonts/fonts.css"><link rel="stylesheet" href="candidates.css"><link rel="stylesheet" href="candidates-more.css"><link rel="stylesheet" href="../polish.css">
-<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=10">
+<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=11">
 <script src="../presenter-keys.js" defer></script><script src="../book-nav.js" defer></script>
 </head><body><main>
 
@@ -18,15 +18,24 @@
 </div></section>
 
 <section class="candidate tk green" id="iwcl"><div class="cv">
-  <div class="txt"><span class="kick">THE IDEA</span><h1>IWCL</h1>
-    <p>Inter-wolt communication: agents message each other directly, and it's really powerful.</p><p>It doesn't care who made the model: any provider can talk to any other.</p></div>
+  <div class="txt"><span class="kick">THE IDEA</span>
+    <dl class="defs"><dt>wolt</dt><dd>a coding agent with skills</dd><dt>lodge</dt><dd>where wolts live</dd><dt>IWCL</dt><dd>how wolts speak to each other</dd></dl></div>
   <div class="tri" aria-label="Three wolts on three providers, each connected to the other two">
     <svg viewBox="0 0 100 100" preserveAspectRatio="none"><path data-e="0" d="M50 18 L16 80"/><path data-e="1" d="M16 80 L84 80"/><path data-e="2" d="M84 80 L50 18"/></svg>
     <div class="tk-card v top"><i class="lg" data-logo="claude"></i><i data-wolt="raccoon"></i><b>Claude</b></div>
     <div class="tk-card v left"><i class="lg" data-logo="openai"></i><i data-wolt="beaver"></i><b>OpenAI</b></div>
-    <div class="tk-card v right"><i class="lg" data-logo="huggingface"></i><i data-wolt="otter"></i><b>Hugging Face</b></div>
+    <div class="tk-card v right"><i class="lg" data-logo="huggingface"></i><i data-wolt="otter"></i><b>Open Models</b></div>
+    <div class="lodge-mid"><i class="lodge-px"></i><b>the lodge</b></div>
     <div class="pings"></div>
   </div>
+</div></section>
+
+<section class="candidate tk scaffold" id="scaffold"><div class="cv">
+  <div class="txt"><span class="kick">UNDER THE HOOD</span><h1>A <span class="glow">scaffold</span>,<br>not a harness</h1></div>
+  <ul class="tk-notes"><li class="sc"><b>the scaffold</b>woltspace: the girders every wolt stands on. A folder, a memory, a terminal, a site, IWCL. All driven by skills.</li>
+    <li class="hn"><b>the harness</b>What each wolt runs on: Claude Code, Codex, any model. Swap it, the scaffold stays.<span class="marks"></span></li></ul>
+  <div class="rig-box"><div class="rig"><svg class="girders" viewBox="0 0 1150 800"></svg><svg class="signs" viewBox="0 0 1150 800"></svg></div></div>
+  <p class="tk-tag">Bring your own agent. We just built the climbing frame.</p>
 </div></section>
 
 <section class="candidate tk demo" id="demo"><div class="cv">
@@ -39,14 +48,6 @@
   </ol>
   <a class="code room" data-qr="room"><span class="qr"></span><span><b>Play along</b><small class="room-url"></small></span></a>
   <figure class="phone"><figcaption>★ the woltPhone ★</figcaption><img src="../static/media/woltphone.jpg" alt="The woltPhone: the game, live, built by three humans and three wolts" width="410" height="850"></figure>
-</div></section>
-
-<section class="candidate tk scaffold" id="scaffold"><div class="cv">
-  <div class="txt"><span class="kick">UNDER THE HOOD</span><h1>A <span class="glow">scaffold</span>,<br>not a harness</h1></div>
-  <ul class="tk-notes"><li class="sc"><b>the scaffold</b>woltspace: the girders every wolt stands on. A folder, a memory, a terminal, a site, IWCL. All driven by skills.</li>
-    <li class="hn"><b>the harness</b>What each wolt runs on: Claude Code, Codex, any model. Swap it, the scaffold stays.<span class="marks"></span></li></ul>
-  <div class="rig-box"><div class="rig"><svg class="girders" viewBox="0 0 1150 800"></svg><svg class="signs" viewBox="0 0 1150 800"></svg></div></div>
-  <p class="tk-tag">Bring your own agent. We just built the climbing frame.</p>
 </div></section>
 
 <section class="candidate tk" id="tmux"><div class="cv">
@@ -63,5 +64,5 @@
 
 </main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="../static/sprites.js"></script><script src="logos.js"></script><script src="slides.js?v=4"></script>
+<script src="../static/sprites.js"></script><script src="logos.js"></script><script src="slides.js?v=5"></script>
 </body></html>
