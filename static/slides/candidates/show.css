@@ -72,13 +72,14 @@
 /* Demo time: the plan in four steps, and the woltPhone it all lands on. */
 .demo .txt{width:900px}
 .demo .txt h1{font-size:130px;color:var(--amber);margin-bottom:0}
-.tk .plan{position:absolute;left:90px;top:290px;width:880px;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:20px}
-.tk .plan li{display:flex;align-items:center;gap:20px;padding:14px 20px;background:#fff8e6;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--terra);color:var(--ink)}
+.tk .plan{position:absolute;left:90px;top:285px;width:880px;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+.tk .plan li{display:flex;align-items:center;gap:20px;padding:10px 20px;background:#fff8e6;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--terra);color:var(--ink)}
 .tk .plan li>i{display:grid;place-items:center;width:56px;height:56px;flex:none;background:var(--terra);color:var(--cream);font:400 32px/1 var(--display);font-style:normal}
 .tk .plan span{display:flex;flex-direction:column;gap:6px}
 .tk .plan b{font:400 36px/1 var(--display)}
 .tk .plan small{font:500 20px/1.25 'JetBrains Mono',monospace;color:#5c4d3c}
-.demo .room{position:absolute;left:90px;top:790px;padding:10px 22px 10px 10px}
+.tk .plan em.local{display:inline-block;align-self:flex-start;margin-top:4px;padding:3px 10px;background:var(--ink);color:var(--amber);font:700 17px 'JetBrains Mono',monospace;font-style:normal;height:auto;opacity:1;width:auto}
+.demo .room{position:absolute;left:90px;top:830px;padding:10px 22px 10px 10px}
 .demo .room .qr img,.demo .room .qr canvas{width:120px!important;height:120px!important}
 .demo .phone{position:absolute;left:1090px;top:50px;width:400px;margin:0;background:none!important;border:0!important;padding:0!important}
 .demo .phone figcaption{background:none!important;padding:0!important;border:0!important;text-align:center;color:var(--amber);font:400 30px/1 var(--display);margin-bottom:16px;animation:press 1.4s steps(1) infinite}
