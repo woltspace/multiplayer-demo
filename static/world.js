@@ -12,7 +12,7 @@ const SLOTS = ["host", "p1", "p2"];
 const fit = () => document.getElementById("stage").style.setProperty("--s", Math.min(innerWidth / 1920, innerHeight / 1080));
 addEventListener("resize", fit); fit();
 
-const ROOM = new URL("play", location.href), SHORT = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
+const ROOM = new URL("./", location.href), SHORT = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
 document.getElementById("jurl").textContent = SHORT;
 if (window.QRCode) {
   new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});

@@ -8,7 +8,7 @@ const fit = () => document.getElementById("stage").style.setProperty("--s", Math
 addEventListener("resize", fit); fit();
 document.getElementById("logo").innerHTML = woltSpriteAvatar("beaver", 52);
 // The public room: the short link and its QR, for everyone in the audience.
-const ROOM = new URL("play", location.href);
+const ROOM = new URL("./", location.href);
 document.getElementById("jurl").textContent = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
 if (window.QRCode) new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});
 document.getElementById("clogo").innerHTML = woltSpriteAvatar("beaver", 120);

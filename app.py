@@ -1059,20 +1059,15 @@ def vote(v: Vote, request: Request):
 
 
 @app.get("/")
-def home(request: Request):
-    """The host's homepage: the big screen, read-only, no key in the URL (safe to project). Through Cloudflare only
-    the owner's Access login gets it (the root is owner-only; the email header proves who). Everyone else: /play."""
-    if not owner_session(request):
-        return RedirectResponse("play")
-    return FileResponse(HERE / "static" / "world.html")
+def room_page():
+    """The one public link: the game, live, full screen on the phone, playable (the QR on the big screen).
+    Side-by-side mode: the room page (chat + the build). The big screen is /world (owner)."""
+    return FileResponse(HERE / "static" / ("stage.html" if WORLD else "room.html"))
 
 
 @app.get("/play")
-def room_page():
-    """What the audience opens (the QR on the big screen). Shared world: just the game, full screen on the phone,
-    built live before their eyes, playable (the chat lives on the big screen; /chat still exists, unlinked).
-    Side-by-side mode: the room page (chat + the build)."""
-    return FileResponse(HERE / "static" / ("stage.html" if WORLD else "room.html"))
+def play_redirect():
+    return RedirectResponse("./")
 
 
 @app.get("/chat")

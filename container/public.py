@@ -1,7 +1,7 @@
 """The show's public address on Cloudflare, gated by default, public only while you say so.
 
     uv run container/public.py setup    # once: owner-only Access apps first, then DNS + the tunnel route
-    uv run container/public.py on       # open /play, the seats and the slides to everyone (Access bypass)
+    uv run container/public.py on       # open the game (/) and the seats to everyone (Access bypass)
     uv run container/public.py off      # back to owner-only (deletes that one bypass policy)
     uv run container/public.py status
     uv run container/public.py down     # remove the route, the DNS record and the Access apps
@@ -33,12 +33,12 @@ TUNNEL = os.environ.get("SHOW_TUNNEL", "woltspace-lodge")
 OWNER = os.environ.get("SHOW_OWNER_EMAIL", "")
 ENV = Path(os.environ.get("WOLTSPACE_ENV", Path.home() / ".woltspace/wolts/.env"))
 BACKUPS = Path(__file__).parent / ".cf-backups"
-ROOT_APP, BACKSTAGE_APP, PUBLIC_APP = f"lodge-show {HOST}", f"lodge-show {HOST} backstage", f"lodge-show {HOST} public"
+ROOT_APP, BACKSTAGE_APP = f"lodge-show {HOST}", f"lodge-show {HOST} backstage"
+OLD_APPS = [f"lodge-show {HOST} public"]  # earlier layouts: setup removes them
 PUBLIC_POLICY = "public-now"
-# Owner-only always: the root (the homepage is the big screen), backstage and what they read or change.
-BACKSTAGE = ["admin", "world", "crowd", "lanes", "api/admin", "api/crowd", "api/mock"]
-# What "on" opens to everyone: the audience's game, the seats, the slides and what they need. Owner-only when off.
-PUBLIC = ["play", "p", "api/p", "api/room", "api/vote", "api/parts", "stage", "static", "live", "slides", "chat"]
+# Owner-only always (more specific than the root, so "on" never opens them): backstage, the big screen, the slides
+# and what they read or change. "on" opens the rest: the game at / (the one public link) and the seats' pages.
+BACKSTAGE = ["admin", "world", "crowd", "lanes", "slides", "chat", "api/admin", "api/crowd", "api/mock"]
 
 
 def env(name):
@@ -126,13 +126,18 @@ def setup():
     tid = tunnel_id()
     # The lock first: nothing is reachable before both Access apps stand.
     ensure_app(ROOT_APP, [HOST])
-    ensure_app(BACKSTAGE_APP, [f"{HOST}/{p}" for p in BACKSTAGE])
-    ensure_app(PUBLIC_APP, [f"{HOST}/{p}" for p in PUBLIC])
+    back = ensure_app(BACKSTAGE_APP, [f"{HOST}/{p}" for p in BACKSTAGE])
+    want = sorted(f"{HOST}/{p}" for p in BACKSTAGE)
+    if sorted(back.get("self_hosted_domains") or []) != want:  # the list changed since the app was made
+        cf("PUT", acct(f"/access/apps/{back['id']}"), {"name": BACKSTAGE_APP, "type": "self_hosted", "domain": want[0],
+           "self_hosted_domains": want, "session_duration": "24h", "app_launcher_visible": False})
+        print(f"  Access app '{BACKSTAGE_APP}': paths updated ({len(want)})")
     apps = access_apps()
-    assert ROOT_APP in apps and BACKSTAGE_APP in apps and PUBLIC_APP in apps
-    for p in apps[ROOT_APP].get("policies", []):  # the root opens no more (older setup put the switch there)
-        if p["name"] == PUBLIC_POLICY:
-            cf("DELETE", acct(f"/access/apps/{apps[ROOT_APP]['id']}/policies/{p['id']}"))
+    assert ROOT_APP in apps and BACKSTAGE_APP in apps
+    for name in OLD_APPS:
+        if name in apps:
+            cf("DELETE", acct(f"/access/apps/{apps[name]['id']}"))
+            print(f"  removed old Access app '{name}'")
     zid = zone_id()
     if not cf("GET", f"/zones/{zid}/dns_records?name={HOST}"):
         cf("POST", f"/zones/{zid}/dns_records", {"type": "CNAME", "name": HOST, "content": f"{tid}.cfargotunnel.com",
@@ -148,7 +153,7 @@ def setup():
 
 
 def on():
-    a = access_apps().get(PUBLIC_APP) or sys.exit("Run setup first")
+    a = access_apps().get(ROOT_APP) or sys.exit("Run setup first")
     if not any(p["name"] == PUBLIC_POLICY for p in a.get("policies", [])):
         cf("POST", acct(f"/access/apps/{a['id']}/policies"),
            {"name": PUBLIC_POLICY, "decision": "bypass", "include": [{"everyone": {}}], "precedence": 2})
@@ -156,7 +161,7 @@ def on():
 
 
 def off():
-    a = access_apps().get(PUBLIC_APP) or sys.exit("Run setup first")
+    a = access_apps().get(ROOT_APP) or sys.exit("Run setup first")
     for p in a.get("policies", []):
         if p["name"] == PUBLIC_POLICY:
             cf("DELETE", acct(f"/access/apps/{a['id']}/policies/{p['id']}"))
@@ -165,13 +170,13 @@ def off():
 
 def state():
     apps = access_apps()
-    root, back, pub = apps.get(ROOT_APP), apps.get(BACKSTAGE_APP), apps.get(PUBLIC_APP)
+    root, back = apps.get(ROOT_APP), apps.get(BACKSTAGE_APP)
     tid = tunnel_id()
     routed = any(r.get("hostname") == HOST for r in get_ingress(tid)["ingress"])
-    public = bool(pub) and any(p["name"] == PUBLIC_POLICY for p in pub.get("policies", []))
-    root_open = bool(root) and any(p["name"] == PUBLIC_POLICY for p in root.get("policies", []))
-    return {"host": HOST, "routed": routed, "gated": bool(root and pub) and not root_open,
-            "backstage_gated": bool(back), "public": public}
+    public = bool(root) and any(p["name"] == PUBLIC_POLICY for p in root.get("policies", []))
+    back_open = bool(back) and any(p["name"] == PUBLIC_POLICY for p in back.get("policies", []))
+    return {"host": HOST, "routed": routed, "gated": bool(root), "backstage_gated": bool(back) and not back_open,
+            "public": public}
 
 
 def status():
@@ -230,7 +235,7 @@ def down():
     for r in cf("GET", f"/zones/{zid}/dns_records?name={HOST}"):
         cf("DELETE", f"/zones/{zid}/dns_records/{r['id']}")
     apps = access_apps()  # the address goes first, the lock last
-    for name in (ROOT_APP, BACKSTAGE_APP, PUBLIC_APP):
+    for name in (ROOT_APP, BACKSTAGE_APP, *OLD_APPS):
         if name in apps:
             cf("DELETE", acct(f"/access/apps/{apps[name]['id']}"))
     status()
