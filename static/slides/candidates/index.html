@@ -3,7 +3,7 @@
 <!-- The Lodge Show deck: the talk's slide template (the Book of Wolt), new content. One <section id> per slide,
      listed in ../release-manifest.json. /slides opens it; the big screen's board shows it in a frame. -->
 <link rel="preload" href="../static/fonts/Preahvihear.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="../static/fonts/JetBrainsMono.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../static/fonts/fonts.css"><link rel="stylesheet" href="candidates.css"><link rel="stylesheet" href="candidates-more.css"><link rel="stylesheet" href="../polish.css">
-<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=16">
+<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=18">
 <script src="../presenter-keys.js" defer></script><script src="../book-nav.js" defer></script>
 </head><body><main>
 
@@ -51,14 +51,21 @@
 </div></section>
 
 <section class="candidate tk open" id="open"><div class="cv">
-  <div class="txt"><span class="kick">THE FUTURE OF OPEN SOURCE</span><h1>Sharing ideas, not just code</h1><p>Ideas incarnated in coding agents.</p></div>
-  <div class="of-then"><small>OPEN SOURCE, SO FAR</small><code>&lt;/&gt;</code><b>share code</b></div>
-  <div class="of-arrow" aria-hidden="true">→</div>
-  <div class="of-now"><small>OPEN SOURCE, NEXT</small>
-    <div class="of-team"><span data-wolt="raccoon"></span><span data-wolt="beaver"></span><span data-wolt="raccoon"></span></div>
-    <b>share ideas, incarnated in coding agents</b></div>
-  <ul class="of-goals"><li>reproducible agent setups</li><li>new discoveries</li><li>access to knowledge and tools, for everyone</li></ul>
-  <p class="of-badge">Woltspace is entirely open source.</p>
+  <div class="txt"><span class="kick">WHERE IS THIS GOING</span><h1>Across trusted boundaries</h1>
+    <p>Lodges pool their wolts on shared tasks: a task board run by a trusted lodge, compute from every lodge that joins.</p></div>
+  <svg class="bmap" viewBox="0 0 900 560" role="img" aria-label="A trusted lodge hosts a task board and a Woodipedia. Lodges it admits bring their wolts and compute: jerpint's lodge, a research lab, an open source project, a company team. An unknown lodge is not admitted.">
+    <g class="links"><line x1="450" y1="280" x2="140" y2="90"/><line x1="450" y1="280" x2="760" y2="90"/><line x1="450" y1="280" x2="140" y2="470"/><line x1="450" y1="280" x2="760" y2="470"/></g>
+    <g class="blocked"><line x1="610" y1="280" x2="700" y2="280"/><text x="655" y="270">✕</text></g>
+    <g class="node" transform="translate(140 90)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🦫</text><text class="nm" x="-92" y="7">jerpint's lodge</text></g>
+    <g class="node" transform="translate(760 90)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🔬</text><text class="nm" x="-92" y="7">a research lab</text></g>
+    <g class="node" transform="translate(140 470)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🌲</text><text class="nm" x="-92" y="7">open source project</text></g>
+    <g class="node" transform="translate(760 470)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🏢</text><text class="nm" x="-92" y="7">a company team</text></g>
+    <g class="node out" transform="translate(800 280)"><rect x="-90" y="-30" width="180" height="60"/><text class="nm" x="0" y="6" text-anchor="middle">unknown lodge</text></g>
+    <g class="hub" transform="translate(450 280)"><rect class="sh" x="-152" y="-84" width="320" height="184"/><rect x="-160" y="-92" width="320" height="184"/><text class="ht" x="0" y="-52" text-anchor="middle">A TRUSTED LODGE</text>
+      <g class="pill"><rect x="-140" y="-30" width="134" height="40"/><text x="-73" y="-4" text-anchor="middle">task board</text></g><g class="pill"><rect x="6" y="-30" width="134" height="40"/><text x="73" y="-4" text-anchor="middle">Woodipedia</text></g>
+      <text class="hn" x="0" y="52" text-anchor="middle">hands out the tasks,</text><text class="hn" x="0" y="74" text-anchor="middle">decides who can join</text></g>
+  </svg>
+  <ul class="buses"><li>open source projects</li><li>open science</li><li>opening silos</li></ul>
 </div></section>
 
 <section class="candidate tk" id="thanks"><div class="cv">

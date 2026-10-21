@@ -108,23 +108,22 @@
 .rig .badge svg{width:24px;height:24px;fill:var(--fg)}
 .tk-tag{position:absolute;left:700px;top:820px;width:820px;margin:0;color:var(--cream);font:400 36px/1.15 var(--display);text-align:center}
 
-/* Open source, next: the talk's slide ("Sharing ideas, not just code"), on this deck's canvas. */
-.tk.open{background:linear-gradient(#1f2638,#10131c)}
-.open .txt{width:1420px}.open .txt h1{font-size:88px;white-space:nowrap}
-.of-team{display:flex;gap:14px}.of-team svg{width:90px;height:auto;image-rendering:pixelated}
-.of-then,.of-now{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;border:5px solid var(--ink);color:var(--ink)}
-.of-then{left:90px;top:400px;width:330px;height:300px;background:#d9d2c3;box-shadow:8px 8px 0 #0c0805}
-.of-now{left:540px;top:380px;width:640px;height:360px;background:#fff8e6;box-shadow:12px 12px 0 var(--terra)}
-.of-then small,.of-now small{color:var(--terra);font:700 18px 'JetBrains Mono',monospace;letter-spacing:.14em}
-.of-then code{font:700 70px 'JetBrains Mono',monospace;color:#5c4d3c}
-.of-then b,.of-now b{font:400 38px/1.15 var(--display);padding:0 24px}
-.of-arrow{position:absolute;left:440px;top:500px;font:700 70px 'JetBrains Mono',monospace;color:var(--amber)}
-.of-goals{position:absolute;left:1230px;top:380px;width:290px;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:18px}
-.of-goals li{padding:14px 18px;background:#0c0805;border:3px solid var(--amber);color:#9fe0a0;font:600 21px/1.35 'JetBrains Mono',monospace}
-.of-badge{position:absolute;left:90px;top:850px;margin:0;font:400 56px var(--display);color:var(--cream);text-shadow:4px 4px var(--ink)}
-@media (max-width:760px){
-  .open .txt h1{font-size:40px}.of-then,.of-now{height:auto;padding:16px 8px;box-shadow:6px 6px 0 var(--terra)}.of-arrow{display:none}
-  .of-then code{font-size:36px}.of-then b,.of-now b{font-size:22px}  }
+/* Where is this going: the talk's "Across trusted boundaries", about pooling wolts and compute. */
+.tk.open{background:linear-gradient(#1f2a33,#10161c)}
+.open .txt{width:560px;top:100px}.open .txt h1{font-size:80px}.open .txt p{font-size:27px}
+.bmap{position:absolute;left:620px;top:200px;width:920px;height:573px;overflow:visible}
+.bmap .links line{stroke:var(--amber);stroke-width:4;stroke-dasharray:12 10;animation:flow 1.1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-22}}
+.bmap .blocked line{stroke:#e04a3a;stroke-width:4;stroke-dasharray:8 8}.bmap .blocked text{fill:#e04a3a;font:700 26px sans-serif;text-anchor:middle}
+.bmap .node rect{fill:#fff8e6;stroke:#0c0805;stroke-width:4}.bmap .node .em{font-size:24px}.bmap .node .nm{font:500 18px 'JetBrains Mono',monospace;fill:#18100a}
+.bmap .node.out rect{fill:#2a3540;stroke:#6b7885;stroke-dasharray:8 6}.bmap .node.out .nm{fill:#aeb8c2}
+.bmap .hub rect{fill:#f3eee6;stroke:#0c0805;stroke-width:5}.bmap .hub rect.sh{fill:var(--terra);stroke:none}
+.bmap .ht{font:700 22px 'JetBrains Mono',monospace;fill:var(--terra);letter-spacing:3px}
+.bmap .pill rect{fill:var(--amber);stroke:#0c0805;stroke-width:3}.bmap .pill text{font:700 17px 'JetBrains Mono',monospace;fill:#18100a}
+.bmap .hn{font:500 17px 'JetBrains Mono',monospace;fill:#5c4d3c}
+.buses{position:absolute;left:90px;top:640px;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:20px}
+.buses li{width:340px;padding:12px 22px;background:#fff8e6;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--terra);color:var(--ink);font:500 25px 'JetBrains Mono',monospace}
+@media (max-width:760px){.open .txt h1{font-size:40px}.open .txt p{font-size:15px}.bmap{height:auto!important;aspect-ratio:900/560}.buses li{width:auto;font-size:15px;box-shadow:5px 5px 0 var(--terra)}}
 
 /* Thank you. */
 #thanks .txt{width:900px}
