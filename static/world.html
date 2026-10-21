@@ -80,6 +80,11 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .start .go{font:400 30px Pixel;color:#fff;animation:pressstart 1.1s steps(1) infinite}
 .start .url{font:400 30px VT;color:#ffca4e;margin-top:10px}
 @keyframes pressstart{50%{opacity:0}}
+/* the corner: the one public link, for the crowd's phones */
+.curtain .watch{position:absolute;right:40px;bottom:36px;display:flex;align-items:center;gap:20px;text-align:left}
+.curtain .watch #bqr{background:#fff;padding:8px;line-height:0;box-shadow:6px 6px 0 #c4531e}
+.curtain .watch b{display:block;font:400 18px Pixel;color:#fff;margin-bottom:10px}
+.curtain .watch span{font:400 30px VT;color:#ffca4e}
 /* the arcade's PRESS START: one big button, blinking */
 .start .startb{margin-top:60px;font:400 clamp(28px,3vw,48px) Pixel;color:#fff;background:transparent;border:0;padding:18px 30px;cursor:pointer;text-shadow:4px 4px 0 #c4531e;animation:pressstart 1.1s steps(1) infinite}
 .start .startb:hover{color:#ffca4e;animation:none}.start .startb:disabled{animation:none;opacity:.6}
@@ -112,7 +117,8 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
   </div>
   <div class="curtain" id="curtain" hidden><div class="start"><div class="k">★ LODGE SHOW ★</div><h2 id="btitle">Dam Builders</h2>
     <div class="sub" id="bsub">3 humans · 3 wolts · 1 game</div>
-    <button class="startb" id="bstart">▶ START THE GAME</button></div></div>
+    <button class="startb" id="bstart">▶ START THE GAME</button></div>
+    <div class="watch"><div id="bqr"></div><div><b>watch it on your phone</b><span id="burl"></span></div></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>

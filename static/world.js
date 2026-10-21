@@ -120,6 +120,8 @@ document.getElementById("turns").addEventListener("click", async (e) => {
 
 // The board (while the show isn't live): the game's start screen, PRESS START style. The slides are their own
 // deck at /slides, in their own window.
+document.getElementById("burl").textContent = SHORT;
+if (window.QRCode) new QRCode(document.getElementById("bqr"), {text: ROOM.href, width: 170, height: 170, correctLevel: QRCode.CorrectLevel.M});
 function drawBoard(shipped) {
   document.getElementById("bsub").textContent = shipped ? "built live by 3 humans · 3 wolts" : "3 humans · 3 wolts · 1 game";
 }
