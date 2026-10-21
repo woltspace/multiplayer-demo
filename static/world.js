@@ -70,6 +70,8 @@ function term(sid) {
 function render() {
   document.getElementById("curtain").hidden = (state.phase || "live") === "live";
   drawBoard(state.events.some((e) => e.type === "ship"));
+  const sb = document.getElementById("bstart"); sb.disabled = false;
+  sb.textContent = state.game_at ? "▶ Back to the game" : "▶ Start the game";
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
@@ -104,7 +106,12 @@ for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
   e.preventDefault();
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
 });
-// One control here, during the game: ⏭ skip the current turn (this page is owner-only; the rest is in backstage).
+// The game's controls live here (this page is owner-only): ▶ start the game on the board (it also brings the board
+// down; after a pause, back to the game), and ⏭ skip the current turn in the turn bar. Setup is in backstage.
+document.getElementById("bstart").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true; b.textContent = "starting…";
+  await fetch(state && state.game_at ? "api/admin/phase/live" : "api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+});
 document.getElementById("turns").addEventListener("click", async (e) => {
   const b = e.target.closest("#skip"); if (!b) return;
   b.disabled = true; b.textContent = "skipping…";

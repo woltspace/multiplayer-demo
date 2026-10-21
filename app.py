@@ -206,6 +206,8 @@ def start_game(by: str) -> bool:
         wolts = [x["wolt"]["name"] for k, x in slots.items() if k != "host" and x["wolt"]]
         host = slots["host"]["wolt"]
     record({"type": "game", "by": by})
+    if phase != "live":
+        set_phase("live")  # one press: the board comes down as the game starts
     _room["body"] = None
     if MODE == "lodge" and host and host.get("session"):
         who = ", ".join(wolts) or "the players' wolts (none has joined yet: send it to each one as it joins)"

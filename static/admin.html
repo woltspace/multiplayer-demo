@@ -69,6 +69,7 @@ function phase(p) {
   const el = document.getElementById("ph"); el.textContent = PH[p] || p; el.className = "ph " + p;
   document.getElementById("start").textContent = p === "paused" ? "▶ Back to the show" : "▶ Start the show";
   document.getElementById("start").disabled = p === "live"; document.getElementById("stop").disabled = p !== "live";
+  document.getElementById("start").hidden = p !== "paused";  // "Start the game" also brings the board down
 }
 function game(on) {
   const g = document.getElementById("game"); g.disabled = !!on; g.textContent = on ? "⚡ game on (players can type)" : "⚡ Start the game";
