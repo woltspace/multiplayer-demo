@@ -69,9 +69,16 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .term.empty{align-items:center;justify-content:center;gap:10px;background:transparent;box-shadow:none;border:4px dashed color-mix(in srgb,var(--m) 60%,#000)}
 .term.empty .big{font:400 20px Pixel;color:var(--m);animation:breathe 3s ease-in-out infinite;text-align:center;line-height:1.6}
 .term.empty span{font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:2px}
-/* the explainer deck on the board: the /slides deck in a frame (clicks land on the curtain, not the frame) */
-#deckf{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none}
-.dnav{position:absolute;bottom:24px;right:34px;font:400 24px VT;color:#6a5a50;letter-spacing:2px}
+/* the board: the game's start screen (the slides are their own deck, /slides) */
+.start{display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center}
+.start .k{font:400 22px Pixel;color:var(--amber,#ffca4e);letter-spacing:4px}
+.start h2{margin:0;font:400 clamp(60px,9vw,150px)/1 Pixel;color:#ff8a3d;text-shadow:6px 6px 0 #4a1a08}
+.start .sub{font:400 34px VT;color:#e8dccb;letter-spacing:2px}
+.start .scan{display:flex;align-items:center;gap:28px;margin-top:20px}
+.start #bqr{background:#fff;padding:10px;line-height:0;box-shadow:8px 8px 0 #c4531e}
+.start .go{font:400 30px Pixel;color:#fff;animation:pressstart 1.1s steps(1) infinite}
+.start .url{font:400 30px VT;color:#ffca4e;margin-top:10px}
+@keyframes pressstart{50%{opacity:0}}
 /* the placeholder board (cards in static/board.js), after a reset and on "Show the board" */
 .curtain{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#2a1420 0,#0b0710 75%)}
 .curtain[hidden]{display:none}
@@ -99,7 +106,9 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
       <div class="phone"><div class="screen"><iframe sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1"></iframe></div><div class="brand"><span id="wbv"></span><span><b>w</b>Phone</span></div></div></div>
     <div class="terms" id="terms"></div>
   </div>
-  <div class="curtain" id="curtain" hidden><iframe id="deckf" src="static/slides/candidates/index.html?board=1#hello" title="The slides" tabindex="-1"></iframe><div class="dnav" id="dnav"></div></div>
+  <div class="curtain" id="curtain" hidden><div class="start"><div class="k">★ LODGE SHOW ★</div><h2 id="btitle">Dam Builders</h2>
+    <div class="sub" id="bsub">3 humans · 3 wolts · 1 game</div>
+    <div class="scan"><div id="bqr"></div><div><div class="go" id="bgo">SCAN TO PLAY</div><div class="url" id="burl"></div></div></div></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>

@@ -69,8 +69,7 @@ function term(sid) {
 
 function render() {
   document.getElementById("curtain").hidden = (state.phase || "live") === "live";
-  const want = state.events.some((e) => e.type === "ship") ? "after" : "before";
-  if (want !== setNow) { setNow = want; slide = 0; drawSlide(); }
+  drawBoard(state.events.some((e) => e.type === "ship"));
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
@@ -111,25 +110,11 @@ addEventListener("keydown", async (e) => {
   await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
 });
 
-// The explainer deck on the board: the same slides as /slides (static/slides/, one manifest), in a frame.
-// ← → or click to move while the board is up. Slides before the game, slides after it ships: the board shows
-// whichever set applies right now.
-let slide = 0, setNow = "before", DECK = [];
-const deckFrame = document.getElementById("deckf");
-const slides = () => DECK.filter((d) => (d.when || "before") === setNow);
-function drawSlide() {
-  const all = slides(); if (!all.length) return;
-  slide = Math.max(0, Math.min(all.length - 1, slide));
-  try { deckFrame.contentWindow.location.hash = all[slide].id; } catch {}
-  document.getElementById("dnav").textContent = `${setNow} · ${slide + 1} / ${all.length}  ·  ← →`;
+// The board (while the show isn't live): the game's start screen, a big QR to /play. The slides are their own
+// deck at /slides, in their own window.
+document.getElementById("burl").textContent = SHORT;
+if (window.QRCode) new QRCode(document.getElementById("bqr"), {text: ROOM.href, width: 260, height: 260, correctLevel: QRCode.CorrectLevel.M});
+function drawBoard(shipped) {
+  document.getElementById("bgo").textContent = shipped ? "▶ PLAY IT NOW" : "SCAN TO PLAY";
+  document.getElementById("bsub").textContent = shipped ? "built live by 3 humans · 3 wolts" : "3 humans · 3 wolts · 1 game";
 }
-fetch("static/slides/release-manifest.json", {cache: "no-store"}).then((r) => r.json()).then((m) => { DECK = m.chapters; drawSlide(); }).catch(() => {});
-deckFrame.addEventListener("load", drawSlide);
-const deckUp = () => !document.getElementById("curtain").hidden;
-const go = (n) => { slide = n; drawSlide(); };
-addEventListener("keydown", (e) => {
-  if (!deckUp()) return;
-  if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.stopImmediatePropagation(); go(slide + 1); }
-  if (["ArrowLeft", "PageUp"].includes(e.key)) { e.stopImmediatePropagation(); go(slide - 1); }
-}, true);
-document.getElementById("curtain").addEventListener("click", (e) => go(slide + (e.clientX > innerWidth / 3 ? 1 : -1)));
