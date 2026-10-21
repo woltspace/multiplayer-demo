@@ -17,6 +17,7 @@
 set -eu
 cd "$(dirname "$0")/.."
 REPO="$PWD"
+[ -f container/.env ] && { set -a; . container/.env; set +a; }  # local settings (gitignored), same as show-on.sh
 V="${SHOW_WOLTSPACE_VERSION:-0.5.21}"
 NAME="${SHOW_NAME:-show-lodge}"
 PORT="${SHOW_LODGE_PORT:-47991}"
@@ -44,12 +45,16 @@ fi
 
 say "data folder: $DATA"
 mkdir -p "$DATA/wolts/apps"
-if [ ! -d "$DATA/wolts/apps/lodge-show/.git" ]; then
-  git clone -q --branch "$(git branch --show-current)" "$REPO" "$DATA/wolts/apps/lodge-show"
-else
-  git -C "$DATA/wolts/apps/lodge-show" pull -q --ff-only
+APPDIR="$DATA/wolts/apps/lodge-show"; BRANCH="$(git branch --show-current)"
+if [ ! -d "$APPDIR/.git" ]; then
+  git clone -q --branch "$BRANCH" "$REPO" "$APPDIR"
+else  # the show's copy is a deploy copy: it follows this repo's branch exactly (its data/ and .env are untracked)
+  git -C "$APPDIR" fetch -q "$REPO" "$BRANCH" && git -C "$APPDIR" checkout -q -f --detach FETCH_HEAD
 fi
-printf 'SHOW_HOST_PLAYER=%s\nSHOW_BIND=0.0.0.0\nSHOW_OWNER_EMAIL=%s\n' "${SHOW_HOST_PLAYER:-jerpint}" "${SHOW_OWNER_EMAIL:-}" > "$DATA/wolts/apps/lodge-show/.env"
+# Keep the owner email the copy already has when none is given (without it, your login stops opening backstage).
+[ -n "${SHOW_OWNER_EMAIL:-}" ] || SHOW_OWNER_EMAIL=$(sed -n 's/^SHOW_OWNER_EMAIL=//p' "$APPDIR/.env" 2>/dev/null || true)
+[ -n "${SHOW_OWNER_EMAIL:-}" ] || echo "⚠️  no SHOW_OWNER_EMAIL: backstage and the big screen will need ?k=<admin key> through the tunnel" >&2
+printf 'SHOW_HOST_PLAYER=%s\nSHOW_BIND=0.0.0.0\nSHOW_OWNER_EMAIL=%s\n' "${SHOW_HOST_PLAYER:-jerpint}" "${SHOW_OWNER_EMAIL:-}" > "$APPDIR/.env"
 [ -f "$DATA/wolts/woltspace.json" ] || printf '{\n  "claude": {"default_wolt": "hostie"}\n}\n' > "$DATA/wolts/woltspace.json"
 
 say "starting container $NAME (woltspace $V, lodge on 127.0.0.1:$PORT, app alone on 127.0.0.1:$APP_PORT, no public tunnel)"

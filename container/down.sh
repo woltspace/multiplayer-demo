@@ -4,6 +4,7 @@
 #   container/down.sh --wipe     # also delete the data folder (SHOW_DATA, default ./show-data)
 set -eu
 cd "$(dirname "$0")/.."
+[ -f container/.env ] && { set -a; . container/.env; set +a; }
 NAME="${SHOW_NAME:-show-lodge}"
 DATA="${SHOW_DATA:-$PWD/show-data}"
 docker rm -f "$NAME" >/dev/null 2>&1 && echo "removed container $NAME" || echo "no container named $NAME"
