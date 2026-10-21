@@ -22,7 +22,7 @@ document.querySelectorAll('[data-wolt]').forEach(el => { el.innerHTML = woltSpri
 document.querySelectorAll('[data-logo]').forEach(el => { el.innerHTML = `<svg viewBox="0 0 24 24"><path d="${LOGOS[el.dataset.logo]}"/></svg>`; });
 
 // QR codes: data-qr="room" is the show's own page (the app root, three levels up from here), else a URL.
-const ROOM = new URL('../../../', location.href);
+const ROOM = new URL('../../../play', location.href);
 document.querySelectorAll('.room-url').forEach(el => { el.textContent = (ROOM.host + ROOM.pathname).replace(/\/$/, ''); });
 document.querySelectorAll('[data-qr]').forEach(el => {
   const url = el.dataset.qr === 'room' ? ROOM.href : el.dataset.qr;

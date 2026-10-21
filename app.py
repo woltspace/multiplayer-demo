@@ -61,6 +61,7 @@ def engine_for(sid: str) -> tuple[str, str]:
 HOST = os.environ.get("SHOW_HOST_WOLT", "hostie")
 TITLE = os.environ.get("SHOW_TITLE", "Dam Builders")  # the game's name for the show, whatever gets built
 HOST_PLAYER_DEFAULT = os.environ.get("SHOW_HOST_PLAYER", "jerpint")
+OWNER_EMAIL = os.environ.get("SHOW_OWNER_EMAIL", "")  # their Cloudflare Access login
 # Who plays the host slot. Dry runs reset the show with an honest tester name (never jerpint's); a plain Reset goes back
 # to the default. Kept in data/ so an app restart doesn't rename the host mid-show.
 _host_file = DATA / "host_player.txt"
@@ -543,6 +544,19 @@ def admin(request: Request) -> None:
         raise HTTPException(403, "admin only")
 
 
+def owner_session(request: Request) -> bool:
+    """On the Mac (not through the tunnel), or through Cloudflare with the owner's Access login (the email header)."""
+    if not request.headers.get("cf-connecting-ip"):
+        return True
+    return request.headers.get("cf-access-authenticated-user-email", "").lower() == OWNER_EMAIL.lower()
+
+
+def viewer(request: Request) -> None:
+    """Read-only views (the big screen): the owner's login is enough, no key in the URL to show the crowd."""
+    if not owner_session(request):
+        admin(request)
+
+
 def slot_for(token: str) -> tuple[str, dict]:
     for sid, s in slots.items():
         if secrets.compare_digest(s["token"], token):
@@ -954,7 +968,7 @@ def stage_page():
 
 @app.get("/api/crowd")
 def crowd(request: Request, after: int = 0):
-    admin(request)
+    viewer(request)
     if MODE == "replay":
         t = mock_t(request)
         return JSONResponse({"events": driver.events(t), "terms": driver.terms(t), "typing": [], "busy": driver.busy(t),
@@ -1045,6 +1059,15 @@ def vote(v: Vote, request: Request):
 
 
 @app.get("/")
+def home(request: Request):
+    """The host's homepage: the big screen, read-only, no key in the URL (safe to project). Through Cloudflare only
+    the owner's Access login gets it (the root is owner-only; the email header proves who). Everyone else: /play."""
+    if not owner_session(request):
+        return RedirectResponse("play")
+    return FileResponse(HERE / "static" / "world.html")
+
+
+@app.get("/play")
 def room_page():
     """What the audience opens (the QR on the big screen). Shared world: just the game, full screen on the phone,
     built live before their eyes, playable (the chat lives on the big screen; /chat still exists, unlinked).
@@ -1184,8 +1207,9 @@ def mock_start(request: Request):
 
 @app.get("/world")
 def world_page(request: Request):
-    """The big screen for the shared world: #lodge chat, the woltPhone, three terminals, turns, the clock."""
-    admin(request)
+    """The big screen for the shared world: #lodge chat, the woltPhone, three terminals, turns, the clock.
+    With ?k= its keyboard shortcuts work (Shift+G starts the game); without, it's read-only (the homepage)."""
+    viewer(request)
     return FileResponse(HERE / "static" / "world.html")
 
 

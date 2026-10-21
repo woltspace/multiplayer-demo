@@ -47,7 +47,7 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
 <script>
 const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));  // player and wolt names are typed by players
 const KEY = new URLSearchParams(location.search).get("k") || "", H = {"X-Admin-Key": KEY};
-document.getElementById("world").href = "world?k=" + encodeURIComponent(KEY);
+document.getElementById("world").href = "./";  // the homepage: the big screen, read-only, no key (safe to project)
 async function load() {
   const d = await (await fetch("api/admin", {headers: H, cache: "no-store"})).json();
   phase(d.phase); game(d.game);
@@ -112,7 +112,7 @@ document.getElementById("pubon").onclick = () => {
 document.getElementById("puboff").onclick = () => pub("/off", "closing…");
 pub(); setInterval(pub, 20000);
 load(); setInterval(load, 3000);
-const room = new URL(".", location.href).href;
+const room = new URL("play", location.href).href;
 const ru = document.getElementById("room-url"); ru.innerHTML = ""; const ra = document.createElement("a"); ra.className = "url"; ra.href = room; ra.target = "_blank"; ra.rel = "noopener"; ra.textContent = room; ru.append(ra); document.getElementById("room-open").href = room;
 new QRCode(document.getElementById("room-qr"), {text: room, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});
 </script>

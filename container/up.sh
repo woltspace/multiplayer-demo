@@ -70,6 +70,6 @@ curl -sf -m 240 -X POST "$APP/api/admin/reset-all?k=$KEY" >/dev/null
 say "ready ✓
   backstage   $APP/admin?k=$KEY
   big screen  $APP/world?k=$KEY
-  room        $APP/
+  room        $APP/play
   app alone   http://127.0.0.1:$APP_PORT/ (point a tunnel here, see container/public.py)
   lodge       http://127.0.0.1:$PORT/"
