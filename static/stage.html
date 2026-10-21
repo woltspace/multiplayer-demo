@@ -91,7 +91,7 @@ html.phone .splash .hint{font:700 13px JB,monospace;color:#8a7a68}
 </style>
 <!-- The built-in controller: a d-pad and an A button, stuck to the bottom of every copy of the page. They send the
      same keys as a keyboard (arrows, space), so games only handle keys, and the big screen plays them too. -->
-<div class="lpad" id="lpad"><div class="dpad"><button data-k="ArrowUp" aria-label="up">▲</button><button data-k="ArrowLeft" aria-label="left">◀</button><button data-k="ArrowRight" aria-label="right">▶</button><button data-k="ArrowDown" aria-label="down">▼</button></div><button class="abtn" data-k=" " aria-label="A">A</button></div>
+<div class="lpad" id="lpad"><div class="dpad"><button data-k="ArrowUp" aria-label="up">▲</button><button data-k="ArrowLeft" aria-label="left">◀</button><button data-k="ArrowRight" aria-label="right">▶</button><button data-k="ArrowDown" aria-label="down">▼</button></div><button class="rbtn" id="rbtn" aria-label="Restart">↻</button><button class="abtn" data-k=" " aria-label="A">A</button></div>
 <style>
 /* The controller has its own strip below the content (never on top of it): the page scrolls above it. */
 html,body{height:100%}
@@ -105,6 +105,9 @@ html.phone #lscroll{overflow:hidden}
 .lpad [data-k=ArrowUp]{grid-column:2;grid-row:1}.lpad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.lpad [data-k=ArrowRight]{grid-column:3;grid-row:2}.lpad [data-k=ArrowDown]{grid-column:2;grid-row:2}
 .lpad .abtn{width:56px;height:56px;border-radius:50%;font:700 24px DMSans,sans-serif;background:#c4531e;color:#fff;box-shadow:0 4px 0 #000}
 .lpad .abtn.on{box-shadow:0 1px 0 #000}
+/* ↻ restart: a new round, for every section of the game (they all listen for the "restart" event). */
+.lpad .rbtn{width:52px;height:40px;border-radius:10px;font:700 22px DMSans,sans-serif;background:#fff8e6;color:#18100a}
+.lpad .rbtn.on{transform:translateY(3px);box-shadow:0 1px 0 #c4531e}
 .lchat{position:fixed;top:10px;right:10px;z-index:50;font:700 13px JB,monospace;color:#fff8e6;background:#18100a;border:2px solid #000;border-radius:999px;padding:6px 12px;text-decoration:none;box-shadow:2px 2px 0 #c4531e}
 </style>
 <script>
@@ -123,7 +126,9 @@ function fitScreen() {
   fit.style.zoom = need > have ? Math.max(0.4, have / need) : 1;
 }
 addEventListener("resize", fitScreen); setInterval(fitScreen, 1000);
-document.querySelectorAll("#lpad button").forEach((b) => {
+document.getElementById("rbtn").addEventListener("pointerdown", (e) => { e.preventDefault(); const b = e.currentTarget;
+  b.classList.add("on"); setTimeout(() => b.classList.remove("on"), 150); window.dispatchEvent(new CustomEvent("restart", {detail: {by: "controller"}})); });
+document.querySelectorAll("#lpad button[data-k]").forEach((b) => {
   const send = (type) => document.body.dispatchEvent(new KeyboardEvent(type, {key: b.dataset.k, code: b.dataset.k === " " ? "Space" : b.dataset.k, bubbles: true}));
   b.addEventListener("pointerdown", (e) => { e.preventDefault(); b.classList.add("on"); send("keydown"); });
   for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => { if (b.classList.contains("on")) { b.classList.remove("on"); send("keyup"); } });

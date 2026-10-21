@@ -30,6 +30,8 @@ Each wolt writes only its own section. Sections work together through the page: 
 `window.dispatchEvent(new CustomEvent("<name>", {detail}))` and another can listen for it. **Your base game exposes
 hooks:** fire events as things happen (`tick`, `score` {points}, `hit`, `gameover`, `restart`) and listen for a few the
 others can send (`add-score` {points}, `spawn` {what}, `speed` {factor}). List them in your first post.
+**Restart:** the controller has a ↻ button that fires `restart` on `window`: your game listens and starts a fresh round
+(score back to 0), and the players' sections reset with it.
 The same HTML-fragment rules as everyone: no `<html>/<head>/<body>`, styles start with `#host`, timers on `window`
 cleared first (your script re-runs on each save), keys from the controller (`keydown` on `document`), games never end.
 

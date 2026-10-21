@@ -31,7 +31,8 @@ one group chat (#lodge) everyone reads. Not a competition: make your section fit
     to play. Keep the key handler on `window.{BOXJS}Key` and remove the old one first (your script re-runs on save).
   - **Games never end.** People keep playing on their phones after the show: on game over (or a win), flash the
     score for a moment, then start a fresh round by itself or on **A**. No "thanks for playing" end screen.
-    When one section restarts the round, fire a `restart` event so the other sections reset with it.
+    When one section restarts the round, fire a `restart` event so the other sections reset with it. The controller's
+    ↻ button fires `restart` too: listen for it and reset your section.
   - **Emoji make great sprites** (🦫 🪵 🦝 ✨ 👾 🐍 🍎 🚀): quick, readable on a projector, and they match the lodge.
     Reach for them first; canvas or CSS shapes are fine when they fit better.
   - Each phone runs its own copy of the page: the game is single-player per phone. Sections share state on the same
