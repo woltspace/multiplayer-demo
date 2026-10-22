@@ -32,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -575,6 +576,9 @@ if MODE == "lodge":
 # ---------------------------------------------------------------- app
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+# The audience's phones poll the game every second through the laptop's upload: compressed, it's ~3x less (12 KB of
+# game HTML -> ~4 KB). No streaming responses here, so nothing to hold back.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.middleware("http")
