@@ -1274,6 +1274,8 @@ def reset_all(request: Request, host_player: str = ""):
                 driver.post(f"/sessions/{name}/stop", {})
             except Exception as e:
                 print(f"stop {name}: {e}")
+        if running:
+            time.sleep(3)  # let the stopped wolts finish exiting (Claude writes its config on the way out)
         import shutil
         # Only wolt folders go (a folder with wolt/ inside). Never apps/ (this app runs from there in the show
         # container), dot-folders (.space, .state, .codex), .env or the lodge's own settings.
@@ -1325,6 +1327,11 @@ def reset_all(request: Request, host_player: str = ""):
         feed = Feed(IWCL_LOG)
         feed.since = time.time()
         env = dict(os.environ, SHOW_LIVE=str(LIVE), SHOW_REPLY_CMD=REPLY_CMD, SHOW_HOST_PLAYER=HOST_PLAYER)
+        # A wolt still exiting can recreate its folder (just a .claude/) after it was moved aside: clear it.
+        stray = wolts / HOST
+        if stray.exists() and not (stray / "wolt").is_dir():
+            (wolts / ".trash").mkdir(exist_ok=True)
+            stray.rename(wolts / ".trash" / f"{HOST}-stray-{secrets.token_hex(2)}")
         out = subprocess.run([sys.executable, str(HERE / "setup_host.py"), "--lodge", LODGE, "--wolts", str(wolts),
                               "--name", HOST, "--model", MODEL], env=env, capture_output=True, text=True, timeout=180)
         if out.returncode != 0:
