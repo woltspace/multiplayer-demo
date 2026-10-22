@@ -46,7 +46,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(ellips
   <div class="top"><span class="k">⏪ INSTANT REPLAY</span><h1 id="title">Dam Builders</h1><span class="sp"></span><span class="n" id="n"></span>
     <button id="again" hidden>⏪ play it again</button></div>
   <section class="box"><div class="bh">#lodge</div><div class="chat" id="chat"></div></section>
-  <div class="phone"><div class="screen"><iframe id="stage" sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1"></iframe></div></div>
+  <div class="phone"><div class="screen"><iframe id="stage" sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1&replay=1"></iframe></div></div>
 </div>
 <script src="static/sprites.js?v=2"></script>
 <script>
@@ -74,7 +74,7 @@ async function play() {
   const chat = document.getElementById("chat"), st = document.getElementById("stage").contentWindow;
   document.getElementById("again").hidden = true; chat.innerHTML = "";
   const steps = D.steps || [], ms = Math.max(250, Math.min(700, Math.round(18000 / Math.max(1, steps.length))));
-  st.postMessage({type: "lodge-replay-start"}, "*"); await nap(600);
+  st.postMessage({type: "lodge-replay-start"}, "*"); await nap(900);
   let i = 0;
   for (const s of steps) {
     i++; document.getElementById("n").textContent = `${i} / ${steps.length}`;
@@ -84,11 +84,11 @@ async function play() {
   }
   document.getElementById("again").hidden = false;
 }
-document.getElementById("again").onclick = () => { document.getElementById("stage").src = "stage?phone=1"; };
+document.getElementById("again").onclick = () => { document.getElementById("stage").src = "stage?phone=1&replay=1"; };
 document.getElementById("stage").addEventListener("load", async () => {
   if (!D) { const r = await fetch("api/replay", {cache: "no-store"}).catch(() => null); D = r && r.ok ? await r.json() : {steps: []}; cast = D.cast || [];
     document.getElementById("title").textContent = D.title || "Dam Builders"; }
-  await nap(800); play();
+  play();
 });
 </script>
 </body>

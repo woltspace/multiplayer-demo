@@ -172,16 +172,12 @@ async function replay(frames, ms) {
     requestAnimationFrame(fitScreen); await nap(ms);
   }
   // Each saved version started its own game loop, and old loops keep running: a clean reload brings the live game
-  // back with just one. On its own screen (/replay): the last frame stays, with a button to play it again.
+  // back with just one.
   await nap(1800);
-  if (ON_REPLAY) { tag.textContent = "⏪ PLAY IT AGAIN"; tag.classList.add("again"); tag.onclick = () => location.reload(); return; }
   location.reload();
 }
-const ON_REPLAY = false;  // /replay is its own page now (replay.html), driving this one
-if (ON_REPLAY) addEventListener("load", async () => {
-  const r = await fetch("api/replay", {cache: "no-store"}).catch(() => null); const d = r && r.ok ? await r.json() : {frames: []};
-  replay(d.frames, Math.max(350, Math.min(900, Math.round(10000 / Math.max(1, d.frames.length)))));
-});
+// Inside the replay screen (stage?replay=1): never shows the live game, only the steps it's sent.
+const ON_REPLAY = !!new URLSearchParams(location.search).get("replay");
 async function poll() {
   if (replaying || ON_REPLAY) return;
   let d; try { const r = await fetch("api/parts", {cache: "no-store"}); if (!r.ok) return; d = await r.json(); } catch { return; }

@@ -897,14 +897,17 @@ def admin_resume(request: Request):
 
 
 @app.get("/replay")
-def replay_page():
-    """⏪ Instant replay on its own screen: #lodge on the left, the woltPhone on the right, in the order it happened."""
+def replay_page(request: Request):
+    """⏪ Instant replay on its own screen: #lodge on the left, the woltPhone on the right, in the order it happened.
+    Owner-only, like the big screen (Access: backstage paths)."""
+    viewer(request)
     return FileResponse(HERE / "static" / "replay.html")
 
 
 @app.get("/api/replay")
-def replay_frames_public():
-    """Same frames as the live page has shown, so as public as the game itself (Access treats it like /)."""
+def replay_frames_owner(request: Request):
+    """The replay screen's data: owner-only, like the screen."""
+    viewer(request)
     return replay_frames_body()
 
 

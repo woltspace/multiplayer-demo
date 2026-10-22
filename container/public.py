@@ -38,7 +38,7 @@ OLD_APPS = [f"lodge-show {HOST} public"]  # earlier layouts: setup removes them
 PUBLIC_POLICY = "public-now"
 # Owner-only always (more specific than the root, so "on" never opens them): backstage, the big screen, the slides
 # and what they read or change. "on" opens the rest: the game at / (the one public link) and the seats' pages.
-BACKSTAGE = ["admin", "world", "crowd", "lanes", "slides", "chat", "api/admin", "api/crowd", "api/mock"]
+BACKSTAGE = ["admin", "world", "crowd", "lanes", "slides", "chat", "replay", "api/admin", "api/crowd", "api/mock", "api/replay"]
 
 
 def env(name):
