@@ -9,7 +9,7 @@ from show_scaffold import scaffold, slug
 ap = argparse.ArgumentParser()
 ap.add_argument("--lodge", required=True)
 ap.add_argument("--wolts", required=True)
-ap.add_argument("--name", default="commie")
+ap.add_argument("--name", default="hostie")
 ap.add_argument("--model", default="sonnet")
 a = ap.parse_args()
 wolts = Path(a.wolts).resolve()
@@ -17,7 +17,9 @@ host_player = os.environ.get("SHOW_HOST_PLAYER", "jerpint")
 folder = scaffold(wolts, a.name, "raccoon", "claude", a.model, "host", {
     "PLAYER": host_player, "HOST_PLAYER": host_player, "WOLTS": str(wolts),
     "LIVE": os.environ.get("SHOW_LIVE", str(wolts / slug(a.name) / "wolt" / "site" / "show")),
-    "REPLY": os.environ.get("SHOW_REPLY_CMD", "show-reply")})
+    "REPLY": os.environ.get("SHOW_REPLY_CMD", "show-reply"),
+    "POST": os.environ.get("SHOW_POST_CMD", str(Path(__file__).resolve().parent / "bin" / "show-post")), "SLOT": "host",
+    "HOST": a.name, "TITLE": os.environ.get("SHOW_TITLE", "Dam Builders")})
 t0 = time.time()
 req = urllib.request.Request(a.lodge + "/sessions/new/lodge", json.dumps({"wolt": slug(a.name), "creature": "raccoon"}).encode(),
                              {"content-type": "application/json"})

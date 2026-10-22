@@ -15,7 +15,7 @@ h1{font:400 32px Preahvihear;margin:0 0 4px}.sub{color:var(--muted);margin:0 0 2
 .slot h2{font:400 26px Preahvihear;margin:0}
 .qr{background:#fff;padding:12px;border:2px solid var(--ink);border-radius:10px}
 .st{font:700 13px JB;color:var(--muted)}.st.on{color:var(--ok)}
-.url{font:12px JB;color:var(--muted);word-break:break-all;text-align:center}
+.url{display:block;font:12px JB;color:var(--muted);word-break:break-all;text-align:center}a.url{text-decoration:underline}a.url:hover{color:var(--ink)}
 button{font:600 15px DMSans;background:#fff;color:var(--ink);border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 var(--ink);padding:8px 14px;cursor:pointer}
 .lbl{font:400 24px Preahvihear;margin:30px 0 12px}
 .show{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:2px solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink);padding:14px;margin:0 0 18px}
@@ -32,41 +32,44 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
 <body>
 <main>
   <h1>Lodge Show · backstage</h1>
-  <p class="sub">Print the two player QRs (or show one on your laptop). Each QR works for the first phone only. Reset = a new QR, the old one stops working.</p>
+  <p class="sub">In show order, left to right. Each player QR works for the first phone only.</p>
   <div class="show card-ish"><span class="ph" id="ph">…</span>
-    <button class="go" id="start">▶ Start the show</button><button id="stop">⏸ Stop (pause screen)</button><button class="danger" id="resetall">↺ Reset everything</button>
+    <button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
     <span class="msg" id="msg" role="status"></span></div>
-  <div class="row"><a class="b" id="crowd" href="#">Open the crowd screen ↗</a><button onclick="print()">Print QRs</button><button id="mock" hidden>Restart mock show</button></div>
+  <div class="show card-ish"><span class="ph" id="pub">checking the public address…</span>
+    <button id="pubon">🌍 Make public</button><button id="puboff">🔒 Make private</button>
+    <span class="msg" id="pubmsg" role="status"></span></div>
+  <div class="row"><a class="b" id="world" href="#" target="_blank" rel="noopener">Open the big screen ↗</a> <a class="b" href="slides" target="_blank" rel="noopener">Open the slides ↗</a></div>
   <div class="grid" id="grid"></div>
   <h2 class="lbl">Everyone in the room</h2>
-  <div class="grid"><div class="slot" data-c="host" id="room"><h2>Room (public)</h2><div class=qr id="room-qr"></div><div class=st>no key: the chat and the build only</div><div class=url id="room-url"></div><a class="b" id="room-open" target="_blank">Open the room ↗</a></div></div>
+  <div class="grid"><div class="slot" data-c="host" id="room"><h2>Room (public)</h2><div class=qr id="room-qr"></div><div class=st>the game, live, for everyone</div><div class=url id="room-url"></div><a class="b" id="room-open" target="_blank">Open the room ↗</a></div></div>
 </main>
 <script>
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));  // player and wolt names are typed by players
 const KEY = new URLSearchParams(location.search).get("k") || "", H = {"X-Admin-Key": KEY};
-document.getElementById("crowd").href = "crowd?k=" + encodeURIComponent(KEY);
+document.getElementById("world").href = "world";  // read-only, no key in the URL (safe to project)
 async function load() {
   const d = await (await fetch("api/admin", {headers: H, cache: "no-store"})).json();
-  phase(d.phase);
-  const m = document.getElementById("mock"); m.hidden = d.mode !== "mock";
-  m.onclick = async () => { await fetch("api/mock/start", {method: "POST", headers: H}); };
+  phase(d.phase, d.game);
   const grid = document.getElementById("grid"), key = JSON.stringify(d.slots);
   if (grid._key === key) return; grid._key = key; grid.innerHTML = "";  // redraw the QRs only when a slot changed
   for (const s of d.slots) {
     const url = new URL("p/" + s.token, location.href).href;
     const el = document.createElement("div"); el.className = "slot"; el.dataset.c = s.slot;
     el.innerHTML = `<h2>${s.label}</h2><div class=qr></div>
-      <div class="st${s.claimed ? " on" : ""}">${s.claimed ? "claimed" : "not scanned yet"}${s.wolt ? " · wolt: " + s.wolt : ""}${s.slot === "host" ? " · your slot" : ""}</div>
-      <div class=url>${url}</div><button>Reset (new QR)</button>`;
+      <div class="st${s.claimed ? " on" : ""}">${s.claimed ? (s.wolt ? "taken" : "creating a wolt…") : "open"}${s.player ? " · player: " + esc(s.player) : ""}${s.wolt ? " · wolt: " + esc(s.wolt) : ""}${s.slot === "host" ? " · your slot" : ""}</div>
+      <a class=url href="${url}" target="_blank" rel="noopener">${url}</a><button>Reset (new QR)</button>`;
     new QRCode(el.querySelector(".qr"), {text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});
     el.querySelector("button").onclick = async () => { if (confirm("New QR for " + s.label + "? The old one stops working.")) { await fetch("api/admin/reset/" + s.slot, {method: "POST", headers: H}); load(); } };
     grid.append(el);
   }
 }
-const PH = {ready: "not started · the big screen shows “starting soon”", live: "● live", paused: "⏸ paused · pause screen is up"};
-function phase(p) {
-  const el = document.getElementById("ph"); el.textContent = PH[p] || p; el.className = "ph " + p;
-  document.getElementById("start").textContent = p === "paused" ? "▶ Resume the show" : "▶ Start the show";
-  document.getElementById("start").disabled = p === "live"; document.getElementById("stop").disabled = p !== "live";
+// Outer game only. The game itself (start, pause/resume, skip) is run from the big screen.
+const PH = {ready: "start screen · press ▶ START on the big screen", live: "● playing", paused: "⏸ paused"};
+function phase(p, on) {
+  const el = document.getElementById("ph"); el.className = "ph " + p;
+  el.textContent = p === "paused" && !on ? "⛔ stopped (kill switch) · reset to start over"
+    : p === "live" && !on ? "● open · players joining · ⚡ start the game on the big screen" : PH[p] || p;
 }
 async function act(path, msg) {
   const m = document.getElementById("msg"); m.textContent = msg;
@@ -75,16 +78,36 @@ async function act(path, msg) {
   m.textContent = r.ok ? "" : (d.detail || "that didn't work");
   load();
 }
-document.getElementById("start").onclick = () => act("api/admin/phase/live", "starting…");
-document.getElementById("stop").onclick = () => act("api/admin/phase/paused", "pausing…");
-document.getElementById("resetall").onclick = () => {
-  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh commie.")) return;
-  if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;
-  act("api/admin/reset-all", "resetting… (commie takes a few seconds to wake up)");
+document.getElementById("kill").onclick = () => {
+  if (!confirm("Kill switch?\n\nStops every wolt now, freezes the game on screen and locks the players' phones. Nothing is deleted: Reset everything starts a fresh show.")) return;
+  act("api/admin/kill", "stopping everything…");
 };
+document.getElementById("resetall").onclick = () => {
+  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh hostie.")) return;
+  if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;
+  act("api/admin/reset-all", "resetting… (hostie takes a few seconds to wake up)");
+};
+// Public / private: the game (/) and the seats. Backstage, the big screen and the slides stay owner-only either way.
+async function pub(path, msg) {
+  const m = document.getElementById("pubmsg"); m.textContent = msg || "";
+  const r = await fetch("api/admin/public" + (path || ""), {method: path ? "POST" : "GET", headers: H, cache: "no-store"});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) { m.textContent = d.detail || "that didn't work"; return; }
+  m.textContent = "";
+  const el = document.getElementById("pub");
+  el.textContent = d.public ? "🌍 PUBLIC · anyone can open the game (and the seat links)" : d.gated ? "🔒 private · your login only" : "no public address set up";
+  el.className = "ph " + (d.public ? "live" : "paused");
+  document.getElementById("pubon").disabled = !!d.public || !d.gated; document.getElementById("puboff").disabled = !d.public;
+}
+document.getElementById("pubon").onclick = () => {
+  if (!confirm("Make it public?\n\nAnyone can open the game at the main link, and the seat links work. Backstage, the big screen and the slides stay yours only.")) return;
+  pub("/on", "opening… (Cloudflare takes a few seconds)");
+};
+document.getElementById("puboff").onclick = () => pub("/off", "closing…");
+pub(); setInterval(pub, 20000);
 load(); setInterval(load, 3000);
-const room = new URL(".", location.href).href;
-document.getElementById("room-url").textContent = room; document.getElementById("room-open").href = room;
+const room = new URL("./", location.href).href;
+const ru = document.getElementById("room-url"); ru.innerHTML = ""; const ra = document.createElement("a"); ra.className = "url"; ra.href = room; ra.target = "_blank"; ra.rel = "noopener"; ra.textContent = room; ru.append(ra); document.getElementById("room-open").href = room;
 new QRCode(document.getElementById("room-qr"), {text: room, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});
 </script>
 </body>

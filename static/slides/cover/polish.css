@@ -1,0 +1,126 @@
+/* Presentation polish (commie, 2026-10-03). Loaded last; the original CSS is untouched. */
+
+/* Small mono lines: the 3px block shadow made them read as doubled text. */
+.cover-heading .cover-wordmark, .cover-heading small, .cover-heading p,
+.scene-heading span,
+.candidate:not(.for-you) .label > span, .candidate:not(.for-you) .label > p,
+.together-caption { text-shadow: 1px 1px #18100a; }
+
+/* While the cover is closed, the lodge page behind it keeps its heading and
+   back button out of sight (phones already did this). */
+body.cover-active .inside-page .scene-heading,
+body.cover-active .inside-page .turn-back { display: none !important; }
+
+/* Desktop: the title column and the app cards no longer overlap. */
+@media (min-width: 701px) {
+  .apps .label { max-width: 30%; }
+  .apps:not(.anywhere) .app-wall { right: 4%; width: 57%; }
+}
+
+/* Big screens: the cover book grows with the screen instead of stopping at
+   980px, so it fills a projector (16:10, room left for the menu above). */
+@media (min-width: 651px) {
+  .book { width: min(92vw, calc((100vh - 170px) * 1.6)); }
+}
+
+/* Card-wall chapters: titles scale with the width so they fit their column. */
+@media (min-width: 701px) {
+  .apps .label h1 { font-size: clamp(40px, 5.2vw, 84px); }
+}
+
+/* Eleven chapters: on desktop, the chapter bar shows only the number of each
+   chapter except the current one, so it fits. Hover shows the name. */
+@media (min-width: 701px) {
+  .book-chapters a:not(.active) { font-size: 0; }
+  .book-chapters a:not(.active) i { font-size: 11px; }
+}
+
+/* Moving between the Lodge, the Workshop and the story pages: a short crossfade
+   instead of a blank page load (Chrome, Edge, Safari; others load normally),
+   on a dark background so there is never a white flash. */
+@view-transition { navigation: auto; }
+html { background: #18100a; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .35s; }
+@media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
+
+/* Cover: a wooden sign on the bank, alternating jerpint's two lines. */
+.meme-sign { position:absolute; z-index:3; left:4%; bottom:15%; display:flex; flex-direction:column; align-items:center; pointer-events:none; }
+.meme-board { position:relative; display:grid; padding:7px 10px; background:#894f22; border:3px solid #18100a; box-shadow:4px 4px #18100a88; color:#f5f1e8; font:600 clamp(8px,.85vw,11px)/1.25 'JetBrains Mono',monospace; letter-spacing:.06em; text-align:center; text-shadow:1px 1px #18100a; }
+.meme-board span { grid-area:1/1; opacity:0; animation:meme-swap 15s steps(1) infinite; }
+.meme-board span:nth-child(2) { animation-delay:-10s; } .meme-board span:nth-child(3) { animation-delay:-5s; }
+@keyframes meme-swap { 0% { opacity:1; } 33.3%,100% { opacity:0; } }
+.meme-post { width:6px; height:26px; background:#5a3614; border:2px solid #18100a; border-top:0; }
+@media (max-width:650px) { .meme-sign { left:auto; right:1.5%; bottom:calc(12.5% - 34px); } .meme-board { font-size:7px; padding:4px 5px; letter-spacing:.02em; } .meme-post { height:34px; } }
+@media (prefers-reduced-motion: reduce) { .meme-board span { animation:none; } .meme-board span { opacity:0; } .meme-board span:first-child { opacity:1; } }
+
+/* The sign, more central: in the middle of the bank on desktop, a bigger board;
+   on phones a plaque hanging in the open sky under the title. */
+.meme-sign { left:45.5%; translate:-50% 0; bottom:15%; }
+.meme-board { padding:10px 16px; font-size:clamp(10px,1.15vw,15px); border-width:4px; }
+.meme-post { height:34px; width:8px; }
+@media (max-width:650px) {
+  .meme-sign { left:50%; right:auto; translate:-50% 0; top:44%; bottom:auto; }
+  .meme-board { font-size:11px; padding:8px 12px; letter-spacing:.06em; }
+  .meme-post { display:none; }
+  .meme-board::before, .meme-board::after { content:""; position:absolute; bottom:100%; width:3px; height:40px; background:#18100a; }
+  .meme-board::before { left:18%; } .meme-board::after { right:18%; }
+}
+
+/* Cover memes in the wolt-site terminal (jerpint 2026-10-06: the floating plank goes; reuse the
+   rotating terminal from new wolt sites). Sits under the byline, phone and desktop alike. */
+.meme-term { width:max-content; max-width:100%; margin-top:22px; font:500 clamp(15px,1.45vw,21px)/1 'JetBrains Mono',monospace; color:#d4c5a8; background:#1a130c; border:2px solid #18100a; border-radius:6px; box-shadow:4px 4px #18100a66; overflow:hidden; text-align:left; text-shadow:none; letter-spacing:0; }
+.meme-term-bar { display:flex; gap:6px; padding:6px 10px; background:#211810; border-bottom:1px solid #2a1f14; }
+.meme-term-bar i { width:11px; height:11px; border-radius:50%; }
+.meme-term-bar .r { background:#c4531e; } .meme-term-bar .y { background:#c98b2a; } .meme-term-bar .g { background:#3a6644; }
+.meme-term-body { display:flex; align-items:center; gap:10px; padding:14px 16px; white-space:nowrap; }
+.meme-spin { color:#5bc87a; width:12px; flex-shrink:0; }
+.meme-line { min-width:38ch; }
+.meme-line::after { content:'▌'; color:#5bc87a; animation:meme-caret 1s steps(1) infinite; }
+@keyframes meme-caret { 50% { opacity:0; } }
+@media (max-width:650px) { .meme-term { font-size:13px; } .meme-term-body { padding:12px; gap:8px; } }
+/* The meme terminal sits in the open sky of the cover (jerpint 2026-10-06): centred on desktop and
+   fullscreen with big text; on phones just under the byline. */
+.cover-page .meme-term { position:absolute; z-index:4; margin:0; }
+@media (max-width:650px) { .cover-page .meme-term { left:24px; top:37%; } }
+@media (min-width:651px) {
+  .cover-page .meme-term { left:50%; top:64%; translate:-50% -50%; font-size:clamp(18px,min(2.4vw,3.6vh),40px); border-width:3px; box-shadow:6px 6px #18100a66; }
+  .cover-page .meme-term-bar { padding:10px 14px; gap:9px; }
+  .cover-page .meme-term-bar i { width:14px; height:14px; }
+  .cover-page .meme-term-body { padding:18px 22px; gap:14px; }
+  .cover-page .meme-spin { width:1ch; }
+}
+@media (min-width:651px) and (max-height:760px) {
+  .cover-page .meme-term { top:66%; left:auto; right:3%; translate:0 -50%; font-size:clamp(14px,2.2vh,20px); }
+  .cover-page .meme-term-body { padding:12px 16px; }
+  .cover-page .meme-term-bar { padding:7px 12px; }
+  .cover-page .meme-term-bar i { width:11px; height:11px; }
+}
+/* Desktop / fullscreen (jerpint 2026-10-06): the small cover lines readable from the room. */
+@media (min-width:651px) {
+  .cover-heading .cover-wordmark, .cover-heading small, .cover-heading p { font-size:clamp(13px,min(1.5vw,2.3vh),24px); }
+  .cover-heading p { margin-top:4px; }
+}
+/* Desktop / fullscreen (jerpint 2026-10-06): the Lodge page gets its welcome text too, not just phones. */
+@media (min-width:651px) {
+  .inside-page .welcome-card { display:block; position:absolute; z-index:30; left:5%; top:29%; width:min(40%,620px); padding:clamp(16px,2vw,28px); border:5px solid #18100a; background:#f5f1e8; box-shadow:8px 8px #18100a; }
+  .inside-page .welcome-card strong { display:block; color:#c4531e; font:600 clamp(12px,min(1.3vw,2vh),20px)/1.2 'JetBrains Mono',monospace; letter-spacing:.12em; text-transform:uppercase; }
+  .inside-page .welcome-card p { margin:10px 0 0; color:#18100a; font:500 clamp(16px,min(1.9vw,2.9vh),30px)/1.4 'JetBrains Mono',monospace; }
+}
+@media (min-width:651px) { .inside-page .scene-heading span { font-size:clamp(13px,min(1.5vw,2.3vh),24px); } }
+/* Cover and lodge as two separate pages (jerpint 2026-10-06): no lodge text showing through the cover. */
+body.cover-active .inside-page .scene-heading, body.cover-active .inside-page .welcome-card,
+body.cover-active .inside-page .turn-back, body.cover-active .inside-page .next-page,
+body.solo-cover .inside-page .scene-heading, body.solo-cover .inside-page .welcome-card,
+body.solo-cover .inside-page .turn-back, body.solo-cover .inside-page .next-page { display:none !important; }
+body.solo-lodge .cover-page { display:none !important; }
+/* Talk renamed (jerpint 2026-10-07): "The future is multiplayer multi-agent". Longer title, smaller type. */
+.cover-heading h1.talk-title{font-size:clamp(44px,6vw,92px);line-height:.9}
+@media (max-width:650px){.cover-active .cover-heading h1.talk-title{font-size:clamp(40px,11vw,52px)}}
+@media (min-width:651px) and (max-height:760px){ .cover-heading h1.talk-title{font-size:clamp(40px,5vw,64px)} .cover-heading p{margin-top:2px} }
+
+.cover-heading h1.talk-title{font-size:clamp(40px,5.2vw,80px);max-width:62%}
+@media (min-width:651px) and (max-height:760px){.cover-heading h1.talk-title{font-size:clamp(36px,4.4vw,56px)}}
+@media (max-width:650px){.cover-active .cover-heading h1.talk-title{font-size:clamp(34px,9.5vw,44px);max-width:none}}
+.cover-heading h1.talk-title{max-width:72%}
+@media (min-width:651px) and (max-height:760px){.cover-heading h1.talk-title{font-size:clamp(32px,3.9vw,50px)}.cover-heading p{margin-top:8px}}
+@media (max-width:650px){ .cover-page .meme-term{top:44%} }

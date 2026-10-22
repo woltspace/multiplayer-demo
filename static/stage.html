@@ -24,30 +24,180 @@ section[data-part]{position:relative;background:#fff;border:4px solid var(--ink)
 .presence .caret{position:absolute;right:6px;bottom:6px;width:3px;height:20px;background:var(--m);animation:blink .5s infinite}
 .top .presence .who{background:var(--ink)}
 @media (max-width:760px){.grid{grid-template-columns:1fr;padding:14px 12px}.top{padding:14px 16px}.top h1{font-size:28px}section[data-part]{min-height:auto}}
+.replaytag{position:fixed;left:50%;top:54px;translate:-50% 0;z-index:50;font:400 13px Pixel,monospace;color:#fff;background:#c4531e;border:3px solid #18100a;box-shadow:4px 4px 0 #18100a;padding:8px 12px;white-space:nowrap;animation:replayblink 1s steps(1) infinite}@keyframes replayblink{50%{opacity:.55}}.replaytag.again{animation:none;cursor:pointer;pointer-events:auto}
 </style>
+<link rel="stylesheet" href="static/arcade.css?v=9" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
+(()=>{const F=["jb","vt","pixel"],q=new URLSearchParams(location.search).get("font");let f=q;try{f=f||localStorage.getItem("show-font")}catch(e){}
+document.documentElement.dataset.font=F.includes(f)?f:"pixel";
+addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,[contenteditable]"))return;const d=document.documentElement,n=F[(F.indexOf(d.dataset.font)+1)%F.length];d.dataset.font=n;try{localStorage.setItem("show-font",n)}catch(_){}});})()</script>
 </head>
 <body>
-<header class="top" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
+<header class="top" id="host" data-part="host" data-c="host"><div class="part-body"><h1>Lodge Show</h1><small>built live by 3 wolts · watch them work</small></div></header>
+<script>if (new URLSearchParams(location.search).get("phone") || location.pathname.replace(/\/+$/, "") === "") document.querySelector("header.top .part-body").innerHTML = '<div class="splash"><div class="k">★ LODGE SHOW ★</div><h2>Dam Builders</h2><p>3 humans · 3 wolts · 1 game</p><div class="wait">WAITING FOR THE GAME<i>.</i><i>.</i><i>.</i></div><p class="hint">built live, right here · watch the big screen</p></div>';</script>
 <div class="grid">
-  <section id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
-  <section id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
+  <section class="empty" id="part-a" data-part="p1" data-c="p1"><div class="owner"><span class="dot"></span><span class="nm">Player 1</span><span class="file">part-a.html</span></div><div class="part-body"><div class="waiting">Player 1's wolt builds here…</div></div></section>
+  <section class="empty" id="part-b" data-part="p2" data-c="p2"><div class="owner"><span class="dot"></span><span class="nm">Player 2</span><span class="file">part-b.html</span></div><div class="part-body"><div class="waiting">Player 2's wolt builds here…</div></div></section>
 </div>
+<script>
+// ?only=p1 (or p2): just that player's game, edge to edge, for its lane on the big screen. No header, no owner bar.
+const ONLY = new URLSearchParams(location.search).get("only");
+// Keys from the big screen: /world forwards game keys (arrows, WASD, space, Enter) so the woltPhone plays from the
+// keyboard without clicking into it first. Re-dispatched as real keydown/keyup events on this page.
+addEventListener("message", (m) => {
+  const d = m.data || {};
+  if (d.type !== "lodge-key" || typeof d.key !== "string") return;
+  // One event from the focused element (or body); it bubbles to document and window, where games listen.
+  (document.activeElement || document.body).dispatchEvent(new KeyboardEvent(d.up ? "keyup" : "keydown", {key: d.key, code: d.code || "", bubbles: true}));
+});
+// The audience page: at the site root (/) the stage IS the game for each phone in the room: the woltPhone layout.
+const AUDIENCE = location.pathname.replace(/\/+$/, "") === "" ;
+// ?phone=1: the woltPhone (wPhone). The whole shared page, sections stacked (title, Player 1, Player 2), no chrome around them.
+if (new URLSearchParams(location.search).get("phone") || AUDIENCE) document.documentElement.classList.add("only", "phone");
+// No chat here on purpose: the chat is on the big screen. The audience just watches the game get built, live on every
+// save, and plays it.
+if (ONLY) {
+  document.documentElement.classList.add("only");
+  document.querySelectorAll("[data-part]").forEach((el) => { if (el.dataset.part !== ONLY) el.remove(); });
+  document.querySelectorAll(".waiting").forEach((el) => el.textContent = "the game appears here…");
+}
+</script>
+<style>
+html.only body{background:#fff8e6!important;min-height:0;padding-top:44px}
+html.only .grid{display:block;padding:0}
+html.only section[data-part]{border:0!important;border-radius:0;box-shadow:none!important;min-height:100vh;background:#fff8e6}
+html.only .owner{display:none}
+html.phone .top{background:#fff8e6!important;color:#18100a!important;border:0!important;box-shadow:none!important;padding:0!important}
+html.phone .top .part-body>h1{font:400 30px/1.05 Preahvihear!important;color:#c4531e!important;text-shadow:none!important}
+html.phone .top h1::after{display:none!important}
+html.phone .top .part-body>small,html.phone .top .part-body>p{font:14px/1.4 DMSans!important;color:#18100a!important;text-transform:none!important;letter-spacing:0!important}
+html.phone section[data-part]{min-height:0!important;margin:0 0 6px}
+html.phone .part-body{padding:8px 18px}
+html.phone .waiting{padding:18px 10px!important}
+html.only .waiting{font-size:13px!important;line-height:1.8!important;padding:30vh 16px!important;white-space:normal}
+/* The phone: a player's box shows only once their wolt has put something in it (no empty "Player 1" boxes to
+   scroll past). Before the game, one start screen fills the phone. */
+html.phone section[data-part].empty{display:none}
+html.phone .splash{min-height:calc(100vh - 160px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:0 12px}
+html.phone .splash .k{font:400 12px Pixel,monospace;color:#c4531e;letter-spacing:2px}
+html.phone .splash h2{margin:0;font:400 34px/1.15 Pixel,monospace;color:#c4531e;animation:titleglow 1.6s ease-in-out infinite alternate}
+@keyframes titleglow{from{text-shadow:3px 3px 0 #18100a22,0 0 0 #ff8a3d00;scale:1}to{text-shadow:3px 3px 0 #18100a22,0 0 18px #ff8a3d99;scale:1.03}}
+html.phone .splash .wait{margin-top:10px;padding:12px 16px;background:#c4531e;color:#fff;border:3px solid #18100a;box-shadow:5px 5px 0 #18100a;font:400 11px/1.6 Pixel,monospace;letter-spacing:0;white-space:nowrap;animation:waitglow 1.6s ease-in-out infinite alternate}
+@keyframes waitglow{from{box-shadow:5px 5px 0 #18100a,0 0 4px #ff8a3d33}to{box-shadow:5px 5px 0 #18100a,0 0 22px #ff8a3d}}
+html.phone .splash .wait i{font-style:normal;animation:dot 1.2s infinite}html.phone .splash .wait i:nth-child(2){animation-delay:.2s}html.phone .splash .wait i:nth-child(3){animation-delay:.4s}
+@keyframes dot{0%,20%{opacity:0}40%,100%{opacity:1}}
+html.phone .splash p{margin:0!important;font:15px/1.4 DMSans,sans-serif!important;color:#18100a!important;text-transform:none!important;letter-spacing:0!important}
+html.phone .splash .live{font:400 13px Pixel,monospace;color:#18100a;animation:breathe 1.6s ease-in-out infinite alternate}
+html.phone .splash .hint{font:700 13px JB,monospace;color:#8a7a68}
+@keyframes breathe{from{opacity:.45}to{opacity:1}}
+</style>
+<!-- The built-in controller: a d-pad and an A button, stuck to the bottom of every copy of the page. They send the
+     same keys as a keyboard (arrows, space), so games only handle keys, and the big screen plays them too. -->
+<div class="lpad" id="lpad"><div class="dpad"><button data-k="ArrowUp" aria-label="up">▲</button><button data-k="ArrowLeft" aria-label="left">◀</button><button data-k="ArrowRight" aria-label="right">▶</button><button data-k="ArrowDown" aria-label="down">▼</button></div><div class="rwrap"><button class="rbtn" id="rbtn" aria-label="Restart">↻</button><small>restart</small></div><button class="abtn" data-k=" " aria-label="A">A</button></div>
+<style>
+/* The controller has its own strip below the content (never on top of it): the page scrolls above it. */
+html,body{height:100%}
+body{display:flex;flex-direction:column}
+#lscroll{flex:1;min-height:0;overflow-y:auto}
+html.phone #lscroll{overflow:hidden}
+.lpad{flex:none;z-index:40;display:flex;align-items:center;justify-content:space-between;padding:6px 22px 8px;background:#18100a}
+.lpad .dpad{display:grid;grid-template-columns:repeat(3,42px);grid-template-rows:repeat(2,34px);gap:3px}
+.lpad button{font:20px sans-serif;color:#18100a;background:#fff8e6;border:3px solid #000;border-radius:10px;box-shadow:0 4px 0 #c4531e;touch-action:manipulation;user-select:none;-webkit-user-select:none;padding:0}
+.lpad button.on{transform:translateY(3px);box-shadow:0 1px 0 #c4531e}
+.lpad [data-k=ArrowUp]{grid-column:2;grid-row:1}.lpad [data-k=ArrowLeft]{grid-column:1;grid-row:2}.lpad [data-k=ArrowRight]{grid-column:3;grid-row:2}.lpad [data-k=ArrowDown]{grid-column:2;grid-row:2}
+.lpad .abtn{width:56px;height:56px;border-radius:50%;font:700 24px DMSans,sans-serif;background:#c4531e;color:#fff;box-shadow:0 4px 0 #000}
+.lpad .abtn.on{box-shadow:0 1px 0 #000}
+/* ↻ restart: a new round, for every section of the game (they all listen for the "restart" event). */
+.lpad .rbtn{width:52px;height:40px;border-radius:10px;font:700 22px DMSans,sans-serif;background:#fff8e6;color:#18100a}
+.lpad .rbtn.on{transform:translateY(3px);box-shadow:0 1px 0 #c4531e}
+.lpad .rwrap{display:flex;flex-direction:column;align-items:center;gap:5px}
+.lpad .rwrap small{font:700 11px JB,monospace;color:#fff8e6;letter-spacing:1px;text-transform:uppercase}
+.lchat{position:fixed;top:10px;right:10px;z-index:50;font:700 13px JB,monospace;color:#fff8e6;background:#18100a;border:2px solid #000;border-radius:999px;padding:6px 12px;text-decoration:none;box-shadow:2px 2px 0 #c4531e}
+</style>
+<script>
+// Everything above the controller goes into one scroll area, so the controller never covers the game.
+(() => { const sc = document.createElement("div"); sc.id = "lscroll"; const fit = document.createElement("div"); fit.id = "lfit";
+  const pad = document.getElementById("lpad"); sc.append(fit);
+  [...document.body.children].filter((el) => el !== pad && el !== sc && el.tagName !== "SCRIPT" && el.tagName !== "STYLE").forEach((el) => fit.append(el));
+  document.body.insertBefore(sc, pad); })();
+// On a phone the game is ONE screen: no scrolling. Whatever the wolts build, if it comes out taller than the space
+// above the controller, the whole page shrinks to fit (the brief asks them for ~600 px; this makes sure of it).
+function fitScreen() {
+  if (!document.documentElement.classList.contains("phone")) return;
+  const sc = document.getElementById("lscroll"), fit = document.getElementById("lfit");
+  fit.style.zoom = 1;
+  const need = fit.scrollHeight, have = sc.clientHeight;
+  fit.style.zoom = need > have ? Math.max(0.4, have / need) : 1;
+}
+addEventListener("resize", fitScreen); setInterval(fitScreen, 1000);
+document.getElementById("rbtn").addEventListener("pointerdown", (e) => { e.preventDefault(); const b = e.currentTarget;
+  b.classList.add("on"); setTimeout(() => b.classList.remove("on"), 150); window.dispatchEvent(new CustomEvent("restart", {detail: {by: "controller"}})); });
+document.querySelectorAll("#lpad button[data-k]").forEach((b) => {
+  const send = (type) => document.body.dispatchEvent(new KeyboardEvent(type, {key: b.dataset.k, code: b.dataset.k === " " ? "Space" : b.dataset.k, bubbles: true}));
+  b.addEventListener("pointerdown", (e) => { e.preventDefault(); b.classList.add("on"); send("keydown"); });
+  for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => { if (b.classList.contains("on")) { b.classList.remove("on"); send("keyup"); } });
+});
+// The big screen's keys light the buttons too, so the room sees what's pressed.
+for (const t of ["keydown", "keyup"]) document.addEventListener(t, (e) => {
+  const k = {w: "ArrowUp", a: "ArrowLeft", s: "ArrowDown", d: "ArrowRight", Enter: " "}[e.key] || e.key;
+  const b = document.querySelector(`#lpad button[data-k="${k === " " ? " " : k}"]`); if (b && e.isTrusted === false) b.classList.toggle("on", t === "keydown");
+});
+</script>
 <script src="static/presence.js"></script>
 <script>
 // Polls the parts once a second; a box changes only when its file's version does. Presence outlines the edit.
 const seen = {};
 const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", opencode: "OpenCode"}[h] || h || ""; const s = String(m || "").split("/").pop(); return s && h !== "claude" ? `${n} · ${s}` : n; };
+// ⏪ Instant replay (sent by the big screen): the empty phone, then every save of the build in order, then live again.
+let replaying = false;
+const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+addEventListener("message", (m) => { const d = m.data || {}; if (d.type === "lodge-replay" && Array.isArray(d.frames)) replay(d.frames, d.ms || 650); });
+// Driven step by step by the replay screen (/replay): start (empty phone, no live polling), one save at a time.
+addEventListener("message", (m) => { const d = m.data || {};
+  if (d.type === "lodge-replay-start") { replaying = true;
+    document.querySelectorAll("[data-part]").forEach((el) => { const body = el.querySelector(".part-body");
+      if ("orig" in el.dataset) body.innerHTML = el.dataset.orig; el.classList.toggle("empty", el.dataset.part !== "host"); });
+    requestAnimationFrame(fitScreen); }
+  if (d.type === "lodge-replay-step") { const el = document.querySelector(`[data-part="${d.slot}"]`); if (!el || !d.html) return;
+    el.classList.remove("empty"); Presence.apply(el, d.html, {name: d.wolt || "", slot: d.slot}); requestAnimationFrame(fitScreen); }
+});
+async function replay(frames, ms) {
+  if (replaying || !frames.length) return; replaying = true;
+  const tag = document.createElement("div"); tag.className = "replaytag"; tag.textContent = "⏪ INSTANT REPLAY"; document.body.append(tag);
+  document.querySelectorAll("[data-part]").forEach((el) => { const body = el.querySelector(".part-body");
+    if ("orig" in el.dataset) body.innerHTML = el.dataset.orig; el.classList.toggle("empty", el.dataset.part !== "host"); });
+  requestAnimationFrame(fitScreen); await nap(700);
+  for (const f of frames) {
+    const el = document.querySelector(`[data-part="${f.slot}"]`); if (!el || !f.html) continue;
+    el.classList.remove("empty"); Presence.apply(el, f.html, {name: f.wolt || "", slot: f.slot});
+    requestAnimationFrame(fitScreen); await nap(ms);
+  }
+  // Each saved version started its own game loop, and old loops keep running: a clean reload brings the live game
+  // back with just one.
+  await nap(1800);
+  location.reload();
+}
+// Inside the replay screen (stage?replay=1): never shows the live game, only the steps it's sent.
+const ON_REPLAY = !!new URLSearchParams(location.search).get("replay");
 async function poll() {
+  if (replaying || ON_REPLAY) return;
   let d; try { const r = await fetch("api/parts", {cache: "no-store"}); if (!r.ok) return; d = await r.json(); } catch { return; }
+  // The splash (before the host's first save) follows the game: waiting, then on as soon as the host starts it.
+  const w = document.querySelector(".splash .wait"), wt = d.game ? "⚡ GAME ON · BUILDING" : "WAITING FOR THE GAME";
+  if (w && w.dataset.t !== wt) { w.dataset.t = wt; w.innerHTML = wt + "<i>.</i><i>.</i><i>.</i>"; }
   for (const [sid, p] of Object.entries(d.parts)) {
     const el = document.querySelector(`[data-part="${sid}"]`); if (!el) continue;
     if (sid !== "host" && p.wolt) {
       const nm = el.querySelector(".nm"), label = `${p.wolt} · ${p.player}'s wolt · ${engine(p.harness, p.model)}`;
       if (nm.textContent !== label) { nm.innerHTML = ""; const b = document.createElement("b"); b.textContent = p.wolt; nm.append(b, ` · ${p.player}'s wolt · ${engine(p.harness, p.model)}`); }
     }
-    if (!p.v || seen[sid] === p.v) continue;
+    const body = el.querySelector(".part-body"); if (!("orig" in el.dataset)) el.dataset.orig = body.innerHTML;
+    // Nothing in this box (before the game, or after a reset): back to its placeholder (or hidden on the phone).
+    if (!p.v || !p.html) { if (seen[sid]) { body.innerHTML = el.dataset.orig; delete seen[sid]; } el.classList.toggle("empty", sid !== "host"); continue; }
+    el.classList.remove("empty");
+    if (seen[sid] === p.v) continue;
     seen[sid] = p.v;
     Presence.apply(el, p.html, {name: p.wolt || "commie", slot: sid});
+    requestAnimationFrame(fitScreen);
     clearTimeout(el._t); el._t = setTimeout(() => delete el.dataset.editing, 1500);
   }
 }

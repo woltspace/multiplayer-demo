@@ -63,7 +63,13 @@ body:before{content:"";position:absolute;inset:0;background-image:radial-gradien
 .dots i:nth-child(1){background:#ff6b5e}.dots i:nth-child(2){background:#ffc23d}.dots i:nth-child(3){background:#45c25a}
 .url{flex:1;background:#fff;border:3px solid var(--ink);border-radius:8px;font:700 15px JB;color:#6b5a48;padding:3px 10px}
 .build iframe{flex:1;border:0;width:100%}
-/* curtain: before Start ("starting soon") and on Stop (pause screen) */
+/* the crowd vote, under the two games once they ship */
+.tally{display:flex;align-items:center;gap:18px;padding:12px 20px;background:var(--ink);color:var(--cream);font:700 20px JB}
+.tally[hidden]{display:none}.tally .q{white-space:nowrap}.tally .bars{flex:1;display:flex;height:34px;border:3px solid var(--cream)}
+.tally .bars i{display:flex;align-items:center;padding:0 10px;font-style:normal;white-space:nowrap;overflow:hidden;transition:flex-grow .8s ease;min-width:0}
+.tally .bars i:first-child{background:var(--c1,#5cb85c)}.tally .bars i:last-child{background:var(--c2,#4a90d9);justify-content:flex-end}
+/* curtain: the placeholder board, after a reset and on Stop (cards in static/board.js) */
+.ccard{transition:opacity .8s ease}.ccard.out{opacity:0}
 .curtain{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,#2a1a0e 0,#18100a 70%)}
 .curtain[hidden]{display:none}
 .cbox{display:flex;align-items:center;gap:80px;background:var(--cream);color:var(--ink);border:6px solid var(--ink);border-radius:24px;box-shadow:16px 16px var(--org);padding:60px 80px}
@@ -72,6 +78,10 @@ body:before{content:"";position:absolute;inset:0;background-image:radial-gradien
 .cbox .cq b{font-size:30px;color:var(--ink)}
 #cqr{background:#fff;padding:14px;border:4px solid var(--ink);border-radius:14px;line-height:0}
 </style>
+<link rel="stylesheet" href="static/arcade.css?v=9" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
+(()=>{const F=["jb","vt","pixel"],q=new URLSearchParams(location.search).get("font");let f=q;try{f=f||localStorage.getItem("show-font")}catch(e){}
+document.documentElement.dataset.font=F.includes(f)?f:"pixel";
+addEventListener("keydown",e=>{if(e.key!=="f"||e.target.closest("input,textarea,[contenteditable]"))return;const d=document.documentElement,n=F[(F.indexOf(d.dataset.font)+1)%F.length];d.dataset.font=n;try{localStorage.setItem("show-font",n)}catch(_){}});})()</script>
 </head>
 <body>
 <div class="stage" id="stage">
@@ -83,12 +93,14 @@ body:before{content:"";position:absolute;inset:0;background-image:radial-gradien
   </div>
   <section class="chat"><div class="lh"><b>IWCL</b> #lodge<span class="live">live</span></div><div class="rows" id="rows"></div></section>
   <section class="terms" id="terms"></section>
-  <div class="curtain" id="curtain" hidden><div class="cbox"><div><span class="av" id="clogo"></span><h1>Lodge Show</h1><p id="ctext">starting soon</p></div>
+  <div class="curtain" id="curtain" hidden><div class="cbox"><div class="ccard" id="ccard"><span class="av" id="clogo"></span><h1 id="ctitle">Lodge Show</h1><p id="ctext"></p></div>
     <div class="cq"><div id="cqr"></div><b id="curl"></b>scan to watch on your phone</div></div></div>
-  <section class="build" id="build"><div class="wbar"><div class="dots"><i></i><i></i><i></i></div><span class="url">the page they are building · live, every save · on every phone in the room</span></div><iframe id="frame" sandbox="allow-scripts" title="the build"></iframe></section>
+  <section class="build" id="build"><div class="wbar"><div class="dots"><i></i><i></i><i></i></div><span class="url">the page they are building · live, every save · on every phone in the room</span></div><iframe id="frame" sandbox="allow-scripts" title="the build"></iframe><div class="tally" id="tally" hidden></div></section>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="static/sprites.js"></script>
-<script src="static/crowd.js"></script>
+<script src="static/sprites.js?v=2"></script>
+<script src="static/board.js?v=1"></script>
+<script src="static/term.js?v=2"></script>
+<script src="static/crowd.js?v=4"></script>
 </body>
 </html>

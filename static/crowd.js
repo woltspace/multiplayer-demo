@@ -8,7 +8,7 @@ const fit = () => document.getElementById("stage").style.setProperty("--s", Math
 addEventListener("resize", fit); fit();
 document.getElementById("logo").innerHTML = woltSpriteAvatar("beaver", 52);
 // The public room: the short link and its QR, for everyone in the audience.
-const ROOM = new URL(".", location.href);
+const ROOM = new URL("./", location.href);
 document.getElementById("jurl").textContent = (ROOM.host + ROOM.pathname).replace(/\/$/, "");
 if (window.QRCode) new QRCode(document.getElementById("jqr"), {text: ROOM.href, width: 64, height: 64, correctLevel: QRCode.CorrectLevel.L});
 document.getElementById("clogo").innerHTML = woltSpriteAvatar("beaver", 120);
@@ -42,43 +42,6 @@ function typingBubble(who) {
   return `<div class="cm${human ? " h" : ""}" data-c=${slot} style="animation:none">${av(human ? "human" : c.creature, human ? 40 : 44)}<div><div class=cn>${esc(who)} is typing</div><div class="bb ty"><i></i><i></i><i></i></div></div></div>`;
 }
 
-// tmux capture-pane -e: SGR colors only (16, 256, truecolor, bold, dim, reverse). Everything else is text.
-const BASE16 = ["#1a120c","#ff7b6b","#6fd47f","#ffc23d","#7fb6f0","#d68fd6","#6fd4d4","#e8dfd0","#8b7d6b","#ff9b8b","#8fe49f","#ffd36d","#9fc6ff","#e6a8e6","#8fe4e4","#ffffff"];
-function c256(n) {
-  if (n < 16) return BASE16[n];
-  if (n >= 232) { const g = 8 + (n - 232) * 10; return `rgb(${g},${g},${g})`; }
-  n -= 16; const k = [0, 95, 135, 175, 215, 255]; return `rgb(${k[Math.floor(n / 36)]},${k[Math.floor(n / 6) % 6]},${k[n % 6]})`;
-}
-function ansi(line) {
-  let out = "", fg = null, bg = null, bold = false, dim = false, open = false;
-  const parts = line.split(/\x1b\[([0-9;]*)m/);
-  for (let i = 0; i < parts.length; i++) {
-    if (i % 2 === 0) { if (parts[i]) out += esc(parts[i].replace(/\x1b\[[0-9;?]*[A-Za-z]|\x1b\][^\x07]*\x07/g, "")); continue; }
-    const c = (parts[i] || "0").split(";").map(Number);
-    for (let j = 0; j < c.length; j++) {
-      const v = c[j];
-      if (v === 0) { fg = bg = null; bold = dim = false; }
-      else if (v === 1) bold = true; else if (v === 2) dim = true; else if (v === 22) bold = dim = false;
-      else if (v >= 30 && v <= 37) fg = BASE16[v - 30]; else if (v >= 90 && v <= 97) fg = BASE16[v - 82]; else if (v === 39) fg = null;
-      else if (v >= 40 && v <= 47) bg = BASE16[v - 40]; else if (v >= 100 && v <= 107) bg = BASE16[v - 92]; else if (v === 49) bg = null;
-      else if ((v === 38 || v === 48) && c[j + 1] === 5) { const col = c256(c[j + 2]); v === 38 ? fg = col : bg = col; j += 2; }
-      else if ((v === 38 || v === 48) && c[j + 1] === 2) { const col = `rgb(${c[j + 2]},${c[j + 3]},${c[j + 4]})`; v === 38 ? fg = col : bg = col; j += 4; }
-    }
-    if (open) out += "</span>";
-    const css = (fg ? `color:${fg};` : "") + (bg ? `background:${bg};` : "") + (bold ? "font-weight:700;" : "") + (dim ? "opacity:.6;" : "");
-    open = !!css; if (css) out += `<span style="${css}">`;
-  }
-  return out + (open ? "</span>" : "");
-}
-
-// Drop the harness's own footer (input box, status bar, update notice): the room wants the work, not the chrome.
-function chromeless(lines) {
-  const plain = lines.map((l) => l.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, ""));
-  for (let i = plain.length - 1; i > 0; i--) {
-    if (/^\s*[─━-]{20,}/.test(plain[i]) && /^\s*[❯›>]/.test(plain[i + 1] || "")) { lines = lines.slice(0, i); break; }
-  }
-  return lines.filter((l, i) => !/Update available!|^\s*$/.test(l.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "")) || false);
-}
 const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", opencode: "OpenCode"}[h]; if (!n) return h; const s = String(m || "").split("/").pop(); return s ? `${n} · ${s}` : n; };
 const clip = (t, n = 200) => t.length > n ? t.slice(0, n - 1) + "…" : t;
 
@@ -90,9 +53,12 @@ function flame(lines) { // activity: how much each terminal moved lately
 
 function terminals() {
   const cast = state.cast || [];
+  const isIn = (sid) => { const c = cast.find((x) => x.slot === sid);
+    return c && c.wolt && (state.mode !== "mock" || state.events.some((e) => (e.type === "join" && e.slot === sid) || (e.type === "host" && sid === "host"))); };
+  const nIn = SLOTS.filter(isIn).length; // host first: an empty player slot is a slim "insert coin" strip, a joined one grows
   return SLOTS.map((sid) => {
     const c = cast.find((x) => x.slot === sid);
-    const joined = c && c.wolt && (state.mode !== "mock" || state.events.some((e) => (e.type === "join" && e.slot === sid) || (e.type === "host" && sid === "host")));
+    const joined = isIn(sid);
     if (!joined) return `<div class="tw empty"><span class=big>${sid === "p1" ? "Player 1" : sid === "p2" ? "Player 2" : "host"}</span>waiting… scan your QR</div>`;
     const name = c.wolt.name || c.wolt, creature = c.creature || c.wolt.creature;
     const raw = chromeless(state.terms[name] || []);
@@ -101,7 +67,7 @@ function terminals() {
     return `<div class=tw data-c=${sid}><div class=tt><span class=avw>${av(creature, 44)}<i class="dot${busy ? " busy" : ""}"></i></span>
       <div><span class=nm>${esc(name)}</span><span class=who>${esc(c.player)}'s wolt${sid === "host" ? " · host" : ""}</span></div>
       <span class=rl>${esc(engine(c.harness || c.wolt.harness || "", c.model || c.wolt.model))}</span>${flame(raw)}</div>
-      <div class=tb><pre>${lines.slice(-14).join("\n")}</pre></div></div>`;
+      <div class=tb><pre>${lines.slice(nIn <= 1 ? -34 : nIn === 2 ? -22 : -14).join("\n")}</pre></div></div>`;
   }).join("");
 }
 
@@ -111,7 +77,6 @@ const put = (id, html) => { const el = document.getElementById(id); if (el._html
 function render() {
   const evs = state.events, ph = state.phase || "live";
   document.getElementById("curtain").hidden = ph === "live";
-  document.getElementById("ctext").textContent = ph === "paused" ? "⏸ back in a moment" : "starting soon";
   put("rows", evs.filter((e) => e.type !== "build" && e.type !== "claim" && e.type !== "reset").slice(-11).map(bubble).join("") + state.typing.map(typingBubble).join(""));
   put("terms", terminals());
   document.getElementById("nh").textContent = new Set(evs.filter((e) => e.type === "join").map((e) => e.player)).size + (evs.some((e) => e.type === "host") ? 1 : 0);
@@ -125,6 +90,16 @@ function render() {
   buildOn = forced !== null ? forced : (state.mode === "mock" ? shipped : !!state.build);
   document.getElementById("build").classList.toggle("on", buildOn);
   document.getElementById("terms").style.visibility = buildOn ? "hidden" : "visible";
+  tally();
+}
+
+// The crowd vote: a live tally under the two games once they ship. Bars grow with the votes.
+function tally() {
+  const el = document.getElementById("tally"); el.hidden = !state.voting;
+  if (!state.voting) return;
+  const c = Object.fromEntries((state.cast || []).map((x) => [x.slot, x])), v = state.votes || {}, a = v.p1 || 0, b = v.p2 || 0;
+  const name = (side, dflt) => esc((c[side] && (c[side].wolt && (c[side].wolt.name || c[side].wolt))) || dflt);
+  put("tally", `<span class=q>vote on your phone</span><div class=bars><i style="flex-grow:${a + 1}">${name("p1", "left")} · ${a}</i><i style="flex-grow:${b + 1}">${b} · ${name("p2", "right")}</i></div>`);
 }
 
 async function poll() {
@@ -135,3 +110,13 @@ async function poll() {
 }
 addEventListener("keydown", (e) => { if (e.key === "b" || e.key === "B") { forced = !buildOn; render(); } if (e.key === "Escape") { forced = null; render(); } });
 poll(); if (!T) setInterval(poll, 700);
+
+// The placeholder board rotates its cards (static/board.js) with a soft fade, only while it's up.
+let boardAt = 0;
+function boardCard(i) { const c = BOARD[i % BOARD.length]; document.getElementById("ctitle").textContent = c.title; document.getElementById("ctext").textContent = c.line; }
+boardCard(0);
+setInterval(() => {
+  if (BOARD.length < 2 || document.getElementById("curtain").hidden) return;
+  const card = document.getElementById("ccard"); card.classList.add("out");
+  setTimeout(() => { boardCard(++boardAt); card.classList.remove("out"); }, 800);
+}, BOARD_SECONDS * 1000);

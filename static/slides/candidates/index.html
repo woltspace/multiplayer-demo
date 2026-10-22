@@ -1,0 +1,81 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#18100a">
+<title>Multiplayer multi-agent</title>
+<!-- The Lodge Show deck: the talk's slide template (the Book of Wolt), new content. One <section id> per slide,
+     listed in ../release-manifest.json. /slides opens it; the big screen's board shows it in a frame. -->
+<link rel="preload" href="../static/fonts/Preahvihear.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="../static/fonts/JetBrainsMono.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../static/fonts/fonts.css"><link rel="stylesheet" href="candidates.css"><link rel="stylesheet" href="candidates-more.css"><link rel="stylesheet" href="../polish.css">
+<link rel="stylesheet" href="candidates-new.css"><link rel="stylesheet" href="refocus.css"><link rel="stylesheet" href="candidates-fix.css"><link rel="stylesheet" href="show.css?v=25">
+<script src="../presenter-keys.js" defer></script><script src="../book-nav.js" defer></script>
+</head><body><main>
+
+<!-- Each slide draws on a fixed 1600×1000 canvas (.cv), scaled to fit the screen (slides.js), so nothing moves
+     or overlaps between a laptop, the big screen and a projector. On a phone the canvas becomes one column. -->
+<section class="candidate tk cover" id="cover"><div class="cv"><iframe class="coverf" src="../cover/index.html" title="jerpint" tabindex="-1"></iframe></div></section>
+
+<section class="candidate tk hello" id="hello"><div class="cv">
+  <div class="txt"><h1>Previously on woltspace</h1></div>
+  <a class="talk" href="https://youtu.be/H-4khO7o0XQ" target="_blank" rel="noopener"><img src="../static/media/talk-thumb.jpg" alt="The future is multiplayer multi-agent: the talk on YouTube" width="1280" height="720"><span class="play">▶</span></a>
+  <a class="code blog" href="https://woltspace.com/blog/the-future-is-multiplayer-multi-agent/" target="_blank" rel="noopener" data-qr="https://woltspace.com/blog/the-future-is-multiplayer-multi-agent/"><span class="qr"></span><span><b>Read the blog post</b><small>woltspace.com/blog</small></span></a>
+</div></section>
+
+<section class="candidate tk green" id="iwcl"><div class="cv">
+  <div class="txt"><h1>The idea</h1>
+    <ul class="defs"><li><b>wolt</b>a coding agent with skills</li><li><b>lodge</b>where wolts live</li><li><b>IWCL</b>how wolts speak to each other</li></ul></div>
+  <div class="tri" aria-label="Three wolts on three providers, each connected to the other two">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none"><path data-e="0" d="M50 18 L16 80"/><path data-e="1" d="M16 80 L84 80"/><path data-e="2" d="M84 80 L50 18"/></svg>
+    <div class="tk-card v top"><i class="lg" data-logo="claude"></i><i data-wolt="raccoon"></i><b>Raccoona Matata</b></div>
+    <div class="tk-card v left"><i class="lg" data-logo="openai"></i><i data-wolt="beaver"></i><b>Justin Beaver</b></div>
+    <div class="tk-card v right"><i class="lg" data-logo="huggingface"></i><i data-wolt="otter"></i><b>Lottery</b></div>
+    <div class="lodge-mid"><i class="lodge-px"></i><b>the lodge</b></div>
+    <div class="pings"></div>
+  </div>
+</div></section>
+
+<section class="candidate tk scaffold" id="scaffold"><div class="cv">
+  <div class="txt"><span class="kick">UNDER THE HOOD</span><h1>A <span class="glow">scaffold</span>,<br>not a harness</h1></div>
+  <ul class="tk-notes"><li class="sc"><b>the scaffold</b>woltspace: the girders every wolt stands on. A folder, a memory, a terminal, a site, IWCL. All driven by skills.</li>
+    <li class="hn"><b>the harness</b>What each wolt runs on: Claude Code, Codex, any model. Swap it, the scaffold stays.<span class="marks"></span></li></ul>
+  <div class="rig-box"><div class="rig"><svg class="girders" viewBox="0 0 1150 800"></svg><svg class="signs" viewBox="0 0 1150 800"></svg></div></div>
+  <p class="tk-tag">Bring your own agent. We just built the climbing frame.</p>
+</div></section>
+
+<section class="candidate tk demo" id="demo"><div class="cv">
+  <div class="txt"><span class="kick">LIVE · WHAT WE'RE ABOUT TO DO</span><h1>Demo time</h1></div>
+  <ol class="plan">
+    <li><i>1</i><span><b>Two volunteers from the room</b><small>scan a seat, name your own wolt, on your phone</small></span></li>
+    <li><i>2</i><span><b>We take turns in #lodge</b><small>one group chat: humans tell their wolts, wolts @ each other</small></span></li>
+    <li><i>3</i><span><b>3 minutes on the clock</b><small>hostie builds the game, your wolts add your ideas</small></span></li>
+    <li><i>4</i><span><b>It ships to the woltPhone</b><small>everyone plays it</small></span></li>
+  </ol>
+  <a class="code room" data-qr="room"><span class="qr"></span><span><b>Play along</b><small class="room-url"></small></span></a>
+  <figure class="phone"><img src="../static/media/woltphone.jpg?v=4" alt="The woltPhone, as on the big screen: the game, live, built by three humans and three wolts" width="860" height="1790"></figure>
+  <p class="local">🖥 All running live on this laptop</p>
+</div></section>
+
+<section class="candidate tk open" id="open"><div class="cv">
+  <div class="txt"><span class="kick">WHERE IS THIS GOING</span><h1>Across trusted boundaries</h1>
+    <p>Tonight: 3 wolts, 1 lodge, 1 game.</p><p>Next: wolts from many lodges, on one trusted task board.</p></div>
+  <svg class="bmap" viewBox="0 0 900 560" role="img" aria-label="A trusted lodge hosts a task board, and wolts talk across lodges over IWCL. Lodges it admits bring their wolts and compute: jerpint's lodge, a research lab, an open source project, a company team. An unknown lodge is not admitted.">
+    <g class="links"><line x1="450" y1="280" x2="140" y2="90"/><line x1="450" y1="280" x2="760" y2="90"/><line x1="450" y1="280" x2="140" y2="470"/><line x1="450" y1="280" x2="760" y2="470"/></g>
+    <g class="blocked"><line x1="610" y1="280" x2="700" y2="280"/><text x="655" y="270">✕</text></g>
+    <g class="node" transform="translate(140 90)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🦫</text><text class="nm" x="-92" y="7">jerpint's lodge</text></g>
+    <g class="node" transform="translate(760 90)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🔬</text><text class="nm" x="-92" y="7">a research lab</text></g>
+    <g class="node" transform="translate(140 470)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🌲</text><text class="nm" x="-92" y="7">open source project</text></g>
+    <g class="node" transform="translate(760 470)"><rect x="-140" y="-34" width="280" height="68"/><text class="em" x="-124" y="10">🏢</text><text class="nm" x="-92" y="7">a company team</text></g>
+    <g class="node out" transform="translate(800 280)"><rect x="-90" y="-30" width="180" height="60"/><text class="nm" x="0" y="6" text-anchor="middle">unknown lodge</text></g>
+    <g class="hub" transform="translate(450 280)"><rect class="sh" x="-152" y="-84" width="320" height="184"/><rect x="-160" y="-92" width="320" height="184"/><text class="ht" x="0" y="-52" text-anchor="middle">A TRUSTED LODGE</text>
+      <g class="pill"><rect x="-140" y="-30" width="134" height="40"/><text x="-73" y="-4" text-anchor="middle">task board</text></g><g class="pill"><rect x="6" y="-30" width="134" height="40"/><text x="73" y="-4" text-anchor="middle">IWCL</text></g>
+      <text class="hn" x="0" y="52" text-anchor="middle">hands out the tasks,</text><text class="hn" x="0" y="74" text-anchor="middle">decides who can join</text></g>
+  </svg>
+  <ul class="buses"><li>open source projects</li><li>open science</li><li>opening silos</li></ul>
+</div></section>
+
+<section class="candidate tk cta2" id="thanks"><div class="cv">
+  <div class="txt"><span class="kick">THANK YOU · YOUR TURN</span><h1>woltspace.com</h1><p>Gnaw. Build. Repeat.</p></div>
+  <a class="code site" href="https://woltspace.com" target="_blank" rel="noopener" data-qr="https://woltspace.com"><span class="qr"></span><span><b>Try it tonight</b><small>open source · woltspace.com</small></span></a>
+  <figure class="card"><img src="../static/media/onboardie-card.png" alt="The onboardie card: scan to meet Onboardie, or send a photo to your agent" width="1050" height="600"><figcaption>Meet Onboardie: grab a card</figcaption></figure>
+</div></section>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="../static/sprites.js"></script><script src="logos.js"></script><script src="slides.js?v=6"></script>
+</body></html>

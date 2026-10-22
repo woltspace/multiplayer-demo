@@ -41,13 +41,15 @@ saves = {sid: [] for sid in ("host", "p1", "p2")}
 with sync_playwright() as p:
     b = p.chromium.launch(executable_path=EXE)
     crowd = b.new_context(viewport={"width": 1920, "height": 1080}).new_page()
-    crowd.goto(f"{BASE}/crowd?k={KEY}")
+    crowd.goto(f"{BASE}/{scn.get('screen', 'crowd')}?k={KEY}")
     phones = {}
     for sid in ("host", "p1", "p2"):
         phones[sid] = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2).new_page()
         phones[sid].goto(f"{BASE}/p/{slots[sid]['token']}"); phones[sid].wait_for_timeout(500)
 
     def do(step):
+        if step.get("start"):
+            api("/api/admin/game/start", "POST"); mark("game started"); return
         ph = phones[step["slot"]]
         try:
             if "create" in step:
@@ -55,7 +57,8 @@ with sync_playwright() as p:
                 ph.fill("#pn", c["player"]); ph.fill("#wn", c["wolt"]); ph.click(f".pick button[data-k={c['creature']}]"); ph.click("#go")
                 ph.wait_for_selector(".me", timeout=90000); mark(f"{step['slot']} created {c['wolt']}")
             else:
-                ph.fill("#say", step["say"]); ph.click("#send"); mark(f"{step['slot']} says: {step['say'][:60]}")
+                # Shared world: the send button stays disabled until it's this player's turn, so this waits for it.
+                ph.fill("#say", step["say"]); ph.click("#send", timeout=150000); mark(f"{step['slot']} says: {step['say'][:60]}")
         except Exception as e:
             mark(f"{step['slot']} FAILED: {str(e).splitlines()[0][:120]}")
 
@@ -82,7 +85,7 @@ with sync_playwright() as p:
 events = [json.loads(l) for l in Path("data/events.jsonl").read_text().splitlines() if l.strip()]
 room = api("/api/room")["events"]
 ship = next((round(e["ts"] - t0, 1) for e in events if e["type"] == "ship"), None)
-replies = [e for e in events if e["type"] == "reply"]
+replies = [e for e in events if e["type"] in ("reply", "post")]
 iwcl = [e for e in room if e["type"] == "iwcl"]
 report = {"scenario": scn["name"], "host": scn["host"], "duration": scn["duration"], "saves": saves,
           "first_save": {k: (v[0] if v else None) for k, v in saves.items()}, "shipped_at": ship,
@@ -93,8 +96,12 @@ lines = [f"# Dry run: {scn['name']}", "", f"Host slot: {scn['host']} · {scn['du
 for sid, label in (("p1", "Player 1"), ("p2", "Player 2"), ("host", "header (ship)")):
     lines.append(f"| {label} | {report['first_save'][sid] if report['first_save'][sid] is not None else 'never'} s | {len(saves[sid])} |")
 lines += ["", f"Shipped: {f'{ship} s' if ship is not None else 'no'} · replies to phones: {len(replies)} · wolt-to-wolt messages: {len(iwcl)}", "",
-          "## Replies to phones", *[f"- {e['from']} → {e['to']}: {e['text'][:160]}" for e in replies], "",
+          "## Replies to phones", *[f"- {e['from']} → {e.get('to', '#lodge')}: {e['text'][:160]}" for e in replies], "",
           "## Wolt to wolt", *[f"- {e['from']} → {e['to']}: {e['text'][:160]}" for e in iwcl], "",
           "## Timeline", *[f"- {t} s · {w}" for t, w in log]]
 (out / "report.md").write_text("\n".join(lines) + "\n")
-print(f"\n{out}/report.md")
+# The raw steps: the show log this run wrote. render.py makes the video from it.
+if Path("data/show.jsonl").exists():
+    import shutil
+    shutil.copy("data/show.jsonl", out / "show.jsonl")
+print(f"\n{out}/report.md\nvideo: uv run --with playwright python render.py {out}/show.jsonl")

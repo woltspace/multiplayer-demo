@@ -1,0 +1,378 @@
+/* Refocus draft (2026-10-06): chapter 6 live demo, chapter 7 axe or teeth. */
+.demo,.swarms{background:linear-gradient(#2a2119,#18100a)}
+.demo .label,.swarms .label{max-width:46%}
+.demo-grid{position:absolute;z-index:20;left:5%;right:5%;top:42%;bottom:7%;display:grid;grid-template-columns:1fr 1.3fr;gap:3vw;align-items:center}
+.demo-go{display:flex;flex-direction:column;gap:12px;padding:28px 30px;border:4px solid var(--amber);background:#fff8e6;color:var(--ink);text-decoration:none;box-shadow:8px 8px 0 var(--terra)}
+.demo-go small{font:800 13px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--terra)}
+.demo-go b{font:400 clamp(26px,3.4vw,48px)/1 var(--display)}
+.demo-links{display:flex;gap:10px;flex-wrap:wrap}
+.demo-links .pill{background:none;width:auto;height:auto;font:700 12px/1 'JetBrains Mono',monospace;font-style:normal;padding:6px 9px;border:2px solid var(--ink)}
+.demo-go:hover{transform:translate(-2px,-2px);box-shadow:10px 10px 0 var(--terra)}
+.demo-video{margin:0}
+.demo-video video{width:100%;display:block;border:4px solid var(--cream);background:#000}
+.demo-video figcaption{margin-top:8px;font:12px/1.4 'JetBrains Mono',monospace;color:#cbbfae}
+.swarm-grid{position:absolute;z-index:20;left:5%;right:5%;top:48%;display:grid;grid-template-columns:1fr auto 1fr;gap:3vw;align-items:center}
+.swarm-card{padding:26px;border:4px solid var(--cream);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:var(--cream)}
+.swarm-card .big{font-size:clamp(56px,8vw,110px);line-height:1}
+.swarm-card b{font:800 clamp(16px,1.8vw,24px)/1 'JetBrains Mono',monospace;letter-spacing:.12em}
+.swarm-card span{font:14px/1.4 'JetBrains Mono',monospace;color:#cbbfae}
+.swarm-card.evil{background:#3a1410;border-color:#e0442a}
+.swarm-card.team{background:#fff8e6;color:var(--ink);border-color:var(--amber);box-shadow:8px 8px 0 var(--terra)}
+.swarm-card.team span{color:#5c4d3c}
+.vs{font:400 clamp(28px,3vw,44px)/1 var(--display);color:var(--amber)}
+.swarm-close{position:absolute;z-index:20;left:5%;right:5%;bottom:7%;margin:0;text-align:center;font:400 clamp(20px,2.4vw,34px)/1.2 var(--display);color:var(--cream)}
+.swarm-close small{display:block;margin-top:6px;font:12px/1 'JetBrains Mono',monospace;color:#cbbfae}
+@media (max-width:760px){
+  .demo .label,.swarms .label{max-width:90%}
+  .demo-grid{top:36%;grid-template-columns:1fr;gap:18px;bottom:auto}
+  .swarm-grid{top:36%;grid-template-columns:1fr;gap:12px}
+  .vs{text-align:center}
+  .swarm-close{position:static;padding:0 5% 30px}
+}
+/* Chapter 3: the phone joins the dam scene (you <-> your wolt <-> other wolts) */
+.tg-phone{position:absolute;inset:0;z-index:25;background:none;pointer-events:none}
+.together .tg-phone .pixel-phone{left:auto;right:6%;top:14%;bottom:auto;width:min(260px,23vw);height:min(430px,47vh);transform:rotate(4deg)}
+@media (max-width:760px){.together .tg-phone .pixel-phone{right:16px;top:22%;bottom:auto;width:min(230px,56vw);height:min(400px,46vh);transform:rotate(3deg)}}
+/* Chapter 4: Woltspace today (app wall + 3 badges) */
+.today-badges{position:absolute;z-index:30;right:4.5%;bottom:6%;display:flex;gap:14px}
+.today-badges .tb{display:flex;flex-direction:column;gap:5px;min-width:190px;padding:12px 14px;background:#fff8e6;border:3px solid var(--ink);box-shadow:5px 5px 0 var(--ink);color:var(--ink)}
+.today-badges .tb i{font-style:normal;font-size:24px;line-height:1}
+.today-badges .tb b{font:800 13px/1 'JetBrains Mono',monospace;letter-spacing:.1em;color:var(--terra)}
+.today-badges .tb span{font:12px/1.3 'JetBrains Mono',monospace}
+@media (max-width:760px){.today-badges{left:12px;right:12px;bottom:12px;gap:8px}.today-badges .tb{min-width:0;flex:1;padding:8px}.today-badges .tb span{font-size:10px}.today-badges .tb b{font-size:10px}}
+/* Chapter 3: keep the wolt-to-wolt bubbles clear of the phone */
+.together .from-beaver{left:30%;top:52%}
+.together .from-raccoon{left:54%;right:auto;top:56%}
+@media (max-width:760px){
+  .together .from-beaver{left:4%;top:70%}
+  .together .from-raccoon{left:auto;right:4%;top:75%}
+}
+/* Chapter 3: one colour per speaker. Beaver = green everywhere (phone reply + dam), raccoon = blue, human = cream */
+.together .from-beaver{background:#8ed081}
+.together .from-beaver b{color:#2e602b}
+.together .from-raccoon{background:#a9c8e8}
+.together .from-raccoon b{color:#1f4a78}
+/* Chapter 3: one story, in order. You text the beaver, it answers, then the wolts talk. 10 s loop. */
+@keyframes seq-1{0%,4%{opacity:0;transform:translateY(8px)}8%,94%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes seq-2{0%,16%{opacity:0;transform:translateY(8px)}20%,94%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes seq-3{0%,32%{opacity:0;transform:translateY(8px)}36%,94%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes seq-4{0%,46%{opacity:0;transform:translateY(8px)}50%,94%{opacity:1;transform:none}100%{opacity:0}}
+.together .tg-phone .iwcl-message.incoming{animation:seq-1 10s linear infinite}
+.together .tg-phone .iwcl-message.reply{animation:seq-2 10s linear infinite}
+.together .from-beaver{animation:seq-3 10s linear infinite}
+.together .from-raccoon{animation:seq-4 10s linear infinite}
+@media (prefers-reduced-motion:reduce){.together .tg-phone .iwcl-message,.together .from-beaver,.together .from-raccoon{animation:none;opacity:1;transform:none}}
+/* Share chapter: the printed card handed out at the talk replaces the bare QR */
+.share .card-cta{width:34%;padding:0;background:none;border:0;box-shadow:none;gap:10px;top:47%;right:5%;transform:rotate(2deg)}
+.share .card-cta img{width:100%;height:auto;display:block;border-radius:10px;box-shadow:10px 10px 0 #18100a66}
+.share .card-cta .card-note{display:block;font:600 12px var(--mono);letter-spacing:.1em;color:#fff;background:var(--terra);padding:5px 10px;border:3px solid var(--ink)}
+@media (max-width:760px){.share .card-cta{left:5%;right:5%;width:90%;top:auto;bottom:5%;transform:rotate(1deg)}.share .share-steps{display:none}}
+/* Share = the printed card as the hero (jerpint 2026-10-06: same card people hold, big enough to scan from the room) */
+.share .share-browser{display:none}
+.share .card-cta{width:56%;top:15%;right:4%;transform:none}
+.share .card-cta .card-note{font-size:16px}
+@media (max-width:760px){.share .card-cta{width:90%;top:auto}}
+.share .draft-tag{z-index:20}
+/* Phone pass (jerpint 2026-10-06: he follows on his phone; card front and center) */
+@media (max-width:760px){
+  .share .card-cta{top:30%;bottom:auto;left:4%;right:4%;width:92%;transform:none}
+  .share .share-steps{display:flex;left:5%;right:5%;width:auto;top:auto;bottom:4%;flex-direction:row;gap:6px}
+  .share .share-steps li{flex-direction:column;gap:4px;padding:6px 4px;font-size:8px;text-align:center;box-shadow:3px 3px var(--ink);border-width:3px}
+  .share .share-steps b{width:20px;height:20px;font-size:11px}
+  .swarm-grid{top:30%;gap:8px}
+  .swarm-card{padding:12px;gap:4px}
+  .swarm-card .big{font-size:44px}
+  .vs{font-size:22px}
+  .swarm-close{position:absolute;bottom:3%;padding:0;font-size:18px}
+}
+/* Screen-share pass: wolf note off the subtitle (ch3), demo title on 2 lines at 1280 (ch7) */
+@media (min-width:761px){
+  .wolf-wink{top:46%;left:30%}
+  .demo .label{max-width:62%}
+}
+/* One slide = one screen on desktop/fullscreen: size the scene by the height too (jerpint 2026-10-06: scrollbar in fullscreen). */
+@media (min-width:761px){
+  html body .candidate{width:min(94vw,calc((100vh - 110px) * 1.6),1600px);margin-bottom:0}
+}
+/* Readable from the room (jerpint 2026-10-06/07: "text on every slide way too small except titles").
+   Sizes are for a laptop screen; the one-page Book scales everything up on bigger screens. */
+@media (min-width:761px){
+html body .candidate .label>span{font-size:16px;letter-spacing:.1em}
+  html body .candidate .label>p{font-size:26px;line-height:1.35}
+  html body .candidate .draft-tag{font-size:13px}
+  html body .wolf-wink b{font-size:16px}
+  html body .wolf-wink small{font-size:13px}
+  html body .builder-tag b{font-size:16px}
+  html body .builder-tag span{font-size:13px}
+  html body .app-card header span{font-size:13px}
+  html body .site-mini span{font-size:15px}
+  html body .app-card footer{font-size:12px}
+  html body .today-badges .tb b{font-size:18px}
+  html body .today-badges .tb span{font-size:16px}
+  html body .share .card-cta .card-note{font-size:20px}
+  html body .share .share-steps li{font-size:18px;gap:14px;padding:14px 18px}
+  html body .share .share-steps b{width:36px;height:36px;font-size:20px}
+  html body .wolt-message b{font-size:12px !important}
+  html body .wolt-message span{font-size:18px !important}
+  html body .together-caption{font-size:20px !important}
+  html body .phone-status strong{font-size:14px !important}
+  html body .phone-status span{font-size:12px !important}
+  html body .iwcl-message b{font-size:13px !important}
+  html body .iwcl-message span{font-size:20px !important}
+  html body .lodge-sign{font-size:16px}
+  html body .human-tag{font-size:18px}
+  html body .human-tag small{font-size:12px}
+  html body .multi-msg b{font-size:15px}
+  html body .demo-go small{font-size:18px}
+  html body .demo-links .pill{font-size:17px}
+  html body .demo-video figcaption{font-size:17px}
+  html body .swarm-card span{font-size:20px}
+  html body .swarm-close small{font-size:18px}
+}
+/* 06 Setting the stage (jerpint 2026-10-07): METR's figure on the Hugging Face incident, before Multiplayer. */
+.stage{background:linear-gradient(#2a2119,#18100a)}
+.stage figure{margin:0;background:#fff;border:5px solid var(--ink)}
+.stage figure img{display:block;width:100%;height:auto}
+.stage .stage-figure{position:absolute;z-index:10;right:3%;top:9%;width:61%;padding:10px;box-shadow:10px 10px 0 var(--terra)}
+.stage .stage-source{position:absolute;z-index:10;left:5%;bottom:9%;width:31%;padding:4px;box-shadow:6px 6px 0 #000a}
+.stage .label{max-width:32%}
+@media (min-width:761px){html body .stage .label h1{font-size:clamp(36px,3.6vw,60px);line-height:.95}}
+@media (max-width:760px){
+  .stage .label{max-width:90%}
+  .stage .stage-figure{left:3%;right:3%;width:auto;top:30%;padding:4px;box-shadow:5px 5px 0 var(--terra)}
+  .stage .stage-source{left:12%;right:12%;width:auto;bottom:6%}
+}
+/* The report's title is the point (jerpint 2026-10-07): header big on the left, figure a bit smaller. */
+@media (min-width:761px){
+  .stage .stage-source{left:4%;top:auto;bottom:12%;width:44%;padding:6px;box-shadow:8px 8px 0 var(--terra)}
+  .stage .stage-figure{right:3%;top:auto;bottom:12%;width:47%;padding:8px;box-shadow:8px 8px 0 #000a}
+  .stage .label{max-width:60%}
+}
+@media (min-width:761px){
+  .stage .stage-source{top:35%;bottom:auto;width:48%}
+  .stage .stage-figure{top:25%;bottom:auto;width:45%}
+}
+@media (min-width:761px){
+  .stage .stage-source{top:41%;width:47%}
+  .stage .stage-figure{top:31%}
+}
+@media (min-width:761px){
+  html body .stage .stage-source{left:4%;width:55%;top:56%;bottom:auto;translate:0 -50%;padding:8px}
+  html body .stage .stage-figure{right:3%;width:36%;top:56%;bottom:auto;translate:0 -50%}
+}
+@media (min-width:761px){
+  html body .stage .stage-source{width:49%;top:60%}
+  html body .stage .stage-figure{width:43%;top:60%}
+}
+/* 07 Multiplayer = our tools, out in the open (jerpint 2026-10-07): real Stick Overflow + Woodipedia screenshots replace the two-lodges mock. */
+.multi .lodge-panel,.multi .multi-link,.multi .multi-msg{display:none}
+.multi .multi-shot{position:absolute;z-index:10;margin:0;background:#fff;border:5px solid var(--ink);box-shadow:8px 8px 0 var(--terra)}
+.multi .multi-shot img{display:block;height:100%;width:auto}
+.multi .multi-shot figcaption{position:absolute;left:-5px;bottom:-44px;padding:6px 10px;background:var(--amber);border:3px solid var(--ink);color:var(--ink);font:600 16px var(--mono);white-space:nowrap}
+@media (min-width:761px){
+  .multi .multi-shot{top:27%;height:58%}
+  .multi .multi-shot.so{left:6%}
+  .multi .multi-shot.wiki{right:6%}
+}
+@media (max-width:760px){
+  .multi .multi-shot{left:5%;right:5%}
+  .multi .multi-shot img{width:100%;height:auto}
+  .multi .multi-shot.so{top:24%;max-height:36%;overflow:hidden}
+  .multi .multi-shot.wiki{top:66%;max-height:26%;overflow:hidden}
+  .multi .multi-shot figcaption{display:none}
+}
+.multi .label{max-width:88%}
+@media (min-width:761px){html body .multi .label h1{font-size:clamp(34px,3.4vw,56px);line-height:1}}
+@media (max-width:760px){
+  html body .multi .label h1{font-size:34px;line-height:1}
+  .multi .multi-shot.so{top:31%;max-height:33%}
+  .multi .multi-shot.wiki{top:68%;max-height:24%}
+}
+/* 08 (jerpint 2026-10-07): the replay video is the slide; his line is the title. */
+.demo .label{max-width:90%}
+@media (min-width:761px){
+  html body .demo .label h1{font-size:clamp(34px,3.4vw,56px);line-height:1}
+  html body .demo-grid{top:30%;bottom:5%;left:4%;right:4%;grid-template-columns:1fr 2.6fr;gap:2.4vw}
+  html body .demo-go{padding:20px 22px}
+  html body .demo-go b{font-size:clamp(20px,2vw,32px)}
+}
+@media (min-width:761px){ html body .multi .multi-shot{top:31%;height:52%} }
+/* 09 Where we're going (jerpint 2026-10-07): the blog's quadrant + a link (and QR) to the post. */
+.future{background:linear-gradient(#2a2119,#18100a)}
+.future .label{max-width:40%}
+.future .future-quad{position:absolute;z-index:10;margin:0;right:4%;top:50%;translate:0 -50%;height:76%;aspect-ratio:640/520;background:#fffdf8;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--terra)}
+.future .future-quad img{display:block;width:100%;height:100%}
+.future .future-post{position:absolute;z-index:10;left:5%;bottom:9%;display:flex;align-items:center;gap:20px;padding:16px 22px 16px 16px;background:#fff8e6;border:4px solid var(--amber);box-shadow:8px 8px 0 var(--terra);color:var(--ink);text-decoration:none}
+.future .future-post img{width:150px;height:150px;background:#fff}
+.future .future-post span{display:flex;flex-direction:column;gap:8px}
+.future .future-post small{font:800 16px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--terra)}
+.future .future-post b{font:400 clamp(24px,2.4vw,38px)/1 var(--display)}
+.future .future-post em{font:500 16px/1.3 'JetBrains Mono',monospace;font-style:normal}
+@media (min-width:761px){html body .future .label h1{font-size:clamp(36px,3.8vw,62px);line-height:1}}
+@media (max-width:760px){
+  .future .label{max-width:90%}
+  .future .future-quad{left:5%;right:5%;height:auto;width:auto;top:26%;translate:none}
+  .future .future-post{left:5%;right:5%;bottom:5%;gap:12px;padding:10px}
+  .future .future-post img{width:84px;height:84px}
+  .future .future-post b{font-size:22px}.future .future-post em,.future .future-post small{font-size:11px}
+}
+.future .future-post .future-title{font:500 15px/1.3 'JetBrains Mono',monospace;font-style:normal;color:#5c4d3c}
+@media (min-width:761px){
+  .future .label{max-width:36%}
+  html body .future .label h1{font-size:clamp(32px,3.2vw,52px)}
+  .future .future-quad{height:72%}
+  .future .future-post{max-width:36%;padding:12px 16px 12px 12px;gap:14px}
+  .future .future-post img{width:120px;height:120px}
+  .future .future-post b{font-size:clamp(20px,1.9vw,30px)}
+}
+@media (max-width:760px){.future .future-post .future-title{font-size:11px}}
+/* Figure first, CTA small (jerpint 2026-10-07). */
+@media (min-width:761px){
+  .future .future-quad{height:82%;right:3%;top:53%}
+  .future .label{max-width:32%}
+  .future .future-post{max-width:28%;bottom:7%;padding:8px 12px 8px 8px;gap:10px;border-width:3px;box-shadow:5px 5px 0 var(--terra)}
+  .future .future-post img{width:72px;height:72px}
+  .future .future-post span{gap:4px}
+  .future .future-post small{font-size:11px}
+  .future .future-post b{font-size:18px}
+  .future .future-post .future-title{display:none}
+}
+/* 10 Where is this going (jerpint 2026-10-07): lodges talking across trusted boundaries. Replaces Axe or teeth in the order. */
+.beyond{background:linear-gradient(#1d2a33,#101820)}
+.beyond .label{max-width:34%}
+.beyond .beyond-map{position:absolute;z-index:10;right:3%;top:50%;translate:0 -50%;width:62%;height:auto;overflow:visible}
+.beyond .links line{stroke:var(--amber);stroke-width:4;stroke-dasharray:10 8;animation:beyond-flow 1.6s linear infinite}
+@keyframes beyond-flow{to{stroke-dashoffset:-36}}
+.beyond .blocked line{stroke:#e0442a;stroke-width:4;stroke-dasharray:6 8}
+.beyond .blocked text{fill:#e0442a;font:800 30px 'JetBrains Mono',monospace;text-anchor:middle}
+.beyond .lodge-node rect{fill:#fff8e6;stroke:var(--ink);stroke-width:4}
+.beyond .node-name{fill:var(--ink);font:600 17px 'JetBrains Mono',monospace}
+.beyond .node-emoji{font-size:24px}
+.beyond .outsider rect{fill:#2a3540;stroke:#6b7a87;stroke-dasharray:6 6}
+.beyond .outsider .node-name{fill:#9aa7b2}
+.beyond .hub>rect{fill:#f5f1e8;stroke:var(--ink);stroke-width:5;filter:drop-shadow(8px 8px 0 #c4531e)}
+.beyond .hub-title{fill:var(--terra);font:800 18px 'JetBrains Mono',monospace;letter-spacing:.14em}
+.beyond .pill rect{fill:var(--amber);stroke:var(--ink);stroke-width:3}
+.beyond .pill text{fill:var(--ink);font:700 15px 'JetBrains Mono',monospace}
+.beyond .hub-note{fill:#5c4d3c;font:500 15px 'JetBrains Mono',monospace}
+.beyond .beyond-uses{position:absolute;z-index:10;left:5%;bottom:9%;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;max-width:30%}
+.beyond .beyond-uses li{padding:10px 16px;background:#fff8e6;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--terra);color:var(--ink);font:700 20px 'JetBrains Mono',monospace}
+@media (min-width:761px){html body .beyond .label h1{font-size:clamp(34px,3.6vw,60px);line-height:1}}
+@media (max-width:760px){
+  .beyond .label{max-width:90%}
+  .beyond .beyond-map{left:2%;right:2%;width:auto;top:30%;translate:none}
+  .beyond .beyond-uses{left:5%;right:5%;max-width:none;bottom:4%;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .beyond .beyond-uses li{font-size:12px;padding:6px 8px;box-shadow:3px 3px 0 var(--terra);border-width:3px}
+}
+@media (prefers-reduced-motion:reduce){.beyond .links line{animation:none}}
+@media (min-width:761px){ html body .beyond .label{max-width:31%} html body .beyond .label>p{font-size:22px} }
+/* 11 Forward deployed wolts (jerpint 2026-10-07): share a configuration upstream, specialized wolts curated by a community. */
+.fdw{background:linear-gradient(#22302a,#121a16)}
+.fdw .label{max-width:36%}
+.fdw .fdw-raccoon{display:inline-block;width:72px;height:72px}
+.fdw .fdw-raccoon{display:grid;place-items:center}
+.fdw .fdw-upstream{position:absolute;z-index:10;right:4%;top:11%;width:52%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 20px;background:#fff8e6;border:5px solid var(--ink);box-shadow:10px 10px 0 var(--terra);color:var(--ink)}
+.fdw .fdw-upstream small{font:800 15px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--terra)}
+.fdw .fdw-upstream b{font:400 clamp(26px,2.6vw,42px)/1 var(--display)}
+.fdw .fdw-team{display:flex;gap:18px}
+.fdw .fdw-note{font:600 16px/1.3 'JetBrains Mono',monospace;font-style:normal;color:#5c4d3c}
+.fdw .fdw-install{position:absolute;z-index:10;right:4%;width:52%;top:47%;display:flex;justify-content:center;align-items:center;gap:16px;color:var(--amber);font:700 26px/1 'JetBrains Mono',monospace}
+.fdw .fdw-install code{font:600 18px 'JetBrains Mono',monospace;padding:6px 12px;background:#0c0805;border:2px solid var(--amber);color:#8ed081}
+.fdw .fdw-lodges{position:absolute;z-index:10;right:4%;width:52%;top:55%;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.fdw .fdw-lodge{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;background:#f5f1e8;border:4px solid var(--ink);box-shadow:6px 6px 0 #000a;color:var(--ink)}
+.fdw .fdw-lodge b{font:700 18px 'JetBrains Mono',monospace}
+.fdw .fdw-lodge small{font:600 14px 'JetBrains Mono',monospace;color:#2e602b}
+.fdw .fdw-tagline{position:absolute;z-index:10;left:5%;right:4%;bottom:6%;margin:0;color:var(--cream);font:400 clamp(22px,2.3vw,36px)/1.2 var(--display);text-shadow:3px 3px var(--ink)}
+@media (min-width:761px){html body .fdw .label h1{font-size:clamp(36px,3.8vw,62px);line-height:1} html body .fdw .label>p{font-size:22px}}
+@media (max-width:760px){
+  .fdw .label{max-width:90%}
+  .fdw .fdw-upstream{left:5%;right:5%;width:auto;top:31%;padding:10px;gap:6px}
+  .fdw .fdw-upstream small,.fdw .fdw-note{font-size:10px}
+  .fdw .fdw-raccoon{width:40px;height:40px}
+  .fdw .fdw-install{left:5%;right:5%;width:auto;top:56%;font-size:16px}.fdw .fdw-install code{font-size:11px}
+  .fdw .fdw-lodges{left:5%;right:5%;width:auto;top:62%;gap:6px}
+  .fdw .fdw-lodge{padding:6px 2px;border-width:3px}.fdw .fdw-lodge b{font-size:10px}.fdw .fdw-lodge small{font-size:9px}
+  .fdw .fdw-tagline{font-size:18px;bottom:4%}
+}
+/* 11: wolts are one config in a git repo (jerpint 2026-10-07). */
+.fdw .fdw-portable{position:absolute;z-index:10;left:5%;top:52%;max-width:34%;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+.fdw .fdw-portable li{display:flex;flex-direction:column;gap:4px;padding:12px 16px;background:#0c0805;border:3px solid var(--amber);color:#cbbfae;font:500 16px/1.2 'JetBrains Mono',monospace}
+.fdw .fdw-portable b{color:#8ed081;font:700 20px/1.2 'JetBrains Mono',monospace}
+@media (max-width:760px){.fdw .fdw-portable{display:none}}
+/* 12 Your turn: the call to action (jerpint 2026-10-07). */
+.cta{background:linear-gradient(#2a2119,#18100a)}
+.cta .label{max-width:60%}
+.cta .cta-steps{position:absolute;z-index:10;left:5%;top:30%;width:52%;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px;counter-reset:cta}
+.cta .cta-steps li{display:flex;align-items:center;gap:16px;padding:10px 16px;background:#fff8e6;border:4px solid var(--ink);box-shadow:6px 6px 0 var(--terra);color:var(--ink)}
+.cta .cta-steps li>i{display:grid;place-items:center;width:44px;height:44px;flex:none;background:var(--terra);color:var(--cream);font:700 22px/1 'JetBrains Mono',monospace;font-style:normal}
+.cta .cta-steps span{display:flex;flex-direction:column;gap:3px}
+.cta .cta-steps b{font:400 clamp(22px,2.1vw,34px)/1 var(--display)}
+.cta .cta-steps small{font:500 15px/1.2 'JetBrains Mono',monospace;color:#5c4d3c}
+.cta .cta-codes{position:absolute;z-index:10;right:5%;top:30%;display:flex;gap:24px}
+.cta .cta-codes a{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px;background:#fff;border:4px solid var(--ink);box-shadow:8px 8px 0 var(--amber);color:var(--ink);text-decoration:none}
+.cta .cta-codes img{width:170px;height:170px}
+.cta .cta-codes small{font:700 16px 'JetBrains Mono',monospace}
+.cta .cta-live{position:absolute;z-index:10;right:5%;bottom:8%;padding:10px 16px;border:3px dashed #cbbfae;color:#cbbfae;font:600 18px 'JetBrains Mono',monospace;text-decoration:none}
+@media (min-width:761px){html body .cta .label h1{font-size:clamp(40px,4.4vw,72px);line-height:1}}
+@media (max-width:760px){
+  .cta .cta-steps{left:5%;right:5%;width:auto;top:22%;gap:6px}
+  .cta .cta-steps li{padding:6px 8px;gap:8px;box-shadow:3px 3px 0 var(--terra);border-width:3px}
+  .cta .cta-steps li>i{width:28px;height:28px;font-size:14px}
+  .cta .cta-steps b{font-size:18px}.cta .cta-steps small{font-size:10px}
+  .cta .cta-codes{left:5%;right:5%;top:auto;bottom:12%;justify-content:center;gap:12px}
+  .cta .cta-codes img{width:90px;height:90px}.cta .cta-codes a{padding:8px}.cta .cta-codes small{font-size:11px}
+  .cta .cta-live{left:5%;right:5%;bottom:3%;font-size:11px;text-align:center}
+}
+@media (max-width:760px){ html body .cta .label h1{font-size:34px;line-height:1} .cta .cta-steps{top:26%} }
+@media (min-width:761px){ html body .multi .multi-shot{top:28%;height:60%} html body .multi .multi-shot.so{left:8%} html body .multi .multi-shot.wiki{right:8%} }
+@media (min-width:761px){ html body .multi .multi-shot{top:30%;height:auto} html body .multi .multi-shot img{width:100%;height:auto} html body .multi .multi-shot.so{left:5%;width:36%} html body .multi .multi-shot.wiki{right:5%;width:46%} }
+@media (min-width:761px){ html body .multi .multi-shot.so{width:41%} html body .multi .multi-shot.wiki{width:48%;right:4%} html body .multi .multi-shot.so{left:4%} }
+/* 07: each screenshot opens the app in the demo lodge. */
+.multi a.multi-shot{display:block;color:inherit;text-decoration:none}
+.multi a.multi-shot figure{margin:0}
+.multi a.multi-shot:hover{translate:-2px -2px}
+/* 12 The future of open source (jerpint 2026-10-07, Telegram). */
+.openfuture{background:linear-gradient(#20263a,#11131f)}
+.openfuture .label{max-width:60%}
+.openfuture .fdw-raccoon{display:grid;place-items:center;width:72px;height:72px}
+.openfuture .of-then,.openfuture .of-now{position:absolute;z-index:10;top:36%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;background:#fff8e6;border:5px solid var(--ink);color:var(--ink);text-align:center}
+.openfuture .of-then{left:5%;width:24%;height:30%;background:#d8d2c4;box-shadow:6px 6px 0 #000a}
+.openfuture .of-now{left:38%;width:40%;height:30%;box-shadow:10px 10px 0 var(--terra)}
+.openfuture small{font:800 14px/1 'JetBrains Mono',monospace;letter-spacing:.14em;color:var(--terra)}
+.openfuture .of-then code{font:700 48px/1 'JetBrains Mono',monospace;color:#5c4d3c}
+.openfuture .of-then b,.openfuture .of-now b{font:400 clamp(20px,2vw,32px)/1.1 var(--display)}
+.openfuture .of-team{display:flex;gap:14px}
+.openfuture .of-arrow{position:absolute;z-index:10;left:30.5%;top:46%;color:var(--amber);font:700 56px/1 'JetBrains Mono',monospace}
+.openfuture .of-goals{position:absolute;z-index:10;right:4%;top:36%;width:17%;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.openfuture .of-goals li{padding:10px 12px;background:#0c0805;border:3px solid var(--amber);color:#8ed081;font:700 16px/1.25 'JetBrains Mono',monospace}
+.openfuture .of-badge{position:absolute;z-index:10;left:5%;right:4%;bottom:8%;margin:0;color:var(--cream);font:400 clamp(24px,2.6vw,40px)/1.1 var(--display);text-shadow:3px 3px var(--ink)}
+@media (min-width:761px){html body .openfuture .label h1{font-size:clamp(36px,3.8vw,62px);line-height:1}}
+@media (max-width:760px){
+  .openfuture .label{max-width:90%}
+  .openfuture .of-then{left:5%;right:5%;width:auto;top:27%;height:auto;padding:8px;flex-direction:row}
+  .openfuture .of-arrow{display:none}
+  .openfuture .of-now{left:5%;right:5%;width:auto;top:40%;height:auto;padding:10px;gap:6px}
+  .openfuture .fdw-raccoon{width:40px;height:40px}
+  .openfuture .of-goals{left:5%;right:5%;width:auto;top:67%;flex-direction:row;flex-wrap:wrap;gap:6px}
+  .openfuture .of-goals li{font-size:11px;padding:6px 8px}
+  .openfuture .of-then code{font-size:24px}.openfuture small{font-size:10px}
+  .openfuture .of-badge{font-size:20px;bottom:4%}
+}
+@media (min-width:761px){ .openfuture .of-now{width:37%} }
+/* Phone pass after the talk changes (jerpint 2026-10-07): no overlaps. Phone widths only, web untouched. */
+@media (max-width:760px){
+  html body .together .tg-phone .pixel-phone{top:28%;height:min(360px,40vh)}
+  html body .multi .label h1{font-size:30px}
+  html body .multi .multi-shot.so{top:33%}
+  html body .future .label h1{font-size:30px}
+  html body .future .future-quad{top:29%}
+  html body .demo .label h1{font-size:30px}
+  html body .stage .label h1,html body .beyond .label h1,html body .fdw .label h1,html body .openfuture .label h1{font-size:32px}
+}
+@media (max-width:760px){ html body .candidate.multi .label h1{font-size:30px;line-height:1} html body .candidate.multi .multi-shot.so{top:31%} }
+@media (max-width:760px) and (max-height:700px){ html body .candidate.multi .label h1{font-size:26px} html body .candidate.multi .multi-shot.so{top:30%;max-height:32%} }
+/* 13: community line under the title (jerpint 2026-10-07) */
+html body .cta .label>p{max-width:46ch}
+@media (min-width:761px){ html body .cta .label>p{font-size:22px} .cta .cta-steps{top:38%;gap:10px} .cta .cta-steps li{padding:8px 14px} .cta .cta-codes{top:38%} }
+@media (max-width:760px){ html body .cta .label>p{font-size:12px} .cta .cta-steps{top:30%} }
+@media (max-width:760px){ .cta .cta-steps{top:31%} }

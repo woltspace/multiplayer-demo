@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover, interactive-widget=resizes-content">
 <title>Lodge Show · player</title>
 <link rel="stylesheet" href="../static/show.css">
 <style>
@@ -26,6 +26,22 @@ button:disabled{opacity:.5}
 .me .nm{font:400 26px/1 Preahvihear}.me .hs{font:700 13px JB;color:var(--m)}
 .me .live{margin-left:auto;white-space:nowrap;font:700 12px JB;color:var(--ok)}.me .live:before{content:"● ";animation:blink 1.2s infinite}
 .msgs{display:flex;flex-direction:column;gap:10px}
+.lodge{display:flex;flex-direction:column;gap:9px;background:#1a120c;border:3px solid var(--ink);border-radius:14px;padding:12px 10px;box-shadow:4px 4px 0 var(--ink)}
+.lodge .sys{align-self:center;font:700 11px JB;color:#c9b59a;border:1.5px dashed #5a3a22;border-radius:8px;padding:2px 9px;text-transform:uppercase;letter-spacing:.5px}
+.lm{display:flex;gap:8px;align-items:flex-start}
+.lm .ic{width:26px;flex:0 0 26px;display:flex;justify-content:center;font-size:20px;line-height:1.2}
+.lm>div{min-width:0}
+.lm .who{font:700 11px JB;color:var(--m);text-transform:uppercase;margin:0 0 2px}
+.lm .bb{font:14px/1.38 DMSans;background:#0d0909;color:#fff3dc;border:1.5px solid #000;border-left:4px solid var(--m);border-radius:8px;padding:6px 9px;word-break:break-word}
+.lm.h .bb{background:#2a2010;color:#ffe9b8}
+.lm.mine .bb{background:var(--m);color:#fff;border-color:var(--ink)}
+.lm.mywolt .bb{box-shadow:0 0 0 2px var(--m)}
+.lm.forme .bb{outline:2px solid #ffc23d}
+.lm .bb b.at{color:#ffc23d}.lm .bb b.atme{background:#ffc23d;color:#18100a;padding:0 3px;border-radius:4px}
+.grp{font:700 12px JB;color:var(--muted);text-align:center;margin:4px 0 10px;letter-spacing:.5px}
+.m .bb b.at{color:var(--org)}.m .bb b.atme{background:#ffc23d;color:var(--ink);padding:0 3px;border-radius:4px}
+.m.mywolt .bb{border-width:3px;box-shadow:3px 3px 0 var(--m),0 0 0 3px color-mix(in srgb,var(--m) 25%,transparent)}
+.m:not(.mine):not(.mywolt):not(.forme) .bb{opacity:.82}
 .m{max-width:86%;animation:pop .3s ease-out}
 .m .who{font:700 12px JB;color:var(--muted);margin:0 6px 2px}
 .m .bb{background:#fff;border:2px solid var(--ink);border-radius:14px 14px 14px 4px;padding:8px 12px;box-shadow:3px 3px 0 var(--m);white-space:pre-wrap;word-break:break-word}
@@ -35,18 +51,22 @@ button:disabled{opacity:.5}
 .waking .av{animation:hop .9s infinite}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--cream);border-top:2px solid var(--ink);padding:10px 16px calc(10px + env(safe-area-inset-bottom))}
 .bar form{max-width:520px;margin:0 auto;padding:0;display:flex;gap:8px;align-items:flex-end}
-.bar textarea{min-height:48px;max-height:120px;resize:none;padding:11px}
+.bar textarea{min-height:48px;max-height:40vh;resize:none;padding:11px;font-size:16px;line-height:1.35;overflow-y:auto;field-sizing:content}
+.bar .count{position:absolute;right:110px;top:-20px;font:700 11px JB;color:var(--muted)}.bar{position:fixed}
 .bar button{flex:none}
 .taken{padding:22px;text-align:center}
+.skipb{display:block;width:100%;margin:0 0 14px;padding:10px;font:700 16px JB;background:#fff;border:3px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink)}
+.startg{display:block;width:100%;margin:0 0 14px;padding:16px;font:700 20px JB;color:#fff;background:var(--org);border:3px solid var(--ink);border-radius:14px;box-shadow:4px 4px 0 var(--ink)}
+.paused.go{background:#4ee06a}
 .paused{background:#ffc23d;border:2px solid var(--ink);border-radius:12px;box-shadow:3px 3px 0 var(--ink);padding:10px 14px;font:700 14px JB;text-align:center;margin:0 0 14px}
 </style>
 </head>
 <body>
 <main id="app"></main>
 <div class="bar" id="bar" hidden>
-  <form id="sayf"><textarea id="say" maxlength="280" rows="1" placeholder="tell your wolt what to build…"></textarea><button id="send">Send</button></form>
+  <form id="sayf"><textarea id="say" maxlength="800" rows="1" enterkeyhint="enter" placeholder="tell your wolt what to build…"></textarea><button id="send">Send</button></form><span class="count" id="count" hidden></span>
 </div>
-<script src="../static/sprites.js"></script>
-<script src="../static/player.js"></script>
+<script src="../static/sprites.js?v=2"></script>
+<script src="../static/player.js?v=16"></script>
 </body>
 </html>

@@ -9,7 +9,7 @@ Players:  GET /p/<token>     claim the slot, name + create your wolt, then type 
 Crowd:    GET /crowd?k=KEY   full screen: #lodge chat + every wolt's terminal, live
 Admin:    GET /admin?k=KEY   the private QR per slot, reset a slot
 
-The host wolt (curated commie) already exists and runs the show; players create theirs live.
+The host wolt (curated hostie, scratch memory) already exists and runs the show; players create theirs live.
 Everything that happens is one line in data/events.jsonl (append-only), so a show can be replayed.
 
 SHOW_MODE=mock  replays mock/scenario.json on a clock (for mocks, no lodge needed)
@@ -23,14 +23,16 @@ import secrets
 import subprocess
 import threading
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -46,7 +48,8 @@ MODEL = os.environ.get("SHOW_MODEL", "sonnet")
 # The live page is a staged shell (static/stage.html) with one box per wolt. Each player's wolt owns one file in its
 # own folder; the host owns the header. Writing the header is the ship moment.
 PART_OF = {"p1": "part-a.html", "p2": "part-b.html", "host": "header.html"}
-SIDE_OF = {"p1": "left", "p2": "right", "host": "top"}
+SIDE_OF = ({"p1": "middle", "p2": "bottom", "host": "top"} if os.environ.get("SHOW_WORLD", "1") == "1"  # one phone, stacked
+           else {"p1": "left", "p2": "right", "host": "top"})
 PART_MAX = 200_000
 
 
@@ -56,14 +59,16 @@ def engine_for(sid: str) -> tuple[str, str]:
     harness = os.environ.get(f"SHOW_HARNESS_{k}", HARNESS)
     model = os.environ.get(f"SHOW_MODEL_{k}") or (MODEL if harness == HARNESS else "")
     return harness, model
-HOST = os.environ.get("SHOW_HOST_WOLT", "commie")
+HOST = os.environ.get("SHOW_HOST_WOLT", "hostie")
+TITLE = os.environ.get("SHOW_TITLE", "Dam Builders")  # the game's name for the show, whatever gets built
 HOST_PLAYER_DEFAULT = os.environ.get("SHOW_HOST_PLAYER", "jerpint")
+OWNER_EMAIL = os.environ.get("SHOW_OWNER_EMAIL", "")  # their Cloudflare Access login
 # Who plays the host slot. Dry runs reset the show with an honest tester name (never jerpint's); a plain Reset goes back
 # to the default. Kept in data/ so an app restart doesn't rename the host mid-show.
 _host_file = DATA / "host_player.txt"
 HOST_PLAYER = _host_file.read_text().strip() if _host_file.exists() else HOST_PLAYER_DEFAULT
 REPLY_CMD = os.environ.get("SHOW_REPLY_CMD", "show-reply")
-SAY_MAX = 280
+SAY_MAX = 800  # a phone message: room for a real idea, still one paste into the wolt
 COOLDOWN = 3.0  # seconds between messages per player
 
 DATA.mkdir(parents=True, exist_ok=True)
@@ -103,22 +108,247 @@ def default_slots() -> dict:
 slots = json.loads(SLOTS.read_text()) if SLOTS.exists() else default_slots()
 
 
-# The show's phase, set from backstage: ready (before Start: the "starting soon" card), live, paused (the pause
-# screen; players can't send, the wolts keep running). The host slot can always type, to brief its wolt.
+# The show's phase, three states and no curtain: ready (after a reset: the start screen), live (playing) and paused
+# (nothing moves, everything stays on screen: phones can't send, the build clock and the turn hold; resume picks up
+# where it left off). Players can create their wolt in any phase but only send while live. The host slot can always
+# type, to brief its wolt.
 PHASE_FILE = DATA / "phase.txt"
 PHASES = ("ready", "live", "paused")
 phase = PHASE_FILE.read_text().strip() if PHASE_FILE.exists() else "ready"
 
 
+# The show log: everything the room saw, in order, so a show can be replayed and its video rendered from it
+# (SHOW_MODE=replay, render.py). App events, IWCL messages, every version of every box, terminal screens, phases.
+SHOW_LOG = DATA / "show.jsonl"
+_showlog_lock = threading.Lock()
+
+
+def showlog(kind: str, **row) -> None:
+    if MODE != "lodge":
+        return
+    with _showlog_lock, SHOW_LOG.open("a") as f:
+        f.write(json.dumps({"ts": time.time(), "kind": kind, **row}) + "\n")
+
+
+# The crowd vote: once the page ships, every phone in the room votes for its favourite of the two games (one vote per
+# phone, changeable, kept by a random cookie). Cleared on Reset everything.
+VOTES_FILE = DATA / "votes.json"
+votes: dict[str, str] = json.loads(VOTES_FILE.read_text()) if VOTES_FILE.exists() else {}
+vote_lock = threading.Lock()
+
+
+def tally() -> dict:
+    with vote_lock:
+        return {side: sum(1 for v in votes.values() if v == side) for side in ("p1", "p2")}
+
+
+VOTING = os.environ.get("SHOW_VOTING") == "1"  # off for now: SHOW_VOTING=1 turns the vote on
+
+
+def shipped(evs: list) -> bool:
+    """Voting is open once the page ships (and only when the vote is switched on)."""
+    return VOTING and any(e.get("type") == "ship" for e in evs)
+
+
+# The game: players can create their wolts any time, but only type to them once the host starts the game (from the
+# backstage). Starting it asks the host wolt to send the kickoff over IWCL.
+GAME_FILE = DATA / "game.txt"
+game_on = GAME_FILE.exists()
+# The build clock: SHOW_GAME_SECONDS from the start (default 3 minutes), on the big screen. At zero the app tells the
+# host it's time to ship. game_at is when the game started (epoch seconds), kept in game.txt across restarts.
+GAME_SECONDS = int(os.environ.get("SHOW_GAME_SECONDS", "180"))
+game_at = float(GAME_FILE.read_text().split("|")[-1]) if game_on and "|" in GAME_FILE.read_text() else None
+_clock: dict = {"timer": None}
+# Time spent paused this game (the clock and the turn timer skip it), kept in pause.json across restarts.
+PAUSE_FILE = DATA / "pause.json"
+pause = {"total": 0.0, "at": None, **(json.loads(PAUSE_FILE.read_text()) if PAUSE_FILE.exists() else {})}
+
+
+def save_pause(total: float = None, at: float | None = ...) -> None:
+    if total is not None:
+        pause["total"] = total
+    if at is not ...:
+        pause["at"] = at
+    PAUSE_FILE.write_text(json.dumps(pause))
+
+
+def arm_clock() -> None:
+    """(Re)start the timer for what's left on the build clock (after a start, or a resume)."""
+    if _clock["timer"]:
+        _clock["timer"].cancel()
+    if not game_on or not game_at or GAME_SECONDS <= 0:
+        return
+    left = GAME_SECONDS - (time.time() - game_at - pause["total"])
+    _clock["timer"] = threading.Timer(max(left, 0), times_up)
+    _clock["timer"].daemon = True
+    _clock["timer"].start()
+
+
+def times_up() -> None:
+    """The build clock hit zero: ask the host to wrap up and ship (once, and only if the game is still on)."""
+    host = slots["host"]["wolt"]
+    if not game_on or phase == "paused" or any(e["type"] in ("ship", "timeup") for e in events):
+        return
+    record({"type": "timeup"})
+    if MODE == "lodge" and host and host.get("session"):
+        body = (f"[lodge-show app, automatic] Time's up ({GAME_SECONDS // 60}:{GAME_SECONDS % 60:02d} on the clock). "
+                "Ship: update your header with the final title and the credits, then post \"✓ shipped\" in one line, "
+                f"no @. Don't message the other wolts. The game goes on: keep answering {HOST_PLAYER} as before.\n"
+                + post_how("host"))
+        threading.Thread(target=driver.deliver, args=(host["session"], body), daemon=True).start()
+
+
 def set_phase(p: str) -> None:
+    """Changing phase also holds and releases the clock and the turn timer around a pause."""
     global phase
+    now = time.time()
+    if p == "paused" and pause["at"] is None:
+        save_pause(at=now)
+        if _clock["timer"]:
+            _clock["timer"].cancel()
+    elif p != "paused" and pause["at"] is not None:
+        held = now - pause["at"]
+        save_pause(total=pause["total"] + held, at=None)
+        if turn["spoke_at"]:
+            turn["held"] = turn.get("held", 0) + held  # the speaker's wolt gets its full time back
+        else:
+            turn["since"] += held
+        phase = p
+        if p == "live":
+            arm_clock()
     phase = p
     PHASE_FILE.write_text(p)
+    showlog("phase", phase=p)
 
 
 def open_for(sid: str) -> None:
+    """Players can send only while the show is live and the game has started. Creating a wolt is always open."""
+    if sid != "host" and phase == "paused" and game_on:
+        raise HTTPException(423, "⏸ paused: back in a moment")
     if sid != "host" and phase != "live":
-        raise HTTPException(423, "the show starts in a moment" if phase == "ready" else "the show is paused, back in a moment")
+        raise HTTPException(423, "the game starts in a moment")
+    if sid != "host" and not game_on:
+        raise HTTPException(423, "the game starts in a moment")
+    if WORLD and sid != "host":
+        t = turn_state()
+        if t.get("turn_over"):
+            raise HTTPException(423, "time's up: thanks for building!")
+        if t["turn"] != sid:
+            raise HTTPException(423, f"one at a time: it's {t['turn_player'] or 'someone else'}'s turn")
+        if t["turn_busy"]:
+            raise HTTPException(423, "your wolt is on it: wait for its post")
+
+
+def start_game(by: str) -> bool:
+    """Unlock the players and ask the host wolt for the kickoff. Once per show (Reset everything turns it off)."""
+    global game_on, game_at
+    with lock:
+        if game_on:
+            return False
+        game_on, game_at = True, time.time()
+        GAME_FILE.write_text(f"{by}|{game_at}")
+        save_pause(total=0.0, at=None)
+        turn.update(sid="host", spoke_at=None, since=time.time(), held=0)
+        wolts = [x["wolt"]["name"] for k, x in slots.items() if k != "host" and x["wolt"]]
+        host = slots["host"]["wolt"]
+    record({"type": "game", "by": by})
+    if phase != "live":
+        set_phase("live")
+    _room["body"] = None
+    if MODE == "lodge" and host and host.get("session"):
+        who = ", ".join(wolts) or "the players' wolts (none has joined yet: send it to each one as it joins)"
+        if WORLD:
+            body = (f"[lodge-show app, automatic] {HOST_PLAYER} just started the game: one turn at a time, {HOST_PLAYER} first. "
+                    f"Post ONE short line now, no @ for the wolts and no question (nobody answers it), e.g. "
+                    f"\"⚡ Let's get started! One turn at a time, {HOST_PLAYER} goes first.\" Then wait for {HOST_PLAYER}.\n{post_how('host')}")
+        else:
+            body = (f"[lodge-show app, automatic] {HOST_PLAYER} just started the game. Send the kickoff now, over IWCL, to "
+                    f"{who}: one short line each, e.g. \"⚡ The game is on! Ask your player what game to build, then build it "
+                    f"in small saves.\" Their players can type from now on.")
+        threading.Thread(target=driver.deliver, args=(host["session"], body), daemon=True).start()
+    arm_clock()
+    return True
+
+
+def clock() -> dict:
+    """For the big screen: when the game started (moved later by the time spent paused, so the clock just counts
+    from it), how long it lasts, the server's now (so screens don't drift), and whether it's paused (frozen)."""
+    now = time.time()
+    held = pause["total"] + (now - pause["at"] if pause["at"] else 0)
+    return {"game_at": game_at + held if game_at else None, "game_seconds": GAME_SECONDS, "now": now,
+            "paused": phase == "paused" and game_on}
+
+
+# ---------------------------------------------------------------- the shared world
+# SHOW_WORLD=1 (default): everyone builds ONE page together in ONE #lodge group chat. Every human message goes to all
+# three wolts; every wolt post (show-post) goes to the other two, so wolt-to-wolt talk (@mentions) is implicit IWCL.
+# One turn at a time once the game is on: host -> P1 -> P2 -> host ...; a turn passes when the speaker's own wolt has
+# posted, or after SHOW_TURN_SECONDS. The host can always speak (to steer), but only takes a turn on their own turn.
+WORLD = os.environ.get("SHOW_WORLD", "1") == "1"
+POST_CMD = os.environ.get("SHOW_POST_CMD", str(HERE / "bin" / "show-post"))
+TURN_ORDER = ("host", "p1", "p2")
+TURN_MAX = int(os.environ.get("SHOW_TURN_SECONDS", "45"))
+TURN_IDLE = int(os.environ.get("SHOW_TURN_IDLE", "0"))  # >0: a turn nobody takes passes on after this long. 0: it
+# waits (the host skips it with ⏭ if someone froze)
+turn = {"sid": "host", "spoke_at": None, "since": time.time()}
+
+
+def seated() -> list[str]:
+    return [k for k in TURN_ORDER if slots.get(k, {}).get("wolt")]
+
+
+def turn_state() -> dict:
+    """Whose turn it is; passes the turn on lazily (every screen asks once a second)."""
+    if not (WORLD and game_on):
+        return {"turn": None, "turn_player": None, "turn_busy": False}
+    sid, at = turn["sid"], turn["spoke_at"]
+    if phase == "paused":  # the turn holds
+        return {"turn": sid, "turn_player": slots[sid]["player"], "turn_busy": bool(at)}
+    posted = at and any(e["type"] == "post" and e.get("slot") == sid and e["ts"] > at for e in events[-80:])
+    if posted or (at and time.time() - at - turn.get("held", 0) > TURN_MAX) or (not at and TURN_IDLE and time.time() - turn["since"] > TURN_IDLE):
+        order = seated() or ["host"]
+        prev_since = turn["since"]
+        nxt = order[(order.index(sid) + 1) % len(order)] if sid in order else order[0]
+        turn.update(sid=nxt, spoke_at=None, since=time.time(), held=0)
+        record({"type": "turn", "slot": nxt, "player": slots[nxt]["player"]})
+        sid = nxt
+        if nxt == "host":  # the host already spoke during the last turn (a twist, a steer): that was their go
+            said = [e for e in events[-40:] if e["type"] == "say" and e.get("slot") == "host" and e["ts"] > prev_since]
+            if said:
+                turn["spoke_at"] = said[-1]["ts"]
+    return {"turn": sid, "turn_player": slots[sid]["player"], "turn_busy": bool(turn["spoke_at"])}
+
+
+def skip_turn(by: str) -> dict:
+    """The host passes the turn on (someone froze, a phone died): to the next seat, now."""
+    if not (WORLD and game_on):
+        raise HTTPException(409, "no game on")
+    if phase == "paused":
+        raise HTTPException(409, "paused: resume first")
+    order = seated() or ["host"]
+    sid = turn["sid"]
+    nxt = order[(order.index(sid) + 1) % len(order)] if sid in order else order[0]
+    turn.update(sid=nxt, spoke_at=None, since=time.time(), held=0)
+    record({"type": "turn", "slot": nxt, "player": slots[nxt]["player"], "skipped": sid, "by": by})
+    _room["body"] = None
+    return turn_state()
+
+
+def post_how(k: str) -> str:
+    d = f"SHOW_{secrets.token_hex(6).upper()}"
+    return f"Post to #lodge (everyone sees it) by replacing YOUR_POST, then run it:\n{POST_CMD} {k} <<'{d}'\nYOUR_POST\n{d}"
+
+
+def broadcast(from_sid: str, head: str, text: str, own_line: str, other_line: str, skip_self: bool) -> None:
+    """Paste a #lodge message into every wolt's terminal (the author's own wolt too, unless skip_self)."""
+    if MODE != "lodge":
+        return
+    for k in TURN_ORDER:
+        w = (slots.get(k) or {}).get("wolt")
+        if not w or not w.get("session") or (skip_self and k == from_sid):
+            continue
+        body = f"[#lodge] {head}\n{text}\n\n{own_line if k == from_sid else other_line}\n{post_how(k)}"
+        threading.Thread(target=driver.deliver, args=(w["session"], body), daemon=True).start()
 
 
 def save_slots() -> None:
@@ -137,6 +367,7 @@ def record(event: dict) -> dict:
     with LOG.open("a") as f:
         f.write(json.dumps(event) + "\n")
     events.append(event)
+    showlog("event", event=event)
     return event
 
 
@@ -170,6 +401,54 @@ class MockDriver:
         return b[-1] if b else 0
 
 
+class ReplayDriver:
+    """Plays a show log (data/show.jsonl from a real show) back on a clock, like MockDriver plays a script."""
+
+    def __init__(self, path: Path):
+        self.rows = [json.loads(l) for l in path.read_text().splitlines() if l.strip()]
+        t0 = self.rows[0]["ts"] if self.rows else 0
+        for r in self.rows:
+            r["t"] = r["ts"] - t0
+        self.length = self.rows[-1]["t"] if self.rows else 0
+        self.t0 = time.time()
+
+    def now(self, t: float | None) -> float:
+        return t if t is not None else time.time() - self.t0
+
+    def _upto(self, t, kind):
+        now = self.now(t)
+        return [r for r in self.rows if r["kind"] == kind and r["t"] <= now]
+
+    def events(self, t: float | None) -> list[dict]:
+        evs = [dict(r["event"], seq=f"a{i}") for i, r in enumerate(self._upto(t, "event"))]
+        evs += [dict(r["row"], seq=f"f{i}") for i, r in enumerate(self._upto(t, "iwcl"))]
+        return sorted(evs, key=lambda e: e["ts"])
+
+    def terms(self, t: float | None) -> dict:
+        return {r["wolt"]: r["lines"] for r in self._upto(t, "term")}
+
+    def busy(self, t: float | None) -> list[str]:
+        now = self.now(t)
+        return sorted({r["wolt"] for r in self._upto(t, "term") if r["t"] > now - 2})
+
+    def parts(self, t: float | None) -> dict:
+        out = {sid: {"file": PART_OF[sid], "wolt": None, "html": "", "v": 0} for sid in ("host", "p1", "p2")}
+        for r in self._upto(t, "part"):
+            out[r["slot"]] = {k: v for k, v in r.items() if k not in ("ts", "t", "kind", "slot")} | {"v": int(r["t"] * 1000) + 1}
+        return out
+
+    def build(self, t: float | None) -> int:
+        return max(p["v"] for p in self.parts(t).values())
+
+    def cast(self, t: float | None) -> list[dict]:
+        rows = self._upto(t, "cast")
+        return rows[-1]["cast"] if rows else []
+
+    def phase(self, t: float | None) -> str:
+        rows = self._upto(t, "phase")
+        return rows[-1]["phase"] if rows else "ready"
+
+
 class LodgeDriver:
     """Drives the real lodge (inside the throwaway container). Players' words go in as plain pastes."""
 
@@ -184,8 +463,22 @@ class LodgeDriver:
         scaffold(Path(_wolts_dir), name, creature, harness, model, "player",
                  {"PLAYER": player, "HOST_PLAYER": HOST_PLAYER, "LIVE": str(LIVE), "REPLY": REPLY_CMD, "WOLTS": _wolts_dir,
                   "PART": PART_OF[sid], "SIDE": SIDE_OF[sid], "BOX": PART_OF[sid].removesuffix(".html"),
-                  "BOXJS": "partA" if sid == "p1" else "partB"})
+                  "BOXJS": "partA" if sid == "p1" else "partB", "POST": POST_CMD, "SLOT": sid, "HOST": HOST, "TITLE": TITLE})
+        if harness == "codex" and is_throwaway():
+            self.auto_grant(slug(name))
         return self.post("/sessions/new/lodge", {"wolt": slug(name), "creature": creature})
+
+    def auto_grant(self, wolt: str) -> None:
+        """jerpint's call (2026-10-19): Codex players run in Auto, in the throwaway lodge only. Revoked at reset-all.
+        Without it Codex stops on an approval prompt for the show-reply call. The lodge wants the exact folder confirmed."""
+        try:
+            self.post("/auto-grants/grant", {"wolt": wolt})
+        except urllib.error.HTTPError as e:
+            canonical = json.loads(e.read() or b"{}").get("canonical_workdir")
+            if not canonical:
+                raise
+            self.post("/auto-grants/grant", {"wolt": wolt, "confirm": canonical})
+        record({"type": "auto_grant", "wolt": wolt})
 
     def deliver(self, session: str, text: str) -> dict:
         return self.post(f"/sessions/{session}/message", {"text": text})
@@ -202,10 +495,15 @@ class LodgeDriver:
         return out.stdout if out.returncode == 0 else ""
 
 
-driver = MockDriver() if MODE == "mock" else LodgeDriver()
+driver = MockDriver() if MODE == "mock" else ReplayDriver(Path(os.environ["SHOW_REPLAY"])) if MODE == "replay" else LodgeDriver()
 
 # The lodge's IWCL log (woltspace 0.5.20+): one line per wolt-to-wolt message or spawn.
 _wolts_dir = os.environ.get("WOLTSPACE_WOLTS_DIR") or str(Path.home() / ".woltspace" / "wolts")
+
+
+def is_throwaway() -> bool:
+    wolts = Path(_wolts_dir).resolve()
+    return (wolts.parent / ".lodge-show-throwaway").exists() and wolts != (Path.home() / ".woltspace" / "wolts").resolve()
 IWCL_LOG = Path(os.environ.get("SHOW_IWCL_LOG") or Path(_wolts_dir) / ".space" / "logs" / "iwcl.jsonl")
 
 
@@ -278,22 +576,47 @@ if MODE == "lodge":
 # ---------------------------------------------------------------- app
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
+# The audience's phones poll the game every second through the laptop's upload: compressed, it's ~3x less (12 KB of
+# game HTML -> ~4 KB). No streaming responses here, so nothing to hold back.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.middleware("http")
 async def headers(request: Request, call_next):
+    # Cloudflare Access matches paths as sent; the app decodes them. /api%2Fadmin would slip past an Access path rule
+    # and still route to /api/admin here, so encoded slashes and backslashes are refused outright.
+    raw = request.scope.get("raw_path", b"").lower()
+    if b"%2f" in raw or b"%5c" in raw:
+        return JSONResponse({"detail": "Not Found"}, status_code=404)
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
     if request.url.path.startswith("/static/"):  # the stage runs in a sandboxed iframe (no origin): fonts need this
         response.headers["Access-Control-Allow-Origin"] = "*"
+    # Pages and their scripts change between rehearsals: browsers re-check them every time (a quick 304), so an open
+    # tab never runs yesterday's big screen.
+    response.headers.setdefault("Cache-Control", "no-cache")
     return response
 
 
 def admin(request: Request) -> None:
+    """The key, or the owner's session (their Cloudflare login, or this Mac): no key in a URL on a shared screen."""
     key = request.headers.get("x-admin-key") or request.query_params.get("k") or ""
-    if not secrets.compare_digest(key, ADMIN_KEY):
+    if not secrets.compare_digest(key, ADMIN_KEY) and not owner_session(request):
         raise HTTPException(403, "admin only")
+
+
+def owner_session(request: Request) -> bool:
+    """On the Mac (not through the tunnel), or through Cloudflare with the owner's Access login (the email header)."""
+    if not request.headers.get("cf-connecting-ip"):
+        return True
+    return bool(OWNER_EMAIL) and request.headers.get("cf-access-authenticated-user-email", "").lower() == OWNER_EMAIL.lower()
+
+
+def viewer(request: Request) -> None:
+    """Read-only views (the big screen): the owner's login is enough, no key in the URL to show the crowd."""
+    if not owner_session(request):
+        admin(request)
 
 
 def slot_for(token: str) -> tuple[str, dict]:
@@ -313,7 +636,7 @@ def owner(request: Request, token: str) -> tuple[str, dict]:
 
 def mock_t(request: Request) -> float | None:
     t = request.query_params.get("t")
-    return float(t) if t and MODE == "mock" else None
+    return float(t) if t and MODE in ("mock", "replay") else None
 
 
 def public_slots() -> list[dict]:
@@ -326,7 +649,9 @@ def public_slots() -> list[dict]:
 def player_page(token: str, request: Request):
     sid, s = slot_for(token)
     response = FileResponse(HERE / "static" / "player.html")
-    if not s["claimed"]:
+    # A player's seat is taken when their wolt is created (create_wolt), not when the QR is scanned: someone who
+    # scans and backs out leaves it free. The host's seat (its wolt already exists) is taken by the first phone.
+    if sid == "host" and not s["claimed"]:
         seat = secrets.token_urlsafe(12)
         with lock:
             s["claimed"] = seat
@@ -347,9 +672,14 @@ def player_state(token: str, request: Request):
         if sid == "host" and MODE == "mock":
             wolt = {"name": HOST, "creature": "raccoon", "harness": "Claude Code · Sonnet"}
         player = s["player"] or (joined and joined[0]["player"]) or None
-        return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "phase": phase, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+        return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "phase": phase, "game": game_on, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+    if WORLD:  # the phone shows the whole #lodge chat
+        msgs = [e for e in events if e["type"] in ("say", "post", "join", "game", "turn", "timeup", "ship")][-50:]
+        cast = [{k: c[k] for k in ("slot", "player", "wolt", "creature")} for c in public_slots() if c["wolt"]]
+        return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on,
+                "world": True, **turn_state(), "messages": msgs, "cast": cast}
     mine = [e for e in events if e.get("slot") == sid or e.get("to_slot") == sid]
-    return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+    return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
 
 
 class Create(BaseModel):
@@ -359,9 +689,8 @@ class Create(BaseModel):
 
 
 @app.post("/api/p/{token}/create")
-def create_wolt(token: str, c: Create, request: Request):
+def create_wolt(token: str, c: Create, request: Request, response: Response):
     sid, s = owner(request, token)
-    open_for(sid)
     if s["wolt"]:
         raise HTTPException(409, "you already have a wolt")
     if c.creature not in ("beaver", "otter", "raccoon"):
@@ -370,13 +699,34 @@ def create_wolt(token: str, c: Create, request: Request):
     taken = {x["wolt"]["name"].lower() for x in slots.values() if x["wolt"]}
     if name.lower() in taken:
         raise HTTPException(409, "that name is taken, pick another")
+    # Take the seat now (the first phone to press Create wins); give it back if creating the wolt fails.
+    seat = None
+    with lock:
+        if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
+            raise HTTPException(409, "this player spot is already taken")
+        if not s["claimed"]:
+            seat = s["claimed"] = secrets.token_urlsafe(12)
+            save_slots()
+    if seat:
+        record({"type": "claim", "slot": sid})
+        response.set_cookie(f"seat_{sid}", seat, max_age=2 * 86400, httponly=True, samesite="lax")
+
+    def give_back():
+        if seat:
+            with lock:
+                if s["claimed"] == seat and not s["wolt"]:
+                    s["claimed"] = None
+                    save_slots()
+            record({"type": "reset", "slot": sid})
     harness, model = engine_for(sid)
     if MODE == "lodge":
         try:
             res = driver.create(name, c.creature, player, harness, model, sid)
         except FileExistsError as e:
+            give_back()
             raise HTTPException(409, str(e))
         except Exception as e:  # the lodge says why (engine missing...)
+            give_back()
             raise HTTPException(502, f"the lodge said no: {e}")
         session = res.get("name")
     else:
@@ -385,13 +735,34 @@ def create_wolt(token: str, c: Create, request: Request):
         s["player"], s["wolt"] = player, {"name": name, "creature": c.creature, "harness": harness, "model": model, "session": session}
         save_slots()
     record({"type": "join", "slot": sid, "player": player, "wolt": name, "creature": c.creature, "harness": harness})
-    host = slots["host"]["wolt"]
-    if MODE == "lodge" and host.get("session"):
-        # An automatic note from the show app (not a human): the host welcomes the new wolt itself.
-        note = (f"[lodge-show app, automatic] {player} just created {name} ({c.creature}, {harness}, session {session}). "
-                f"It owns {PART_OF[sid]}, the {SIDE_OF[sid]} box of the live page (it already knows). Welcome it over IWCL (see SHOW.md).")
-        threading.Thread(target=driver.deliver, args=(host["session"], note), daemon=True).start()
+    # No automatic message on join (jerpint, 2026-10-20: be intentional with automatic messages): #lodge shows
+    # "<player> joined with <wolt>", and every wolt already knows the show from its brief.
     return {"ok": True}
+
+
+# Live typing: what each person is typing right now (from their phone, every ~0.3 s), shown at the bottom of their
+# wolt's terminal on the big screen. Never sent to a wolt: only the finished message is. Drafts vanish after 6 s.
+drafts: dict[str, tuple[str, float]] = {}
+
+
+class Draft(BaseModel):
+    text: str = Field(max_length=800)
+
+
+@app.post("/api/p/{token}/draft")
+def draft(token: str, d: Draft, request: Request):
+    sid, s = owner(request, token)
+    if not s["wolt"]:
+        return {"ok": True}
+    drafts[sid] = (" ".join(d.text.split()), time.time())
+    return {"ok": True}
+
+
+def live_drafts() -> dict:
+    now = time.time()
+    # A draft stays on screen while the player pauses to think; it goes when they send or clear it (or after 90 s
+    # without a keystroke, a phone that walked away).
+    return {k: t for k, (t, at) in drafts.items() if t and now - at < 90}
 
 
 class Say(BaseModel):
@@ -402,21 +773,215 @@ class Say(BaseModel):
 def say(token: str, m: Say, request: Request):
     sid, s = owner(request, token)
     open_for(sid)
+    return say_as(sid, s, m.text)
+
+
+@app.post("/api/admin/say/{sid}")
+def admin_say(sid: str, m: Say, request: Request):
+    """The host types into any seat from the big screen (a phone died, a player can't log in): same rules as the
+    phone (turns, cooldown), as that player."""
+    admin(request)
+    if sid not in slots:
+        raise HTTPException(404, "no such seat")
+    open_for(sid)
+    return say_as(sid, slots[sid], m.text)
+
+
+@app.post("/api/admin/draft/{sid}")
+def admin_draft(sid: str, d: Draft, request: Request):
+    admin(request)
+    if sid in slots and slots[sid]["wolt"]:
+        drafts[sid] = (" ".join(d.text.split()), time.time())
+    return {"ok": True}
+
+
+def say_as(sid: str, s: dict, raw: str) -> dict:
     if not s["wolt"]:
         raise HTTPException(400, "create your wolt first")
-    text = " ".join(m.text.split())[:SAY_MAX]
+    text = " ".join(raw.split())[:SAY_MAX]
     wait = COOLDOWN - (time.time() - last_say.get(sid, 0))
     if wait > 0:
         raise HTTPException(429, f"wait {int(wait) + 1}s")
     last_say[sid] = time.time()
+    drafts.pop(sid, None)
     ev = record({"type": "say", "slot": sid, "from": s["player"], "to": s["wolt"]["name"], "text": text})
-    if MODE == "lodge" and s["wolt"]["session"]:
+    if WORLD:
+        if game_on and turn["sid"] == sid and not turn["spoke_at"]:
+            turn["spoke_at"] = ev["ts"]
+        role = "the host, on stage" if sid == "host" else f"player of {s['wolt']['name']}"
+        broadcast(sid, f"{s['player']} ({role}) says:", text,
+                  "This is YOUR human. Act on it in your part of the page, then post one short line to #lodge.",
+                  "Not your human: read it, don't build from it and don't post. Only your own human decides what you build.",
+                  skip_self=False)
+    elif MODE == "lodge" and s["wolt"]["session"]:
         # Shown on the crowd screen first, then pasted into the wolt's terminal.
         d = f"SHOW_{secrets.token_hex(6).upper()}"
         body = (f"[message from {s['player']}, your player on stage]\n{text}\n"
                 f"Reply to {s['player']} on their phone by replacing YOUR_REPLY, then run it:\n{REPLY_CMD} {sid} <<'{d}'\nYOUR_REPLY\n{d}")
         threading.Thread(target=driver.deliver, args=(s["wolt"]["session"], body), daemon=True).start()
     return {"ok": True, "seq": ev["seq"]}
+
+
+@app.post("/api/p/{token}/start")
+def host_start(token: str, request: Request):
+    """The host's phone: ▶ Start the game."""
+    sid, s = owner(request, token)
+    if sid != "host":
+        raise HTTPException(403, "only the host starts the game")
+    return {"ok": True, "started": start_game("host phone"), "game": game_on}
+
+
+@app.post("/api/p/{token}/skip")
+def host_skip(token: str, request: Request):
+    """The host's phone: ⏭ skip whoever's turn it is."""
+    sid, s = owner(request, token)
+    if sid != "host":
+        raise HTTPException(403, "only the host skips")
+    return skip_turn("host phone")
+
+
+@app.post("/api/admin/kill")
+def kill_switch(request: Request):
+    """The emergency button (someone got in): every wolt session in the lodge stops, the game freezes on screen, the
+    players' phones lock. Deletes nothing (Reset everything starts a fresh show)."""
+    admin(request)
+    global game_on
+    set_phase("paused")
+    game_on = False
+    GAME_FILE.unlink(missing_ok=True)
+    if _clock["timer"]:
+        _clock["timer"].cancel()
+    stopped = []
+    if MODE == "lodge":
+        try:
+            with urllib.request.urlopen(LODGE + "/sessions", timeout=10) as r:
+                running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running"]
+        except Exception as e:
+            running = []
+            print(f"kill: list sessions: {e}")
+        for name in running:
+            try:
+                driver.post(f"/sessions/{name}/stop", {})
+                stopped.append(name)
+            except Exception as e:
+                print(f"kill: stop {name}: {e}")
+    record({"type": "kill", "stopped": stopped})
+    _room["body"] = None
+    return {"ok": True, "stopped": stopped, "phase": phase}
+
+
+@app.post("/api/admin/pause")
+def admin_pause(request: Request):
+    """⏸ on the big screen: nothing moves, everything stays on screen."""
+    admin(request)
+    if not game_on:
+        raise HTTPException(409, "no game on")
+    if phase != "paused":
+        set_phase("paused")
+        record({"type": "pause"})
+    _room["body"] = None
+    return {"ok": True, "phase": phase}
+
+
+@app.post("/api/admin/resume")
+def admin_resume(request: Request):
+    """▶ on the big screen: back where it was."""
+    admin(request)
+    if not game_on:
+        raise HTTPException(409, "the game was stopped: Reset everything (backstage) starts a fresh one")
+    if phase != "live":
+        set_phase("live")
+        record({"type": "resume"})
+    _room["body"] = None
+    return {"ok": True, "phase": phase}
+
+
+@app.get("/replay")
+def replay_page(request: Request):
+    """⏪ Instant replay on its own screen: #lodge on the left, the woltPhone on the right, in the order it happened.
+    Owner-only, like the big screen (Access: backstage paths)."""
+    viewer(request)
+    return FileResponse(HERE / "static" / "replay.html")
+
+
+@app.get("/api/replay")
+def replay_frames_owner(request: Request):
+    """The replay screen's data: owner-only, like the screen."""
+    viewer(request)
+    return replay_frames_body()
+
+
+@app.get("/api/admin/replay")
+def replay_frames(request: Request):
+    """The woltPhone's build, save by save, from this show's log: the big screen's ⏪ instant replay."""
+    admin(request)
+    return replay_frames_body()
+
+
+def replay_frames_body():
+    """The woltPhone's saves (frames, for the in-place replay) and the whole build in order (steps: the chat's lines
+    and the saves), with the cast for names, creatures and seat colors."""
+    rows = [json.loads(l) for l in SHOW_LOG.read_text().splitlines() if l.strip()] if SHOW_LOG.exists() else []
+    frames = [{k: r.get(k) for k in ("slot", "html", "wolt", "player")} for r in rows if r.get("kind") == "part"]
+    CHAT = ("say", "post", "reply", "iwcl", "join", "open", "game", "timeup", "ship")
+    steps = []
+    for r in rows:
+        if r.get("kind") == "part":
+            steps.append({"kind": "part", "ts": r["ts"], **{k: r.get(k) for k in ("slot", "html", "wolt", "player")}})
+        elif r.get("kind") == "event" and (r.get("event") or {}).get("type") in CHAT:
+            steps.append({"kind": "chat", "ts": r["ts"], **r["event"]})
+    cast = next((r["cast"] for r in reversed(rows) if r.get("kind") == "cast"), [])
+    return JSONResponse({"frames": frames, "steps": steps, "cast": cast, "title": TITLE}, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/api/admin/turn/skip")
+def admin_skip(request: Request):
+    admin(request)
+    return skip_turn("backstage")
+
+
+@app.post("/api/admin/game/start")
+def admin_start(request: Request):
+    """From backstage (the only place with host controls)."""
+    admin(request)
+    return {"ok": True, "started": start_game("backstage"), "game": game_on}
+
+
+# Public / private, from backstage: the Mac's switch (container/public.py serve) flips the Cloudflare Access bypass.
+# Cloudflare's token stays on the Mac; this app only holds the switch's key (written into data/ by the switch).
+SWITCH = os.environ.get("SHOW_SWITCH", "http://host.docker.internal:47993")
+
+
+def switch(method: str, path: str):
+    key_file = DATA / "public.key"
+    if not key_file.exists():
+        raise HTTPException(503, "the public switch isn't running on the Mac (container/public.py serve)")
+    req = urllib.request.Request(SWITCH + path, method=method, headers={"X-Public-Key": key_file.read_text().strip()})
+    try:
+        with urllib.request.urlopen(req, timeout=60) as r:
+            return json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        raise HTTPException(502, f"public switch: {e.read().decode(errors='replace')[:300]}")
+    except Exception as e:
+        raise HTTPException(503, f"public switch unreachable: {e}")
+
+
+@app.get("/api/admin/public")
+def public_state(request: Request):
+    admin(request)
+    return switch("GET", "/status")
+
+
+@app.post("/api/admin/public/{state}")
+def public_set(state: str, request: Request):
+    """Public: the room, the seats and the slides open to everyone. Private: owner-only again. Backstage and the big
+    screen stay owner-only either way."""
+    admin(request)
+    if state not in ("on", "off"):
+        raise HTTPException(400, "on or off")
+    s = switch("POST", "/" + state)
+    record({"type": "public", "public": s.get("public")})
+    return s
 
 
 class Reply(BaseModel):
@@ -436,6 +1001,33 @@ def reply(r: Reply, request: Request):
         raise HTTPException(404, "no such player")
     record({"type": "reply", "from": s["wolt"]["name"], "to": s["player"], "to_slot": r.slot, "text": r.text[:600]})
     return {"ok": True}
+
+
+class Post(BaseModel):
+    slot: str
+    text: str = Field(min_length=1, max_length=1200)
+
+
+@app.post("/api/post")
+def post(r: Post, request: Request):
+    """A wolt posts to #lodge (show-post CLI, lodge only like show-reply). Everyone sees it; the other wolts get it."""
+    key = request.headers.get("x-reply-key") or ""
+    if request.headers.get("cf-connecting-ip") or not secrets.compare_digest(key, REPLY_KEY):
+        raise HTTPException(403, "lodge only")
+    s = slots.get(r.slot)
+    if not s or not s["wolt"]:
+        raise HTTPException(404, "no such wolt")
+    text = r.text.strip()[:600]
+    ev = record({"type": "post", "slot": r.slot, "from": s["wolt"]["name"], "text": text})
+    if r.slot == "host" and "✓ shipped" in text and not any(e["type"] == "ship" for e in events):
+        humans = 1 + sum(1 for k, x in slots.items() if k != "host" and x["wolt"])
+        record({"type": "ship", "text": f"{humans} humans · {humans} wolts · one page"})
+    _room["body"] = None
+    broadcast(r.slot, f"{s['wolt']['name']} (wolt of {s['player']}) posted:", text, "",
+              "Read it. Don't build from it: only your own human decides what you build, on their turn (a ⚡ Twist from "
+              "the host is the exception, when its human asked). No reply, no ack, unless it @mentions you because "
+              "its human asked.", skip_self=True)
+    return {"ok": True, "seq": ev["seq"]}
 
 
 def part_path(sid: str) -> Path | None:
@@ -471,10 +1063,12 @@ ship_lock = threading.Lock()
 
 def check_ship(parts: dict | None = None) -> int:
     """The build's version (0: nothing written yet). The host writing the header is the ship moment."""
-    if MODE == "mock":
+    if MODE != "lodge":
         return 0
     parts = parts or read_parts()
     build = max(p["v"] for p in parts.values())
+    if WORLD:  # the shared world: the header is written early (the plan); the host's "✓ shipped" post is the ship
+        return build
     with ship_lock:  # the crowd screen and the room both ask: one ship event only
         if not parts["host"]["v"] or any(e["type"] == "ship" for e in events):
             return build
@@ -483,16 +1077,58 @@ def check_ship(parts: dict | None = None) -> int:
     return build
 
 
+def recorder() -> None:
+    """Once a second: new IWCL rows, changed boxes, changed terminal screens and the cast go into the show log."""
+    seen_iwcl, seen_v, seen_term, seen_cast = 0, {}, {}, None
+    while True:
+        if _recorder["reset"]:  # a reset started a new show log
+            _recorder["reset"] = False
+            seen_iwcl, seen_v, seen_term, seen_cast = 0, {}, {}, None
+        try:
+            rows = feed.poll() if feed else []
+            if len(rows) < seen_iwcl:
+                seen_iwcl = 0  # a reset started a new feed
+            for r in rows[seen_iwcl:]:
+                showlog("iwcl", row=r)
+            seen_iwcl = len(rows)
+            for sid, part in read_parts().items():
+                if part["v"] and part["v"] != seen_v.get(sid):
+                    seen_v[sid] = part["v"]
+                    showlog("part", slot=sid, **{k: v for k, v in part.items() if k != "v"})
+            for x in list(slots.values()):
+                w = x.get("wolt") or {}
+                if w.get("session"):
+                    screen = driver.capture(w["session"])
+                    if screen != seen_term.get(w["name"]):
+                        seen_term[w["name"]] = screen
+                        showlog("term", wolt=w["name"], lines=screen.rstrip("\n").splitlines()[-40:])
+            cast = [c for c in public_slots() if c["wolt"]]
+            if cast != seen_cast:
+                seen_cast = cast
+                showlog("cast", cast=cast)
+        except Exception as e:
+            print(f"recorder: {e}")
+        time.sleep(1)
+
+
+_recorder = {"reset": False}
+if MODE == "lodge":
+    threading.Thread(target=recorder, daemon=True).start()
+
+
 _parts = {"at": 0.0, "body": None}
 
 
 @app.get("/api/parts")
 def parts_api():
     """Public, like the page itself: the stage polls it. Read from disk at most once a second for everyone."""
+    if MODE == "replay":
+        return JSONResponse({"parts": driver.parts(None), "phase": driver.phase(None)},
+                            headers={"Cache-Control": "no-store", "Access-Control-Allow-Origin": "*"})
     if _parts["body"] is None or time.time() - _parts["at"] >= 1.0:
         parts = read_parts()
         check_ship(parts)
-        _parts.update(at=time.time(), body={"parts": parts, "phase": phase})
+        _parts.update(at=time.time(), body={"parts": parts, "phase": phase, "game": game_on})
     return JSONResponse(_parts["body"], headers={"Cache-Control": "no-store", "Access-Control-Allow-Origin": "*"})
 
 
@@ -503,7 +1139,12 @@ def stage_page():
 
 @app.get("/api/crowd")
 def crowd(request: Request, after: int = 0):
-    admin(request)
+    viewer(request)
+    if MODE == "replay":
+        t = mock_t(request)
+        return JSONResponse({"events": driver.events(t), "terms": driver.terms(t), "typing": [], "busy": driver.busy(t),
+                             "build": driver.build(t), "cast": driver.cast(t), "mode": MODE, "phase": driver.phase(t)},
+                            headers={"Cache-Control": "no-store"})
     if MODE == "mock":
         t = mock_t(request)
         evs = driver.events(t)
@@ -523,14 +1164,16 @@ def crowd(request: Request, after: int = 0):
                     typing.append(s["wolt"]["name"])
         cast = public_slots()
         return JSONResponse({"events": evs, "terms": terms, "typing": [], "busy": typing,
-                             "build": build, "cast": cast, "mode": MODE, "phase": phase}, headers={"Cache-Control": "no-store"})
+                             "build": build, "cast": cast, "mode": MODE, "phase": phase,
+                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
     return JSONResponse({"events": [e for e in evs if e["seq"] > after], "terms": terms, "typing": typing,
-                         "build": build, "cast": cast, "mode": MODE, "phase": phase}, headers={"Cache-Control": "no-store"})
+                         "build": build, "cast": cast, "mode": MODE, "phase": phase,
+                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
 
 
 # The room: the public page everyone in the audience opens (short link on the big screen). The chat and
 # the build only: no terminals, no tokens, no keys. One answer per second, shared by every phone.
-ROOM_TYPES = {"host", "join", "add", "say", "iwcl", "reply", "ship"}
+ROOM_TYPES = {"host", "join", "add", "say", "iwcl", "reply", "ship", "post", "turn", "game"}
 _room = {"at": 0.0, "body": None}
 
 
@@ -546,6 +1189,8 @@ def room(request: Request):
                  "creature": c.get("creature") or c["wolt"].get("creature"), "harness": c.get("harness") or c["wolt"].get("harness")}
                 for c in cast if c.get("wolt") and c["slot"] in joined]
         busy_now = typing
+    elif MODE == "replay":
+        evs, build, cast, busy_now = driver.events(t), driver.build(t), driver.cast(t), driver.busy(t)
     else:
         build = check_ship()
         with lock:
@@ -554,14 +1199,50 @@ def room(request: Request):
         busy_now = []
     body = {"events": [{k: e.get(k) for k in ("seq", "type", "slot", "from", "to", "player", "wolt", "creature", "text")}
                        for e in evs if e.get("type") in ROOM_TYPES][-80:],
-            "cast": cast, "busy": busy_now, "build": build, "mode": MODE, "phase": phase}
+            "cast": cast, "busy": busy_now, "build": build, "mode": MODE, "phase": driver.phase(t) if MODE == "replay" else phase,
+            "voting": shipped(evs) and MODE != "replay", "votes": tally(), "world": WORLD}
     if t is None:
         _room.update(at=time.time(), body=body)
     return JSONResponse(body, headers={"Cache-Control": "no-store"})
 
 
+class Vote(BaseModel):
+    side: str = Field(pattern="^p[12]$")
+
+
+@app.post("/api/vote")
+def vote(v: Vote, request: Request):
+    """One vote per phone (a random cookie), changeable until the end. Open once the page has shipped."""
+    if MODE == "replay":
+        raise HTTPException(403, "voting is closed")
+    with lock:
+        evs = list(events) if MODE == "lodge" else driver.events(None)
+    if not shipped(evs):
+        raise HTTPException(423, "voting opens when both games ship")
+    voter = request.cookies.get("voter") or secrets.token_urlsafe(12)
+    with vote_lock:
+        votes[voter[:40]] = v.side
+        VOTES_FILE.write_text(json.dumps(votes))
+    _room["body"] = None
+    res = JSONResponse({"ok": True, "side": v.side, "votes": tally()})
+    res.set_cookie("voter", voter[:40], max_age=86400, httponly=True, samesite="lax")
+    return res
+
+
 @app.get("/")
 def room_page():
+    """The one public link: the game, live, full screen on the phone, playable (the QR on the big screen).
+    Side-by-side mode: the room page (chat + the build). The big screen is /world (owner)."""
+    return FileResponse(HERE / "static" / ("stage.html" if WORLD else "room.html"))
+
+
+@app.get("/play")
+def play_redirect():
+    return RedirectResponse("./")
+
+
+@app.get("/chat")
+def room_chat_page():
     return FileResponse(HERE / "static" / "room.html")
 
 
@@ -570,7 +1251,7 @@ def admin_state(request: Request):
     admin(request)
     return {"slots": [{"slot": sid, "label": s["label"], "token": s["token"], "claimed": bool(s["claimed"]),
                        "player": s["player"], "wolt": s["wolt"] and s["wolt"]["name"]} for sid, s in slots.items()],
-            "mode": MODE, "phase": phase}
+            "mode": MODE, "phase": phase, "game": game_on}
 
 
 @app.post("/api/admin/reset/{sid}")
@@ -589,6 +1270,17 @@ def reset_slot(sid: str, request: Request):
     return {"ok": True}
 
 
+def open_lodge() -> None:
+    """▶ START on the big screen: the lodge opens (players join, no clock yet). The host wolt opens with one line."""
+    record({"type": "open"})
+    host = slots["host"]["wolt"]
+    if MODE == "lodge" and host and host.get("session"):
+        body = (f"[lodge-show app, automatic] The lodge is open: the room sees #lodge now, players are joining, the game "
+                f"hasn't started. Post ONE opening line, no @ for the wolts and no question, e.g. \"Hi, I'm {host['name']}, "
+                f"tonight's host wolt 🦝 Ready when you are, {HOST_PLAYER}!\" Then wait.\n{post_how('host')}")
+        threading.Thread(target=driver.deliver, args=(host["session"], body), daemon=True).start()
+
+
 @app.post("/api/admin/phase/{p}")
 def change_phase(p: str, request: Request):
     """Start (live) and Stop (paused) from backstage."""
@@ -597,18 +1289,34 @@ def change_phase(p: str, request: Request):
         raise HTTPException(400, "live or paused")
     if MODE == "mock" and p == "live" and phase == "ready":
         driver.t0 = time.time()  # the recorded show starts from the top
+    opening = p == "live" and phase == "ready" and not game_on
     set_phase(p)
+    if opening:
+        open_lodge()
     _room["body"] = None
     return {"ok": True, "phase": phase}
 
 
+_resetting = threading.Lock()
+
+
 @app.post("/api/admin/reset-all")
 def reset_all(request: Request, host_player: str = ""):
+    """One reset at a time: a second press while one runs (panic double-clicks, both screens) is a no-op."""
+    admin(request)
+    if not _resetting.acquire(blocking=False):
+        return {"ok": True, "already": "a reset is already running"}
+    try:
+        return _reset_all(host_player)
+    finally:
+        _resetting.release()
+
+
+def _reset_all(host_player: str = ""):
     """Reset the whole show: every session stopped, the players' wolts deleted, the chat and the page cleared, new
     QR codes, a fresh host. Only on a throwaway lodge (lodge/start.sh marks it), never on a real one.
     ?host_player=... names the host slot for a dry run (a tester, never jerpint); without it, the default."""
-    global feed, HOST_PLAYER
-    admin(request)
+    global feed, HOST_PLAYER, game_on, game_at
     host_player = " ".join(host_player.split())[:40]
     if host_player.lower() == "jerpint":
         raise HTTPException(400, "dry runs use a tester name, never jerpint's")
@@ -623,17 +1331,46 @@ def reset_all(request: Request, host_player: str = ""):
                 driver.post(f"/sessions/{name}/stop", {})
             except Exception as e:
                 print(f"stop {name}: {e}")
+        if running:
+            time.sleep(3)  # let the stopped wolts finish exiting (Claude writes its config on the way out)
         import shutil
-        for child in wolts.iterdir():
-            if child.name != ".space":
-                shutil.rmtree(child) if child.is_dir() and not child.is_symlink() else child.unlink()
+        # Only wolt folders go (a folder with wolt/ inside). Never apps/ (this app runs from there in the show
+        # container), dot-folders (.space, .state, .codex), .env or the lodge's own settings.
+        wolt_dirs = [c for c in wolts.iterdir() if c.is_dir() and not c.is_symlink() and not c.name.startswith(".")
+                     and c.name != "apps" and (c / "wolt").is_dir()]
+        for child in wolt_dirs:
+            try:
+                driver.post("/auto-grants/revoke", {"wolt": child.name})
+            except Exception as e:
+                print(f"revoke {child.name}: {e}")
+        # A just-stopped wolt can still be writing in its folder (Claude saves on exit): deleting it right away can
+        # fail half-way ("Directory not empty") and leave the show un-reset. Move each folder aside first (instant,
+        # same disk), then delete the pile in the background.
+        trash = wolts / ".trash"
+        trash.mkdir(exist_ok=True)
+        for child in wolt_dirs:
+            child.rename(trash / f"{child.name}-{time.strftime('%H%M%S')}-{secrets.token_hex(2)}")
+        threading.Thread(target=lambda: [shutil.rmtree(t, ignore_errors=True) for t in trash.iterdir()], daemon=True).start()
         IWCL_LOG.unlink(missing_ok=True)
+    if SHOW_LOG.exists():  # keep the last show's log for replays: data/shows/<time>.jsonl
+        (DATA / "shows").mkdir(exist_ok=True)
+        SHOW_LOG.rename(DATA / "shows" / time.strftime("%m%d-%H%M%S.jsonl"))
+    _recorder["reset"] = True
     HOST_PLAYER = host_player or HOST_PLAYER_DEFAULT
     _host_file.write_text(HOST_PLAYER)
     with lock:
         LOG.write_text("")
         events.clear()
         last_say.clear()
+        with vote_lock:
+            votes.clear()
+            VOTES_FILE.unlink(missing_ok=True)
+        game_on, game_at = False, None
+        GAME_FILE.unlink(missing_ok=True)
+        save_pause(total=0.0, at=None)
+        turn.update(sid="host", spoke_at=None, since=time.time(), held=0)
+        if _clock["timer"]:
+            _clock["timer"].cancel()
         _screens.clear()
         slots.clear()
         slots.update(default_slots())
@@ -647,6 +1384,11 @@ def reset_all(request: Request, host_player: str = ""):
         feed = Feed(IWCL_LOG)
         feed.since = time.time()
         env = dict(os.environ, SHOW_LIVE=str(LIVE), SHOW_REPLY_CMD=REPLY_CMD, SHOW_HOST_PLAYER=HOST_PLAYER)
+        # A wolt still exiting can recreate its folder (just a .claude/) after it was moved aside: clear it.
+        stray = wolts / HOST
+        if stray.exists() and not (stray / "wolt").is_dir():
+            (wolts / ".trash").mkdir(exist_ok=True)
+            stray.rename(wolts / ".trash" / f"{HOST}-stray-{secrets.token_hex(2)}")
         out = subprocess.run([sys.executable, str(HERE / "setup_host.py"), "--lodge", LODGE, "--wolts", str(wolts),
                               "--name", HOST, "--model", MODEL], env=env, capture_output=True, text=True, timeout=180)
         if out.returncode != 0:
@@ -664,10 +1406,31 @@ def reset_all(request: Request, host_player: str = ""):
 @app.post("/api/mock/start")
 def mock_start(request: Request):
     admin(request)
-    if MODE != "mock":
-        raise HTTPException(400, "not in mock mode")
+    if MODE not in ("mock", "replay"):
+        raise HTTPException(400, "not in mock or replay mode")
     driver.t0 = time.time()
     return {"ok": True}
+
+
+@app.get("/world")
+def world_page(request: Request):
+    """The big screen for the shared world: #lodge chat, the woltPhone, three terminals, turns, the clock.
+    A display, plus ⏭ skip in the turn bar during the game; every other host control is in backstage."""
+    viewer(request)
+    return FileResponse(HERE / "static" / "world.html")
+
+
+@app.get("/slides")
+def slides_page():
+    """The deck on its own (the talk's slide template): ← → or a clicker, ⛶ for full screen. The board shows it too."""
+    return RedirectResponse("static/slides/candidates/index.html#cover")
+
+
+@app.get("/lanes")
+def lanes_page(request: Request):
+    """The big screen as two lanes (one per player: chat, terminal, game). /crowd is the earlier single-chat screen."""
+    admin(request)
+    return FileResponse(HERE / "static" / "lanes.html")
 
 
 @app.get("/crowd")
@@ -689,4 +1452,6 @@ if __name__ == "__main__":
 
     port = int(os.environ.get("SHOW_PORT", 4060))
     print(f"mode {MODE} · admin key in {_key_file}" if "SHOW_ADMIN_KEY" not in os.environ else f"mode {MODE}")
-    uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning", proxy_headers=True)
+    # 127.0.0.1 unless SHOW_BIND says otherwise: the show container sets 0.0.0.0 so docker can publish the app on
+    # the host's loopback (container/up.sh), where the host's tunnel reaches it without going through the lodge.
+    uvicorn.run(app, host=os.environ.get("SHOW_BIND", "127.0.0.1"), port=port, log_level="warning", proxy_headers=True)
