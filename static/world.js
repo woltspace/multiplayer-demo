@@ -176,3 +176,12 @@ if (window.QRCode) new QRCode(document.getElementById("bqr"), {text: ROOM.href, 
 function drawBoard(shipped) {
   document.getElementById("bsub").textContent = shipped ? "built live by 3 humans · 3 wolts" : "3 humans · 3 wolts · 1 game";
 }
+
+// ↺ Reset everything, also from here (same as backstage): a fresh show, new wolts, new seat QRs.
+document.getElementById("resetall").addEventListener("click", async (e) => {
+  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 seats and starts a fresh hostie.")) return;
+  if (!confirm("Sure? The seat QR codes stop working.")) return;
+  const b = e.currentTarget; b.disabled = true; b.textContent = "…";
+  await fetch("api/admin/reset-all", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  b.disabled = false; b.textContent = "↺"; poll();
+});
