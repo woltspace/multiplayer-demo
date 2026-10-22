@@ -104,8 +104,9 @@ function render() {
   SLOTS.forEach((sid, i) => {
     let el = tw.children[i];
     if (!el) { el = document.createElement("div"); el.style.display = "contents"; el.innerHTML = `<div style="display:contents"></div>`; el.append(sayBox(sid)); tw.append(el); }
+    const f = el.lastChild, c = bySlot(sid); if (f._sync) f._sync();  // the player's newest text first
     put(el.firstChild, term(sid));
-    const f = el.lastChild, c = bySlot(sid); f.hidden = !joined(sid);
+    f.hidden = !joined(sid);
     if (c) f.querySelector("input").placeholder = `type as ${c.player || "the host"} → ${wname(c)}…`;
   });
 }
@@ -120,9 +121,17 @@ function sayBox(sid) {
   const post = (path, text) => fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY, "content-type": "application/json"}, body: JSON.stringify({text})});
   // One draft per seat, the one on screen (the phone's or yours): clicking in picks it up as it is, typing updates it
   // for everyone at once, leaving keeps it there. Nothing appears or disappears on its own.
-  const share = (text) => { if (state) state.drafts = {...(state.drafts || {}), [sid]: text}; clearTimeout(tmo); tmo = 0;
+  let mineLast = null;  // the last text this screen shared for the seat
+  const share = (text) => { mineLast = text; if (state) state.drafts = {...(state.drafts || {}), [sid]: text}; clearTimeout(tmo); tmo = 0;
     return post(`api/admin/draft/${sid}`, text).catch(() => null); };
-  i.addEventListener("focus", () => { i.value = (state && state.drafts || {})[sid] || ""; local[sid] = i.value; typingIn = sid; redraw(); });
+  // The player always wins: you're the backup. While you're in their terminal, anything new from their phone (more
+  // text, a clear, a send) replaces what you have.
+  f._sync = () => {
+    if (typingIn !== sid || tmo) return;
+    const theirs = (state.drafts || {})[sid] || "";
+    if (mineLast !== null && theirs !== mineLast && theirs !== i.value) { i.value = theirs; local[sid] = theirs; mineLast = theirs; }
+  };
+  i.addEventListener("focus", () => { i.value = (state && state.drafts || {})[sid] || ""; local[sid] = i.value; mineLast = i.value; typingIn = sid; redraw(); });
   i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; share(i.value); redraw(); });
   i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
   i.addEventListener("input", () => { local[sid] = i.value; redraw(); clearTimeout(tmo); tmo = setTimeout(() => share(i.value), 120); });
