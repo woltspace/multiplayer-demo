@@ -117,7 +117,12 @@ function sayBox(sid) {
   f.innerHTML = `<span>›</span><input autocomplete=off spellcheck=false maxlength=2000><em></em>`;
   const i = f.querySelector("input"), note = f.querySelector("em"); let tmo = 0;
   const redraw = () => { const el = document.getElementById("terms").children[SLOTS.indexOf(sid)]; if (el && state) put(el.firstChild, term(sid)); };
-  i.addEventListener("focus", () => { typingIn = sid; redraw(); });
+  i.addEventListener("focus", () => {
+    // Taking over a seat mid-sentence: start from what the player already typed on their phone.
+    const theirs = (state && state.drafts || {})[sid];
+    if (!i.value && theirs) { i.value = theirs; local[sid] = theirs; }
+    typingIn = sid; redraw();
+  });
   i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; redraw(); });
   i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
   const post = (path, text) => fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY, "content-type": "application/json"}, body: JSON.stringify({text})});
