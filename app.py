@@ -499,6 +499,9 @@ driver = MockDriver() if MODE == "mock" else ReplayDriver(Path(os.environ["SHOW_
 
 # The lodge's IWCL log (woltspace 0.5.20+): one line per wolt-to-wolt message or spawn.
 _wolts_dir = os.environ.get("WOLTSPACE_WOLTS_DIR") or str(Path.home() / ".woltspace" / "wolts")
+# Wolts that live in the show lodge but are not in the game (the guide you talk to about woltspace): reset leaves
+# them and their sessions alone. The kill switch still stops everything.
+KEEP = set(os.environ.get("SHOW_KEEP", "guide").split(","))
 
 
 def is_throwaway() -> bool:
@@ -1330,7 +1333,7 @@ def _reset_all(host_player: str = ""):
         if not (wolts.parent / ".lodge-show-throwaway").exists() or wolts == (Path.home() / ".woltspace" / "wolts").resolve():
             raise HTTPException(409, f"{wolts} is not a throwaway lodge, reset refused")
         with urllib.request.urlopen(LODGE + "/sessions", timeout=10) as r:
-            running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running"]
+            running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running" and x.get("wolt") not in KEEP]
         for name in running:
             try:
                 driver.post(f"/sessions/{name}/stop", {})
@@ -1342,7 +1345,7 @@ def _reset_all(host_player: str = ""):
         # Only wolt folders go (a folder with wolt/ inside). Never apps/ (this app runs from there in the show
         # container), dot-folders (.space, .state, .codex), .env or the lodge's own settings.
         wolt_dirs = [c for c in wolts.iterdir() if c.is_dir() and not c.is_symlink() and not c.name.startswith(".")
-                     and c.name != "apps" and (c / "wolt").is_dir()]
+                     and c.name != "apps" and c.name not in KEEP and (c / "wolt").is_dir()]
         for child in wolt_dirs:
             try:
                 driver.post("/auto-grants/revoke", {"wolt": child.name})
