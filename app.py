@@ -1270,8 +1270,14 @@ def reset_all(request: Request, host_player: str = ""):
                 driver.post("/auto-grants/revoke", {"wolt": child.name})
             except Exception as e:
                 print(f"revoke {child.name}: {e}")
+        # A just-stopped wolt can still be writing in its folder (Claude saves on exit): deleting it right away can
+        # fail half-way ("Directory not empty") and leave the show un-reset. Move each folder aside first (instant,
+        # same disk), then delete the pile in the background.
+        trash = wolts / ".trash"
+        trash.mkdir(exist_ok=True)
         for child in wolt_dirs:
-            shutil.rmtree(child)
+            child.rename(trash / f"{child.name}-{time.strftime('%H%M%S')}-{secrets.token_hex(2)}")
+        threading.Thread(target=lambda: [shutil.rmtree(t, ignore_errors=True) for t in trash.iterdir()], daemon=True).start()
         IWCL_LOG.unlink(missing_ok=True)
     if SHOW_LOG.exists():  # keep the last show's log for replays: data/shows/<time>.jsonl
         (DATA / "shows").mkdir(exist_ok=True)
