@@ -45,7 +45,8 @@ def container_claude_config(folder: Path) -> None:
     st = folder / ".claude" / "settings.json"
     st.parent.mkdir(exist_ok=True)
     cur = json.loads(st.read_text()) if st.exists() else {}
-    st.write_text(json.dumps({**cur, "skipDangerousModePermissionPrompt": True}, indent=2) + "\n")
+    # No grey "prompt suggestions" in the prompt: the terminals are on the big screen, only real input belongs there.
+    st.write_text(json.dumps({**cur, "skipDangerousModePermissionPrompt": True, "promptSuggestionEnabled": False}, indent=2) + "\n")
 
 
 def scaffold(wolts: Path, name: str, creature: str, harness: str, model: str, role: str, values: dict) -> Path:
