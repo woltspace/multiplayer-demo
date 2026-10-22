@@ -79,7 +79,10 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 .tb pre .rl{display:block;white-space:pre;overflow:hidden}section.term:not(.empty){cursor:text}.say[hidden]{display:none}.say span{color:var(--m,var(--glow))}
 .say input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff3dc;font:14px JB}.say input::placeholder{color:#6a5a50}
 .say em{font:normal 13px JB;color:#ff8a6a;white-space:nowrap}
-.term{flex:1}
+.term{flex:1;position:relative}
+.term .turnarrow{position:absolute;left:-46px;top:50%;margin-top:-26px;font:normal 44px/52px Pixel;color:var(--m,var(--glow));text-shadow:0 0 12px var(--m,var(--glow)),3px 3px 0 #000;animation:turnflash .8s steps(1) infinite,turnnudge .8s ease-in-out infinite;z-index:3}
+.term.now{box-shadow:0 0 0 4px var(--m,var(--glow)),0 0 50px var(--m,var(--glow))}
+@keyframes turnflash{50%{opacity:.25}}@keyframes turnnudge{50%{translate:8px 0}}
 .tb{flex:1;position:relative;background:#050307;overflow:hidden;min-height:0}
 .tb pre{margin:0;position:absolute;left:0;right:0;bottom:0;padding:8px 12px;font:12.5px/1.38 JB,monospace;color:#d8d0c4;white-space:pre-wrap;word-break:break-word}
 .draft{display:block;margin-top:4px;padding:4px 8px;background:color-mix(in srgb,var(--m) 22%,#000);border-left:4px solid var(--m);color:#fff3dc;font-size:14px}
@@ -143,6 +146,6 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=20"></script>
+<script src="static/world.js?v=21"></script>
 </body>
 </html>
