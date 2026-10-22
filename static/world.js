@@ -227,8 +227,8 @@ document.getElementById("terms").addEventListener("click", (e) => {
 
 // ⏪ Instant replay: the woltPhone rebuilds the game save by save (about 10 s), then goes back to live.
 document.getElementById("replay").addEventListener("click", async (e) => {
-  // Its own screen by default (a new window, e.g. for a second display); Shift+click replays on the woltPhone here.
-  if (!e.shiftKey) { window.open("replay", "lodge-replay", "popup,width=1200,height=960"); return; }
+  // Its own screen by default (a new tab; pressing it again replays in that same tab); Shift+click replays on the woltPhone here.
+  if (!e.shiftKey) { window.open("replay", "lodge-replay"); return; }
   const b = e.currentTarget; b.disabled = true;
   const r = await fetch("api/admin/replay", {headers: {"X-Admin-Key": KEY}, cache: "no-store"}).catch(() => null);
   const d = r && r.ok ? await r.json() : {frames: []};
