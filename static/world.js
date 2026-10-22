@@ -75,7 +75,8 @@ function term(sid) {
   const err = errs[sid] ? `<span class=terr>✗ ${esc(errs[sid])}</span>` : "";
   if (at >= 0) shown[at] = `<span class=pline>❯ ${esc(d)}${mine ? "<i class=caret></i>" : ""}</span>${err}`;
   const lines = shown.map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
-  const typing = at < 0 && (d || mine) ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>${err}` : at < 0 ? err : "";
+  // The player's input line is always there under the terminal: dim when empty, live as they (or you) type.
+  const typing = `\n<span class="draft${d || mine ? "" : " idle"}">› <b>${esc(c.player)}:</b> ${esc(d)}${d || mine ? "<i class=caret></i>" : ""}</span>${err}`;
   // Whose turn it is: a flashing arrow beside that terminal, and its frame glows.
   const now = state.turn === sid && state.game_at;
   return `<section class="box term${mine ? " typing" : ""}${now ? " now" : ""}" data-c=${sid}>${now ? "<i class=turnarrow><b>TURN</b>▶</i>" : ""}<div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${esc(c.player || "the host")}'s wolt · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;

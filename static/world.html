@@ -72,6 +72,7 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .terms{display:flex;flex-direction:column;gap:16px;min-height:0}
 /* the type box is a real input, kept out of sight: what you type shows on the terminal's own ❯ prompt line */
 .say{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.draft.idle{opacity:.45}
 .tb pre .pline{color:#fff3dc;background:color-mix(in srgb,var(--m,var(--glow)) 16%,transparent)}
 .tb pre .pline .caret,.draft .caret{display:inline-block;width:.55em;height:1em;vertical-align:-.15em;background:#fff3dc;margin-left:2px;animation:coin 1s steps(1) infinite}
 .tb pre .terr{display:block;color:#ff8a6a}
@@ -147,6 +148,6 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=26"></script>
+<script src="static/world.js?v=27"></script>
 </body>
 </html>
