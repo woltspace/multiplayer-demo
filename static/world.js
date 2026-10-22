@@ -41,6 +41,7 @@ function line(e) {
   if (e.type === "game") return `<div class="sys go">⚡ the game is on · one turn at a time</div>`;
   if (e.type === "turn") return `<div class=sys>▸ ${esc(e.player || e.slot)}'s turn</div>`;
   if (e.type === "timeup") return `<div class="sys go">⏱ time's up</div>`;
+  if (e.type === "open") return `<div class=sys>▶ the lodge is open · scan to join</div>`;
   if (e.type === "pause") return `<div class=sys>⏸ paused</div>`;
   if (e.type === "resume") return `<div class="sys go">▶ back on</div>`;
   if (e.type === "ship") return `<div class="sys go">✓ shipped</div>`;

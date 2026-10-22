@@ -258,8 +258,8 @@ def start_game(by: str) -> bool:
         who = ", ".join(wolts) or "the players' wolts (none has joined yet: send it to each one as it joins)"
         if WORLD:
             body = (f"[lodge-show app, automatic] {HOST_PLAYER} just started the game: one turn at a time, {HOST_PLAYER} first. "
-                    f"Post ONE welcome line now, no @mentions and no question (nobody answers it), e.g. "
-                    f"\"⚡ Welcome to {TITLE}! One turn at a time, {HOST_PLAYER} goes first.\" Then wait for {HOST_PLAYER}.\n{post_how('host')}")
+                    f"Post ONE short line now, no @ for the wolts and no question (nobody answers it), e.g. "
+                    f"\"⚡ Let's get started! One turn at a time, {HOST_PLAYER} goes first.\" Then wait for {HOST_PLAYER}.\n{post_how('host')}")
         else:
             body = (f"[lodge-show app, automatic] {HOST_PLAYER} just started the game. Send the kickoff now, over IWCL, to "
                     f"{who}: one short line each, e.g. \"⚡ The game is on! Ask your player what game to build, then build it "
@@ -1226,6 +1226,17 @@ def reset_slot(sid: str, request: Request):
     return {"ok": True}
 
 
+def open_lodge() -> None:
+    """▶ START on the big screen: the lodge opens (players join, no clock yet). The host wolt opens with one line."""
+    record({"type": "open"})
+    host = slots["host"]["wolt"]
+    if MODE == "lodge" and host and host.get("session"):
+        body = (f"[lodge-show app, automatic] The lodge is open: the room sees #lodge now, players are joining, the game "
+                f"hasn't started. Post ONE opening line, no @ for the wolts and no question, e.g. \"Welcome to {TITLE}! "
+                f"I'm your host, {host['name']}, waiting for @{HOST_PLAYER} to start the game!\" Then wait.\n{post_how('host')}")
+        threading.Thread(target=driver.deliver, args=(host["session"], body), daemon=True).start()
+
+
 @app.post("/api/admin/phase/{p}")
 def change_phase(p: str, request: Request):
     """Start (live) and Stop (paused) from backstage."""
@@ -1234,7 +1245,10 @@ def change_phase(p: str, request: Request):
         raise HTTPException(400, "live or paused")
     if MODE == "mock" and p == "live" and phase == "ready":
         driver.t0 = time.time()  # the recorded show starts from the top
+    opening = p == "live" and phase == "ready" and not game_on
     set_phase(p)
+    if opening:
+        open_lodge()
     _room["body"] = None
     return {"ok": True, "phase": phase}
 
