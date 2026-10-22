@@ -32,18 +32,19 @@ const claimed = (sid) => { const r = state.events.filter((e) => (e.type === "cla
 
 // #lodge: humans (say), wolts (post; wolt-to-wolt posts carry @mentions = the implicit IWCL), and the show's moments.
 function line(e) {
-  if (e.type === "say") return `<div class="cm h" data-c=${e.slot}><span class=ic>${av("human", 24)}</span><span class=who>${esc(e.from)}</span><div class=bb>${at(e.text)}</div></div>`;
-  if (e.type === "post" || e.type === "reply") { const sid = e.slot || slotOfWolt(e.from), c = bySlot(sid);
-    return `<div class="cm${/@[a-z0-9]/i.test(e.text) ? " at" : ""}" data-c=${sid}><span class=ic>${av(creature(c), 26)}</span><span class=who>${esc(e.from)}</span><div class=bb>${at(e.text)}</div></div>`; }
-  if (e.type === "iwcl") { const sid = slotOfWolt(e.from), c = bySlot(sid);
-    return `<div class="cm at" data-c=${sid}><span class=ic>${av(creature(c), 26)}</span><span class=who>${esc(e.from)}</span><div class=bb><b>@${esc(e.to)}</b> ${at(e.text)}</div></div>`; }
+  // Slack-thread style: avatar left, a name line (name · HUMAN/WOLT · time), the message under it. Seat colors.
+  const tm = e.ts ? new Date(e.ts * 1000).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"}) : "";
+  const row = (kind, sid, icon, from, body, mention) => `<div class="cm ${kind}${mention ? " at" : ""}" data-c=${sid}><span class=ic>${icon}</span>` +
+    `<div class=hd><span class=who>${esc(from)}</span><span class=tag>${kind === "h" ? "human" : "wolt"}</span><span class=tm>${tm}</span></div><div class=bb>${body}</div></div>`;
+  const wolt = (sid, from, body, mention) => row("w", sid, av(creature(bySlot(sid)), 30), from, body, mention);
+  if (e.type === "say") return row("h", e.slot, av("human", 28), e.from, at(e.text), false);
+  if (e.type === "post" || e.type === "reply") return wolt(e.slot || slotOfWolt(e.from), e.from, at(e.text), /@[a-z0-9]/i.test(e.text));
+  if (e.type === "iwcl") return wolt(slotOfWolt(e.from), e.from, `<b>@${esc(e.to)}</b> ${at(e.text)}`, true);
+  // Turns, pause and resume stay out of #lodge (the turn bar and the clock show them).
   if (e.type === "join") return `<div class=sys>👤 ${esc(e.player)} joined with ${esc(e.wolt)}</div>`;
   if (e.type === "game") return `<div class="sys go">⚡ the game is on · one turn at a time</div>`;
-  if (e.type === "turn") return `<div class=sys>▸ ${esc(e.player || e.slot)}'s turn</div>`;
   if (e.type === "timeup") return `<div class="sys go">⏱ time's up</div>`;
   if (e.type === "open") return `<div class=sys>▶ the lodge is open · scan to join</div>`;
-  if (e.type === "pause") return `<div class=sys>⏸ paused</div>`;
-  if (e.type === "resume") return `<div class="sys go">▶ back on</div>`;
   if (e.type === "ship") return `<div class="sys go">✓ shipped</div>`;
   return "";
 }
@@ -99,7 +100,10 @@ function render() {
   put(document.getElementById("turns"), turns());
   const humans = SLOTS.filter(joined).length;
   put(document.getElementById("who"), `· ${humans} human${humans === 1 ? "" : "s"} · ${humans} wolt${humans === 1 ? "" : "s"}`);
-  put(document.getElementById("chat"), state.events.map(line).filter(Boolean).slice(-14).join(""));
+  // #lodge scrolls: it follows new messages while you're at the bottom; scroll up to read back, it stays put.
+  const ch = document.getElementById("chat"), atEnd = ch.scrollHeight - ch.scrollTop - ch.clientHeight < 60;
+  put(ch, state.events.map(line).filter(Boolean).slice(-300).join(""));
+  if (atEnd) ch.scrollTop = ch.scrollHeight;
   // Terminals: a seat's terminal box is replaced only when it changes, never the woltPhone.
   const tw = document.getElementById("terms");
   SLOTS.forEach((sid, i) => {

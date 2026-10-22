@@ -49,15 +49,22 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .bh{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#000;border-bottom:4px solid var(--m,var(--glow));font:400 20px VT;text-transform:uppercase;letter-spacing:1px;color:var(--m,var(--glow));white-space:nowrap;overflow:hidden}
 .bh b{font:400 16px Pixel;font-weight:400}.bh .r{margin-left:auto;color:#8a7258}
 .bh .dot{width:10px;height:10px;background:#45c25a;display:inline-block}.bh .dot.busy{animation:breathe 1.6s ease-in-out infinite}
-.chat{flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:14px;background:color-mix(in srgb,var(--glow) 8%,#140e10);overflow:hidden;
+.chat{flex:1;display:flex;flex-direction:column;gap:10px;padding:14px;background:color-mix(in srgb,var(--glow) 8%,#140e10);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--glow) transparent;min-height:0;
  -webkit-mask-image:linear-gradient(transparent 0,#000 40px);mask-image:linear-gradient(transparent 0,#000 40px)}
-.cm{display:flex;gap:10px;align-items:flex-start;flex:none}
-.cm .ic{width:30px;flex:0 0 30px;display:flex;justify-content:center;padding-top:2px;font-size:24px;line-height:1}
-.cm .who{width:84px;flex:none;font:400 18px VT;color:var(--m);text-transform:uppercase;padding-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cm .bb{font:15.5px/1.38 JB;background:#0d0909;border:2px solid #000;border-left:4px solid var(--m);padding:7px 10px;color:var(--cream2);overflow-wrap:anywhere;min-width:0}
+/* #lodge, Slack-thread style: avatar left, name line (name · HUMAN/WOLT · time), message below. Seat colors. */
+.chat>:first-child{margin-top:auto}
+.cm{display:grid;grid-template-columns:36px 1fr;column-gap:12px;row-gap:2px;flex:none;padding:6px 8px 6px 6px;border-left:4px solid transparent}
+.cm .ic{grid-row:1/3;display:flex;align-items:flex-start;justify-content:center;padding-top:2px;font-size:26px;line-height:1}
+.cm .hd{display:flex;align-items:baseline;gap:8px;line-height:1.1;min-width:0}
+.cm .who{font:400 21px VT;color:var(--m);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.cm .tag{font:400 14px VT;text-transform:uppercase;letter-spacing:1px;padding:0 5px;border:1px solid currentColor;align-self:center}
+.cm.h .tag{color:#120a06;background:var(--m);border-color:var(--m)}.cm.w .tag{color:var(--m)}
+.cm .tm{font:400 15px VT;color:#7a6a5c;letter-spacing:1px}
+.cm .bb{font:16px/1.42 JB;color:var(--cream2);overflow-wrap:anywhere;min-width:0}
+.cm.h{background:color-mix(in srgb,var(--m) 10%,transparent);border-left-color:var(--m)}
+.cm.h .bb{color:#fff3dc;font-weight:600}
 .cm .bb b{color:var(--neon);font-weight:700}
-.cm.h .bb{background:#2a2010;color:#ffe9b8}
-.cm.at .bb{box-shadow:0 0 12px color-mix(in srgb,var(--m) 40%,transparent)}
+.cm.at .bb b{text-shadow:0 0 8px color-mix(in srgb,var(--neon) 60%,transparent)}
 .sys{align-self:center;flex:none;font:400 18px VT;color:var(--tan);border:2px dashed #5a3a22;padding:3px 12px;text-transform:uppercase;letter-spacing:1px;text-align:center}
 .sys.go{color:#000;background:var(--neon);border-color:var(--neon)}
 .world{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:0}
@@ -148,6 +155,6 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=28"></script>
+<script src="static/world.js?v=32"></script>
 </body>
 </html>
