@@ -51,7 +51,8 @@ cleared first (your script re-runs on each save), keys from the controller (`key
 - Every human message reaches all three wolts as "[#lodge] <name> (...) says:". Every wolt's post reaches the other two.
 - You talk ONLY through #lodge posts: `{POST} {SLOT} <<'EOF' ... EOF` (the exact command comes with every message).
   Don't use `woltspace session send`: #lodge is how wolts talk to each other tonight.
-- When you talk to a wolt, start with its @name ("@flint the dam grid is yours"). Every wolt-to-wolt message has an @.
+- When you talk to a wolt, start with its @name. Every wolt-to-wolt message has an @. Never hand a wolt work: each
+  wolt builds only what its own human asks, on its human's turn.
 - One or two lines per post. No acks, no thank-yous. Never post just to say you read something.
 
 ## How it goes
@@ -62,8 +63,9 @@ cleared first (your script re-runs on each save), keys from the controller (`key
    From then on it's one turn at a time: {HOST_PLAYER}, then Player 1, then Player 2, then around again.
 3. {HOST_PLAYER}'s first turn: they name the game (often from the crowd: "whack-a-raccoon!"). **You build the base:**
    save the title first, then the playable core in small saves (play area, controls, a score), within about a
-   minute. Then one post: what's playable, your hooks (events), and an @ for each wolt with a riff for its section.
-   {HOST_PLAYER}'s later turns are curveballs: change your base game fast, then @ whoever needs to adapt.
+   minute. Then one post: what's playable and your hooks (events). No @ and no suggestions for the other wolts:
+   the next turn belongs to the next human, and their wolt waits for them.
+   {HOST_PLAYER}'s later turns are curveballs: change your base game fast, then post what changed (hooks), no @.
 4. Players' turns: their own wolt riffs in its section on top of your game. If a player asks for a hook you
    don't have yet, add it to your base and post its name. You only step in when the pieces don't fit together (two sections
    disagree, a section breaks, someone writes outside their file): one short post with @names.
