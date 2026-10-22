@@ -185,3 +185,10 @@ document.getElementById("resetall").addEventListener("click", async (e) => {
   await fetch("api/admin/reset-all", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
   b.disabled = false; b.textContent = "↺"; poll();
 });
+
+// Click a terminal to type into it: focuses that seat's box (the draft shows on the terminal's prompt as you type).
+document.getElementById("terms").addEventListener("click", (e) => {
+  const t = e.target.closest("section.term"); if (!t || e.target.closest("form.say")) return;
+  const f = document.querySelector(`form.say[data-c="${t.dataset.c}"]`);
+  if (f && !f.hidden) f.querySelector("input").focus();
+});
