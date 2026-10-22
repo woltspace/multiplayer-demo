@@ -627,11 +627,9 @@ def slot_for(token: str) -> tuple[str, dict]:
 
 
 def owner(request: Request, token: str) -> tuple[str, dict]:
-    """The first phone that opens a player link owns it; every other phone gets 'taken'."""
-    sid, s = slot_for(token)
-    if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
-        raise HTTPException(409, "this player spot is already taken")
-    return sid, s
+    """A player link is the key to its seat: whoever opens it gets that page, again and again, on any phone (the QR is
+    only ever shown to that player). Reset (new QR) in backstage is how a seat changes hands."""
+    return slot_for(token)
 
 
 def mock_t(request: Request) -> float | None:
@@ -699,11 +697,11 @@ def create_wolt(token: str, c: Create, request: Request, response: Response):
     taken = {x["wolt"]["name"].lower() for x in slots.values() if x["wolt"]}
     if name.lower() in taken:
         raise HTTPException(409, "that name is taken, pick another")
-    # Take the seat now (the first phone to press Create wins); give it back if creating the wolt fails.
+    # Take the seat now (two presses of Create at once: the first wins); give it back if creating the wolt fails.
     seat = None
     with lock:
         if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
-            raise HTTPException(409, "this player spot is already taken")
+            raise HTTPException(409, "this seat's wolt is being created: wait a few seconds")
         if not s["claimed"]:
             seat = s["claimed"] = secrets.token_urlsafe(12)
             save_slots()
@@ -755,7 +753,13 @@ def draft(token: str, d: Draft, request: Request):
     if not s["wolt"]:
         return {"ok": True}
     drafts[sid] = (" ".join(d.text.split()), time.time())
+    draft_src[sid] = "phone"
     return {"ok": True}
+
+
+# Who typed each draft last: "phone" (the player) or "screen" (the host, from the big screen). The big screen only
+# gives way to a phone, never to another big-screen tab.
+draft_src: dict = {}
 
 
 def live_drafts() -> dict:
@@ -792,6 +796,7 @@ def admin_draft(sid: str, d: Draft, request: Request):
     admin(request)
     if sid in slots and slots[sid]["wolt"]:
         drafts[sid] = (" ".join(d.text.split()), time.time())
+        draft_src[sid] = "screen"
     return {"ok": True}
 
 
@@ -1165,10 +1170,10 @@ def crowd(request: Request, after: int = 0):
         cast = public_slots()
         return JSONResponse({"events": evs, "terms": terms, "typing": [], "busy": typing,
                              "build": build, "cast": cast, "mode": MODE, "phase": phase,
-                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
+                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts(), "draft_src": dict(draft_src)}, headers={"Cache-Control": "no-store"})
     return JSONResponse({"events": [e for e in evs if e["seq"] > after], "terms": terms, "typing": typing,
                          "build": build, "cast": cast, "mode": MODE, "phase": phase,
-                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
+                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts(), "draft_src": dict(draft_src)}, headers={"Cache-Control": "no-store"})
 
 
 # The room: the public page everyone in the audience opens (short link on the big screen). The chat and

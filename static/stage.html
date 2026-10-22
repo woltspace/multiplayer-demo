@@ -192,7 +192,9 @@ async function poll() {
     }
     const body = el.querySelector(".part-body"); if (!("orig" in el.dataset)) el.dataset.orig = body.innerHTML;
     // Nothing in this box (before the game, or after a reset): back to its placeholder (or hidden on the phone).
-    if (!p.v || !p.html) { if (seen[sid]) { body.innerHTML = el.dataset.orig; delete seen[sid]; } el.classList.toggle("empty", sid !== "host"); continue; }
+    // A box we had shown is empty again: the show was reset. The old game's code can still be running (animations
+    // add their own elements), so start this screen over, clean.
+    if (!p.v || !p.html) { if (seen[sid]) { location.reload(); return; } el.classList.toggle("empty", sid !== "host"); continue; }
     el.classList.remove("empty");
     if (seen[sid] === p.v) continue;
     seen[sid] = p.v;

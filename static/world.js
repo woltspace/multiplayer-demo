@@ -72,7 +72,8 @@ function term(sid) {
   const rule = (l) => /─{8,}/.test(l.replace(/<[^>]*>/g, "")) && !/[A-Za-z]{3}/.test(l.replace(/<[^>]*>/g, "").replace(/\S*-\S*-\S*/g, ""));
   const shown = (state.mode === "mock" ? raw0(name) : raw0(name).map(ansi)).slice(-40);
   // Typing (click a terminal on the big screen, or a phone's draft): a line right under the terminal, as the player.
-  const mine = typingIn === sid, d = mine ? local[sid] || "" : (state.drafts || {})[sid] || "", at = -1;
+  // Your own seat always shows your own box; a player's seat shows their phone (or your takeover while you're in it).
+  const mine = typingIn === sid, d = mine || sid === "host" ? local[sid] || "" : (state.drafts || {})[sid] || "", at = -1;
   const err = errs[sid] ? `<span class=terr>✗ ${esc(errs[sid])}</span>` : "";
   if (at >= 0) shown[at] = `<span class=pline>❯ ${esc(d)}${mine ? "<i class=caret></i>" : ""}</span>${err}`;
   const lines = shown.map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
@@ -133,12 +134,18 @@ function sayBox(sid) {
   // The player always wins: you're the backup. While you're in their terminal, anything new from their phone (more
   // text, a clear, a send) replaces what you have.
   f._sync = () => {
+    // Your own seat is a plain text box: nothing but your keyboard ever changes it (no phone, no other tab).
+    if (sid === "host") return;
     // A refresh that left before your last keystroke still carries the old text: not the phone. Wait for a fresh one.
     if (typingIn !== sid || tmo || Date.now() - mineAt < 2000) return;
+    if ((state.draft_src || {})[sid] !== "phone") return;  // only the player's phone wins, never another screen
     const theirs = (state.drafts || {})[sid] || "";
     if (mineLast !== null && theirs !== mineLast && theirs !== i.value) { i.value = theirs; local[sid] = theirs; mineLast = theirs; }
   };
-  i.addEventListener("focus", () => { i.value = (state && state.drafts || {})[sid] || ""; local[sid] = i.value; mineLast = i.value; typingIn = sid; redraw(); });
+  i.addEventListener("focus", () => {
+    // A player's seat: pick up what their phone has typed. Your own seat: keep exactly what you had.
+    if (sid !== "host") { i.value = (state && state.drafts || {})[sid] || ""; }
+    local[sid] = i.value; mineLast = i.value; typingIn = sid; redraw(); });
   i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; share(i.value); redraw(); });
   i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
   i.addEventListener("input", () => { local[sid] = i.value; mineAt = Date.now(); redraw(); clearTimeout(tmo); tmo = setTimeout(() => share(i.value), 120); });
