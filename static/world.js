@@ -122,20 +122,21 @@ function sayBox(sid) {
   const post = (path, text) => fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY, "content-type": "application/json"}, body: JSON.stringify({text})});
   // One draft per seat, the one on screen (the phone's or yours): clicking in picks it up as it is, typing updates it
   // for everyone at once, leaving keeps it there. Nothing appears or disappears on its own.
-  let mineLast = null;  // the last text this screen shared for the seat
-  const share = (text) => { mineLast = text; if (state) state.drafts = {...(state.drafts || {}), [sid]: text}; clearTimeout(tmo); tmo = 0;
+  let mineLast = null, mineAt = 0;  // the last text this screen shared for the seat, and when
+  const share = (text) => { mineLast = text; mineAt = Date.now(); if (state) state.drafts = {...(state.drafts || {}), [sid]: text}; clearTimeout(tmo); tmo = 0;
     return post(`api/admin/draft/${sid}`, text).catch(() => null); };
   // The player always wins: you're the backup. While you're in their terminal, anything new from their phone (more
   // text, a clear, a send) replaces what you have.
   f._sync = () => {
-    if (typingIn !== sid || tmo) return;
+    // A refresh that left before your last keystroke still carries the old text: not the phone. Wait for a fresh one.
+    if (typingIn !== sid || tmo || Date.now() - mineAt < 2000) return;
     const theirs = (state.drafts || {})[sid] || "";
     if (mineLast !== null && theirs !== mineLast && theirs !== i.value) { i.value = theirs; local[sid] = theirs; mineLast = theirs; }
   };
   i.addEventListener("focus", () => { i.value = (state && state.drafts || {})[sid] || ""; local[sid] = i.value; mineLast = i.value; typingIn = sid; redraw(); });
   i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; share(i.value); redraw(); });
   i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
-  i.addEventListener("input", () => { local[sid] = i.value; redraw(); clearTimeout(tmo); tmo = setTimeout(() => share(i.value), 120); });
+  i.addEventListener("input", () => { local[sid] = i.value; mineAt = Date.now(); redraw(); clearTimeout(tmo); tmo = setTimeout(() => share(i.value), 120); });
   f.addEventListener("submit", async (e) => {
     e.preventDefault(); const text = i.value.trim(); if (!text) return;
     const r = await post(`api/admin/say/${sid}`, text).catch(() => null);
