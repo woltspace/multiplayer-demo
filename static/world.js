@@ -75,7 +75,7 @@ function term(sid) {
   if (at >= 0) shown[at] = `<span class=pline>❯ ${esc(d)}${mine ? "<i class=caret></i>" : ""}</span>${err}`;
   const lines = shown.map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
   const typing = at < 0 && (d || mine) ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>${err}` : at < 0 ? err : "";
-  return `<section class="box term${mine ? " typing" : ""}" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
+  return `<section class="box term${mine ? " typing" : ""}" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${esc(c.player || "the host")}'s wolt · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
 }
 
 function render() {
