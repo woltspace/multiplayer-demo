@@ -755,7 +755,13 @@ def draft(token: str, d: Draft, request: Request):
     if not s["wolt"]:
         return {"ok": True}
     drafts[sid] = (" ".join(d.text.split()), time.time())
+    draft_src[sid] = "phone"
     return {"ok": True}
+
+
+# Who typed each draft last: "phone" (the player) or "screen" (the host, from the big screen). The big screen only
+# gives way to a phone, never to another big-screen tab.
+draft_src: dict = {}
 
 
 def live_drafts() -> dict:
@@ -792,6 +798,7 @@ def admin_draft(sid: str, d: Draft, request: Request):
     admin(request)
     if sid in slots and slots[sid]["wolt"]:
         drafts[sid] = (" ".join(d.text.split()), time.time())
+        draft_src[sid] = "screen"
     return {"ok": True}
 
 
@@ -1165,10 +1172,10 @@ def crowd(request: Request, after: int = 0):
         cast = public_slots()
         return JSONResponse({"events": evs, "terms": terms, "typing": [], "busy": typing,
                              "build": build, "cast": cast, "mode": MODE, "phase": phase,
-                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
+                             "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts(), "draft_src": dict(draft_src)}, headers={"Cache-Control": "no-store"})
     return JSONResponse({"events": [e for e in evs if e["seq"] > after], "terms": terms, "typing": typing,
                          "build": build, "cast": cast, "mode": MODE, "phase": phase,
-                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts()}, headers={"Cache-Control": "no-store"})
+                         "voting": shipped(evs), "votes": tally(), **clock(), **turn_state(), "world": WORLD, "drafts": live_drafts(), "draft_src": dict(draft_src)}, headers={"Cache-Control": "no-store"})
 
 
 # The room: the public page everyone in the audience opens (short link on the big screen). The chat and
