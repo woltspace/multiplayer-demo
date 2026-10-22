@@ -148,6 +148,9 @@ const seen = {};
 const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", opencode: "OpenCode"}[h] || h || ""; const s = String(m || "").split("/").pop(); return s && h !== "claude" ? `${n} · ${s}` : n; };
 async function poll() {
   let d; try { const r = await fetch("api/parts", {cache: "no-store"}); if (!r.ok) return; d = await r.json(); } catch { return; }
+  // The splash (before the host's first save) follows the game: waiting, then on as soon as the host starts it.
+  const w = document.querySelector(".splash .wait"), wt = d.game ? "⚡ GAME ON · BUILDING" : "WAITING FOR THE GAME";
+  if (w && w.dataset.t !== wt) { w.dataset.t = wt; w.innerHTML = wt + "<i>.</i><i>.</i><i>.</i>"; }
   for (const [sid, p] of Object.entries(d.parts)) {
     const el = document.querySelector(`[data-part="${sid}"]`); if (!el) continue;
     if (sid !== "host" && p.wolt) {

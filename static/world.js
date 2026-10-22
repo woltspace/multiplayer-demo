@@ -63,7 +63,11 @@ function term(sid) {
     return `<section class="box term empty" data-c=${sid}><div class=big>${claimed(sid) ? n : "waiting for<br>" + n}</div><span>${claimed(sid) ? "📱 is creating their wolt…" : "scan your QR to join"}</span></section>`;
   }
   const name = wname(c), busy = (state.busy || state.typing || []).includes(name);
-  const raw = chromeless(state.terms[name] || [], true), lines = (state.mode === "mock" ? raw : raw.map(ansi)).slice(-40).join("\n");
+  // The prompt's horizontal rules are as wide as the wolt's terminal, wider than this box: they'd wrap and leave a
+  // stray "─" on the next line. Rule lines are clipped to the box instead (rl), everything else wraps.
+  const rule = (l) => /─{8,}/.test(l.replace(/<[^>]*>/g, "")) && !/[A-Za-z]{3}/.test(l.replace(/<[^>]*>/g, "").replace(/\S*-\S*-\S*/g, ""));
+  const raw = chromeless(state.terms[name] || [], true), lines = (state.mode === "mock" ? raw : raw.map(ansi)).slice(-40)
+    .map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
   // Live typing: the human's draft, as they type it on their phone, on this wolt's prompt line.
   const d = (state.drafts || {})[sid], typing = d ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>` : "";
   return `<section class="box term" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
@@ -74,11 +78,13 @@ function render() {
   document.getElementById("curtain").hidden = state.phase !== "ready";
   drawBoard(state.events.some((e) => e.type === "ship"));
   const sb = document.getElementById("bstart"); if (sb.textContent !== "starting…") sb.disabled = false;
-  if (state.phase === "ready") sb.textContent = "▶ START THE GAME";
-  // ⏸ / ▶ next to the clock while a game is on; after the kill switch the game is frozen and stays that way.
-  const pb = document.getElementById("pause"), on = !!state.game_at && !state.turn_over && state.phase !== "ready";
+  if (state.phase === "ready") sb.textContent = "▶ START";
+  // Next to the clock: ⚡ start the game (the clock and the turns start), then ⏸ pause / ▶ resume. After the kill
+  // switch the game is frozen and stays that way.
+  const pb = document.getElementById("pause"), on = state.phase !== "ready" && !state.turn_over;
   pb.hidden = !on; pb.disabled = false;
-  pb.textContent = state.paused ? "▶ resume" : state.phase === "paused" ? "⛔ stopped" : "⏸ pause";
+  pb.textContent = !state.game_at ? "⚡ start the game" : state.paused ? "▶ resume" : state.phase === "paused" ? "⛔ stopped" : "⏸ pause";
+  pb.classList.toggle("go", !state.game_at);
   if (state.phase === "paused" && !state.paused) pb.disabled = true;
   pb.classList.toggle("on", !!state.paused);
   put(document.getElementById("turns"), turns());
@@ -87,13 +93,40 @@ function render() {
   put(document.getElementById("chat"), state.events.map(line).filter(Boolean).slice(-14).join(""));
   // Terminals: a seat's terminal box is replaced only when it changes, never the woltPhone.
   const tw = document.getElementById("terms");
-  SLOTS.forEach((sid, i) => { let el = tw.children[i]; if (!el) { el = document.createElement("div"); el.style.display = "contents"; tw.append(el); } put(el, term(sid)); });
+  SLOTS.forEach((sid, i) => {
+    let el = tw.children[i];
+    if (!el) { el = document.createElement("div"); el.style.display = "contents"; el.innerHTML = `<div style="display:contents"></div>`; el.append(sayBox(sid)); tw.append(el); }
+    put(el.firstChild, term(sid));
+    const f = el.lastChild, c = bySlot(sid); f.hidden = !joined(sid);
+    if (c) f.querySelector("input").placeholder = `type as ${c.player || "the host"} → ${wname(c)}…`;
+  });
+}
+
+// Type into any seat from here (a phone died, a player can't log in): as that player, same turn rules as the phone.
+// Each box sits under its terminal and is never re-rendered, so typing isn't interrupted.
+function sayBox(sid) {
+  const f = document.createElement("form"); f.className = "say"; f.dataset.c = sid; f.hidden = true;
+  f.innerHTML = `<span>›</span><input autocomplete=off spellcheck=false maxlength=2000><em></em>`;
+  const i = f.querySelector("input"), note = f.querySelector("em"); let tmo = 0;
+  const post = (path, text) => fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY, "content-type": "application/json"}, body: JSON.stringify({text})});
+  i.addEventListener("input", () => { clearTimeout(tmo); tmo = setTimeout(() => post(`api/admin/draft/${sid}`, i.value).catch(() => null), 150); });
+  f.addEventListener("submit", async (e) => {
+    e.preventDefault(); const text = i.value.trim(); if (!text) return;
+    const r = await post(`api/admin/say/${sid}`, text).catch(() => null);
+    if (r && r.ok) { i.value = ""; note.textContent = ""; poll(); }
+    else { const d = r ? await r.json().catch(() => ({})) : {}; note.textContent = d.detail || "didn't send"; setTimeout(() => note.textContent = "", 4000); }
+  });
+  return f;
 }
 
 let clockAt = 0;
 function tick() {
   const el = document.getElementById("clock");
-  if (!state || !state.game_at || !state.game_seconds) { el.hidden = true; return; }
+  if (!state || !state.game_seconds || state.phase === "ready") { el.hidden = true; return; }
+  if (!state.game_at) {  // the world is up, the game isn't started yet: the full clock, waiting
+    const g = state.game_seconds; el.hidden = false; el.classList.remove("late", "held");
+    put(el, `<small>build time</small><b>${Math.floor(g / 60)}:${String(g % 60).padStart(2, "0")}</b>`); return;
+  }
   // Paused: the clock holds (the server already moved game_at by the time spent paused).
   const left = Math.ceil(state.game_seconds - (state.now - state.game_at) - (state.paused ? 0 : (Date.now() - clockAt) / 1000));
   const shipped = state.events.some((e) => e.type === "ship");
@@ -112,20 +145,22 @@ poll(); if (!T) setInterval(poll, 700);
 // Game keys go to the woltPhone (the page inside listens for them), so the big screen plays from the keyboard.
 const GAME_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", "w", "a", "s", "d", "W", "A", "S", "D"]);
 for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
-  if (!GAME_KEYS.has(e.key) || e.shiftKey && e.key === "G") return;
+  if (!GAME_KEYS.has(e.key) || e.shiftKey && e.key === "G" || e.target.closest && e.target.closest("input,textarea")) return;
   e.preventDefault();
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
 });
-// The game's controls (inner game) live here, owner-only: ▶ start on the start screen, ⏸ pause / ▶ resume next to
-// the clock, ⏭ skip in the turn bar. Outer game (reset, public/private, seats, kill switch) is in backstage.
+// The game's controls (inner game) live here, owner-only: ▶ START on the start screen (the world comes up, players
+// join; no clock yet), then next to the clock ⚡ start the game (clock + turns), ⏸ pause / ▶ resume, and ⏭ skip in
+// the turn bar. Outer game (reset, public/private, seats, kill switch) is in backstage.
 document.getElementById("bstart").addEventListener("click", async (e) => {
   const b = e.currentTarget; b.disabled = true; b.textContent = "starting…";
-  await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
-  b.textContent = "▶ START THE GAME"; poll();
+  await fetch("api/admin/phase/live", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  b.textContent = "▶ START"; poll();
 });
 document.getElementById("pause").addEventListener("click", async (e) => {
   const b = e.currentTarget; b.disabled = true;
-  await fetch(state && state.paused ? "api/admin/resume" : "api/admin/pause", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  const path = !state.game_at ? "api/admin/game/start" : state.paused ? "api/admin/resume" : "api/admin/pause";
+  await fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
   poll();
 });
 document.getElementById("turns").addEventListener("click", async (e) => {

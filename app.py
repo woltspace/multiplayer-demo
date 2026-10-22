@@ -767,9 +767,32 @@ class Say(BaseModel):
 def say(token: str, m: Say, request: Request):
     sid, s = owner(request, token)
     open_for(sid)
+    return say_as(sid, s, m.text)
+
+
+@app.post("/api/admin/say/{sid}")
+def admin_say(sid: str, m: Say, request: Request):
+    """The host types into any seat from the big screen (a phone died, a player can't log in): same rules as the
+    phone (turns, cooldown), as that player."""
+    admin(request)
+    if sid not in slots:
+        raise HTTPException(404, "no such seat")
+    open_for(sid)
+    return say_as(sid, slots[sid], m.text)
+
+
+@app.post("/api/admin/draft/{sid}")
+def admin_draft(sid: str, d: Draft, request: Request):
+    admin(request)
+    if sid in slots and slots[sid]["wolt"]:
+        drafts[sid] = (" ".join(d.text.split()), time.time())
+    return {"ok": True}
+
+
+def say_as(sid: str, s: dict, raw: str) -> dict:
     if not s["wolt"]:
         raise HTTPException(400, "create your wolt first")
-    text = " ".join(m.text.split())[:SAY_MAX]
+    text = " ".join(raw.split())[:SAY_MAX]
     wait = COOLDOWN - (time.time() - last_say.get(sid, 0))
     if wait > 0:
         raise HTTPException(429, f"wait {int(wait) + 1}s")
@@ -1059,7 +1082,7 @@ def parts_api():
     if _parts["body"] is None or time.time() - _parts["at"] >= 1.0:
         parts = read_parts()
         check_ship(parts)
-        _parts.update(at=time.time(), body={"parts": parts, "phase": phase})
+        _parts.update(at=time.time(), body={"parts": parts, "phase": phase, "game": game_on})
     return JSONResponse(_parts["body"], headers={"Cache-Control": "no-store", "Access-Control-Allow-Origin": "*"})
 
 

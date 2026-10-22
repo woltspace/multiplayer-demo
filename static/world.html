@@ -36,7 +36,7 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .clock.late{border-color:#ff5a4a}.clock.late b{color:#ff5a4a}
 .clock.held{border-color:#ffca4e}.clock.held b{color:#ffca4e;animation:breathe 2s ease-in-out infinite}
 .pausebtn{flex:none;font:400 18px Pixel;color:#fff;background:#3a2a20;border:3px solid #ffca4e;padding:14px 18px;cursor:pointer;box-shadow:4px 4px 0 #000}
-.pausebtn[hidden]{display:none}.pausebtn:hover{background:#5a3a24}.pausebtn.on{background:#c4531e;border-color:#fff}.pausebtn:disabled{opacity:.6;cursor:default}
+.pausebtn.go{background:#c4531e;border-color:#fff;animation:startglow 1.6s ease-in-out infinite alternate}.pausebtn[hidden]{display:none}.pausebtn:hover{background:#5a3a24}.pausebtn.on{background:#c4531e;border-color:#fff}.pausebtn:disabled{opacity:.6;cursor:default}
 /* the shared world: #lodge chat left, the woltPhone in the middle, the three terminals right */
 .turns{flex:1;min-width:0;display:flex;align-items:center;gap:12px;font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
 .turn{display:flex;align-items:center;gap:8px;padding:6px 12px;border:2px solid #2a2030;color:#7a6a5c;white-space:nowrap}
@@ -70,6 +70,10 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .phone .brand{position:absolute;left:0;right:0;bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;font:400 18px Pixel;color:#d8d0c4;letter-spacing:2px}
 .phone .brand b{font-weight:400;color:var(--glow)}
 .terms{display:flex;flex-direction:column;gap:16px;min-height:0}
+.say{flex:none;display:flex;align-items:center;gap:8px;margin-top:-10px;padding:6px 10px;background:#000;border:3px solid var(--m,var(--glow));font:400 18px JB}
+.tb pre .rl{display:block;white-space:pre;overflow:hidden}.say[hidden]{display:none}.say span{color:var(--m,var(--glow))}
+.say input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff3dc;font:14px JB}.say input::placeholder{color:#6a5a50}
+.say em{font:normal 13px JB;color:#ff8a6a;white-space:nowrap}
 .term{flex:1}
 .tb{flex:1;position:relative;background:#050307;overflow:hidden;min-height:0}
 .tb pre{margin:0;position:absolute;left:0;right:0;bottom:0;padding:8px 12px;font:12.5px/1.38 JB,monospace;color:#d8d0c4;white-space:pre-wrap;word-break:break-word}
@@ -127,12 +131,12 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
   </div>
   <div class="curtain" id="curtain" hidden><div class="start"><div class="k">★ LODGE SHOW ★</div><h2 id="btitle">Dam Builders</h2>
     <div class="sub" id="bsub">3 humans · 3 wolts · 1 game</div>
-    <button class="startb" id="bstart">▶ START THE GAME</button></div>
+    <button class="startb" id="bstart">▶ START</button></div>
     <div class="watch"><div id="bqr"></div><div><b>watch it on your phone</b><span id="burl"></span></div></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=12"></script>
+<script src="static/world.js?v=15"></script>
 </body>
 </html>

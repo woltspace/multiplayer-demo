@@ -65,10 +65,11 @@ async function load() {
   }
 }
 // Outer game only. The game itself (start, pause/resume, skip) is run from the big screen.
-const PH = {ready: "ready · start the game on the big screen", live: "● playing", paused: "⏸ paused"};
+const PH = {ready: "start screen · press ▶ START on the big screen", live: "● playing", paused: "⏸ paused"};
 function phase(p, on) {
   const el = document.getElementById("ph"); el.className = "ph " + p;
-  el.textContent = p === "paused" && !on ? "⛔ stopped (kill switch) · reset to start over" : PH[p] || p;
+  el.textContent = p === "paused" && !on ? "⛔ stopped (kill switch) · reset to start over"
+    : p === "live" && !on ? "● open · players joining · ⚡ start the game on the big screen" : PH[p] || p;
 }
 async function act(path, msg) {
   const m = document.getElementById("msg"); m.textContent = msg;
