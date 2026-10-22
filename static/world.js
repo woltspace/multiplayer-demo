@@ -117,20 +117,19 @@ function sayBox(sid) {
   f.innerHTML = `<span>›</span><input autocomplete=off spellcheck=false maxlength=2000><em></em>`;
   const i = f.querySelector("input"), note = f.querySelector("em"); let tmo = 0;
   const redraw = () => { const el = document.getElementById("terms").children[SLOTS.indexOf(sid)]; if (el && state) put(el.firstChild, term(sid)); };
-  i.addEventListener("focus", () => {
-    // Taking over a seat mid-sentence: start from what the player already typed on their phone.
-    const theirs = (state && state.drafts || {})[sid];
-    if (!i.value && theirs) { i.value = theirs; local[sid] = theirs; }
-    typingIn = sid; redraw();
-  });
-  i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; redraw(); });
-  i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
   const post = (path, text) => fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY, "content-type": "application/json"}, body: JSON.stringify({text})});
-  i.addEventListener("input", () => { local[sid] = i.value; redraw(); clearTimeout(tmo); tmo = setTimeout(() => post(`api/admin/draft/${sid}`, i.value).catch(() => null), 150); });
+  // One draft per seat, the one on screen (the phone's or yours): clicking in picks it up as it is, typing updates it
+  // for everyone at once, leaving keeps it there. Nothing appears or disappears on its own.
+  const share = (text) => { if (state) state.drafts = {...(state.drafts || {}), [sid]: text}; clearTimeout(tmo); tmo = 0;
+    return post(`api/admin/draft/${sid}`, text).catch(() => null); };
+  i.addEventListener("focus", () => { i.value = (state && state.drafts || {})[sid] || ""; local[sid] = i.value; typingIn = sid; redraw(); });
+  i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; share(i.value); redraw(); });
+  i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
+  i.addEventListener("input", () => { local[sid] = i.value; redraw(); clearTimeout(tmo); tmo = setTimeout(() => share(i.value), 120); });
   f.addEventListener("submit", async (e) => {
     e.preventDefault(); const text = i.value.trim(); if (!text) return;
     const r = await post(`api/admin/say/${sid}`, text).catch(() => null);
-    if (r && r.ok) { i.value = ""; local[sid] = ""; delete errs[sid]; redraw(); poll(); }
+    if (r && r.ok) { i.value = ""; local[sid] = ""; if (state && state.drafts) delete state.drafts[sid]; delete errs[sid]; redraw(); poll(); }
     else { const d = r ? await r.json().catch(() => ({})) : {}; errs[sid] = d.detail || "didn't send"; redraw(); setTimeout(() => { delete errs[sid]; redraw(); }, 4000); }
   });
   return f;
