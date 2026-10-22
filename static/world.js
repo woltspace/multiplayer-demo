@@ -225,11 +225,15 @@ document.getElementById("resetall").addEventListener("click", async (e) => {
   b.disabled = false; b.textContent = "↺"; poll();
 });
 
-// Click a terminal to type into it: focuses that seat's box (the draft shows on the terminal's prompt as you type).
-document.getElementById("terms").addEventListener("click", (e) => {
+// Click a terminal to type into it. Taken on press (pointerdown), before the browser moves focus: a click that
+// first blurs the box redraws the terminal, and the click itself would then land on nothing (the 2nd-click bug).
+document.getElementById("terms").addEventListener("pointerdown", (e) => {
   const t = e.target.closest("section.term"); if (!t || e.target.closest("form.say")) return;
   const f = document.querySelector(`form.say[data-c="${t.dataset.c}"]`);
-  if (f && !f.hidden) f.querySelector("input").focus();
+  if (!f || f.hidden) return;
+  e.preventDefault();  // keep focus where we put it
+  const i = f.querySelector("input"); if (document.activeElement !== i) i.focus();
+  i.setSelectionRange(i.value.length, i.value.length);  // the cursor at the end, like any text box
 });
 
 // ⏪ Instant replay: the woltPhone rebuilds the game save by save (about 10 s), then goes back to live.
