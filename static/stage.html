@@ -24,7 +24,7 @@ section[data-part]{position:relative;background:#fff;border:4px solid var(--ink)
 .presence .caret{position:absolute;right:6px;bottom:6px;width:3px;height:20px;background:var(--m);animation:blink .5s infinite}
 .top .presence .who{background:var(--ink)}
 @media (max-width:760px){.grid{grid-template-columns:1fr;padding:14px 12px}.top{padding:14px 16px}.top h1{font-size:28px}section[data-part]{min-height:auto}}
-.replaytag{position:fixed;left:50%;top:54px;translate:-50% 0;z-index:50;font:400 13px Pixel,monospace;color:#fff;background:#c4531e;border:3px solid #18100a;box-shadow:4px 4px 0 #18100a;padding:8px 12px;white-space:nowrap;animation:replayblink 1s steps(1) infinite}@keyframes replayblink{50%{opacity:.55}}
+.replaytag{position:fixed;left:50%;top:54px;translate:-50% 0;z-index:50;font:400 13px Pixel,monospace;color:#fff;background:#c4531e;border:3px solid #18100a;box-shadow:4px 4px 0 #18100a;padding:8px 12px;white-space:nowrap;animation:replayblink 1s steps(1) infinite}@keyframes replayblink{50%{opacity:.55}}.replaytag.again{animation:none;cursor:pointer;pointer-events:auto}
 </style>
 <link rel="stylesheet" href="static/arcade.css?v=9" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
 (()=>{const F=["jb","vt","pixel"],q=new URLSearchParams(location.search).get("font");let f=q;try{f=f||localStorage.getItem("show-font")}catch(e){}
@@ -163,11 +163,18 @@ async function replay(frames, ms) {
     requestAnimationFrame(fitScreen); await nap(ms);
   }
   // Each saved version started its own game loop, and old loops keep running: a clean reload brings the live game
-  // back with just one.
-  await nap(1800); location.reload();
+  // back with just one. On its own screen (/replay): the last frame stays, with a button to play it again.
+  await nap(1800);
+  if (ON_REPLAY) { tag.textContent = "⏪ PLAY IT AGAIN"; tag.classList.add("again"); tag.onclick = () => location.reload(); return; }
+  location.reload();
 }
+const ON_REPLAY = /\/replay\/?$/.test(location.pathname);
+if (ON_REPLAY) addEventListener("load", async () => {
+  const r = await fetch("api/replay", {cache: "no-store"}).catch(() => null); const d = r && r.ok ? await r.json() : {frames: []};
+  replay(d.frames, Math.max(350, Math.min(900, Math.round(10000 / Math.max(1, d.frames.length)))));
+});
 async function poll() {
-  if (replaying) return;
+  if (replaying || ON_REPLAY) return;
   let d; try { const r = await fetch("api/parts", {cache: "no-store"}); if (!r.ok) return; d = await r.json(); } catch { return; }
   // The splash (before the host's first save) follows the game: waiting, then on as soon as the host starts it.
   const w = document.querySelector(".splash .wait"), wt = d.game ? "⚡ GAME ON · BUILDING" : "WAITING FOR THE GAME";

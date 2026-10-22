@@ -896,10 +896,26 @@ def admin_resume(request: Request):
     return {"ok": True, "phase": phase}
 
 
+@app.get("/replay")
+def replay_page():
+    """⏪ The build, replayed save by save, on its own screen (the big screen's ⏪ opens it in a new window)."""
+    return FileResponse(HERE / "static" / "stage.html")
+
+
+@app.get("/api/replay")
+def replay_frames_public():
+    """Same frames as the live page has shown, so as public as the game itself (Access treats it like /)."""
+    return replay_frames_body()
+
+
 @app.get("/api/admin/replay")
 def replay_frames(request: Request):
     """The woltPhone's build, save by save, from this show's log: the big screen's ⏪ instant replay."""
     admin(request)
+    return replay_frames_body()
+
+
+def replay_frames_body():
     rows = [json.loads(l) for l in SHOW_LOG.read_text().splitlines() if l.strip()] if SHOW_LOG.exists() else []
     frames = [{k: r.get(k) for k in ("slot", "html", "wolt", "player")} for r in rows if r.get("kind") == "part"]
     return JSONResponse({"frames": frames}, headers={"Cache-Control": "no-store"})
