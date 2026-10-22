@@ -56,6 +56,8 @@ function turns() {
     .join(`<span class=arrow>→</span>`) + (state.paused ? "" : `<button class=skip id=skip title="Skip this turn">⏭ skip</button>`);
 }
 
+const raw0 = (name) => chromeless(state.terms[name] || [], true);
+let typingIn = null; const local = {}, errs = {};
 function term(sid) {
   const c = bySlot(sid);
   if (!joined(sid)) {
@@ -66,11 +68,16 @@ function term(sid) {
   // The prompt's horizontal rules are as wide as the wolt's terminal, wider than this box: they'd wrap and leave a
   // stray "─" on the next line. Rule lines are clipped to the box instead (rl), everything else wraps.
   const rule = (l) => /─{8,}/.test(l.replace(/<[^>]*>/g, "")) && !/[A-Za-z]{3}/.test(l.replace(/<[^>]*>/g, "").replace(/\S*-\S*-\S*/g, ""));
-  const raw = chromeless(state.terms[name] || [], true), lines = (state.mode === "mock" ? raw : raw.map(ansi)).slice(-40)
-    .map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
-  // Live typing: the human's draft, as they type it on their phone, on this wolt's prompt line.
-  const d = (state.drafts || {})[sid], typing = d ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>` : "";
-  return `<section class="box term" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
+  const shown = (state.mode === "mock" ? raw0(name) : raw0(name).map(ansi)).slice(-40);
+  // Typing: on the big screen it goes straight onto the wolt's own ❯ prompt line, like typing into Claude Code;
+  // a phone's draft too. No prompt line in view: the old draft line at the bottom.
+  const mine = typingIn === sid, d = mine ? local[sid] || "" : (state.drafts || {})[sid] || "";
+  const at = (mine || d) ? shown.findLastIndex((l) => /^\s*[❯›>]\s*$/.test(l.replace(/<[^>]*>/g, ""))) : -1;
+  const err = errs[sid] ? `<span class=terr>✗ ${esc(errs[sid])}</span>` : "";
+  if (at >= 0) shown[at] = `<span class=pline>❯ ${esc(d)}${mine ? "<i class=caret></i>" : ""}</span>${err}`;
+  const lines = shown.map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
+  const typing = at < 0 && (d || mine) ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>${err}` : at < 0 ? err : "";
+  return `<section class="box term${mine ? " typing" : ""}" data-c=${sid}><div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${sid === "host" ? "host" : esc(c.player) + "'s wolt"} · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
 }
 
 function render() {
@@ -108,13 +115,17 @@ function sayBox(sid) {
   const f = document.createElement("form"); f.className = "say"; f.dataset.c = sid; f.hidden = true;
   f.innerHTML = `<span>›</span><input autocomplete=off spellcheck=false maxlength=2000><em></em>`;
   const i = f.querySelector("input"), note = f.querySelector("em"); let tmo = 0;
+  const redraw = () => { const el = document.getElementById("terms").children[SLOTS.indexOf(sid)]; if (el && state) put(el.firstChild, term(sid)); };
+  i.addEventListener("focus", () => { typingIn = sid; redraw(); });
+  i.addEventListener("blur", () => { if (typingIn === sid) typingIn = null; redraw(); });
+  i.addEventListener("keydown", (e) => { if (e.key === "Escape") i.blur(); });
   const post = (path, text) => fetch(path, {method: "POST", headers: {"X-Admin-Key": KEY, "content-type": "application/json"}, body: JSON.stringify({text})});
-  i.addEventListener("input", () => { clearTimeout(tmo); tmo = setTimeout(() => post(`api/admin/draft/${sid}`, i.value).catch(() => null), 150); });
+  i.addEventListener("input", () => { local[sid] = i.value; redraw(); clearTimeout(tmo); tmo = setTimeout(() => post(`api/admin/draft/${sid}`, i.value).catch(() => null), 150); });
   f.addEventListener("submit", async (e) => {
     e.preventDefault(); const text = i.value.trim(); if (!text) return;
     const r = await post(`api/admin/say/${sid}`, text).catch(() => null);
-    if (r && r.ok) { i.value = ""; note.textContent = ""; poll(); }
-    else { const d = r ? await r.json().catch(() => ({})) : {}; note.textContent = d.detail || "didn't send"; setTimeout(() => note.textContent = "", 4000); }
+    if (r && r.ok) { i.value = ""; local[sid] = ""; delete errs[sid]; redraw(); poll(); }
+    else { const d = r ? await r.json().catch(() => ({})) : {}; errs[sid] = d.detail || "didn't send"; redraw(); setTimeout(() => { delete errs[sid]; redraw(); }, 4000); }
   });
   return f;
 }

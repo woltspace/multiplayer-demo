@@ -70,8 +70,13 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 .phone .brand{position:absolute;left:0;right:0;bottom:12px;display:flex;align-items:center;justify-content:center;gap:10px;font:400 18px Pixel;color:#d8d0c4;letter-spacing:2px}
 .phone .brand b{font-weight:400;color:var(--glow)}
 .terms{display:flex;flex-direction:column;gap:16px;min-height:0}
-.say{flex:none;display:flex;align-items:center;gap:8px;margin-top:-10px;padding:6px 10px;background:#000;border:3px solid var(--m,var(--glow));font:400 18px JB}
-.tb pre .rl{display:block;white-space:pre;overflow:hidden}section.term:not(.empty){cursor:text}.say:focus-within{box-shadow:0 0 0 3px #fff3dc,0 0 24px var(--m,var(--glow))}.say[hidden]{display:none}.say span{color:var(--m,var(--glow))}
+/* the type box is a real input, kept out of sight: what you type shows on the terminal's own ❯ prompt line */
+.say{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.tb pre .pline{color:#fff3dc;background:color-mix(in srgb,var(--m,var(--glow)) 16%,transparent)}
+.tb pre .pline .caret,.draft .caret{display:inline-block;width:.55em;height:1em;vertical-align:-.15em;background:#fff3dc;margin-left:2px;animation:coin 1s steps(1) infinite}
+.tb pre .terr{display:block;color:#ff8a6a}
+section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
+.tb pre .rl{display:block;white-space:pre;overflow:hidden}section.term:not(.empty){cursor:text}.say[hidden]{display:none}.say span{color:var(--m,var(--glow))}
 .say input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff3dc;font:14px JB}.say input::placeholder{color:#6a5a50}
 .say em{font:normal 13px JB;color:#ff8a6a;white-space:nowrap}
 .term{flex:1}
@@ -138,6 +143,6 @@ html,body{height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=17"></script>
+<script src="static/world.js?v=18"></script>
 </body>
 </html>
