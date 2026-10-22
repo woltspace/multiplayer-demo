@@ -1253,13 +1253,26 @@ def change_phase(p: str, request: Request):
     return {"ok": True, "phase": phase}
 
 
+_resetting = threading.Lock()
+
+
 @app.post("/api/admin/reset-all")
 def reset_all(request: Request, host_player: str = ""):
+    """One reset at a time: a second press while one runs (panic double-clicks, both screens) is a no-op."""
+    admin(request)
+    if not _resetting.acquire(blocking=False):
+        return {"ok": True, "already": "a reset is already running"}
+    try:
+        return _reset_all(host_player)
+    finally:
+        _resetting.release()
+
+
+def _reset_all(host_player: str = ""):
     """Reset the whole show: every session stopped, the players' wolts deleted, the chat and the page cleared, new
     QR codes, a fresh host. Only on a throwaway lodge (lodge/start.sh marks it), never on a real one.
     ?host_player=... names the host slot for a dry run (a tester, never jerpint); without it, the default."""
     global feed, HOST_PLAYER, game_on, game_at
-    admin(request)
     host_player = " ".join(host_player.split())[:40]
     if host_player.lower() == "jerpint":
         raise HTTPException(400, "dry runs use a tester name, never jerpint's")
