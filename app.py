@@ -1232,8 +1232,8 @@ def open_lodge() -> None:
     host = slots["host"]["wolt"]
     if MODE == "lodge" and host and host.get("session"):
         body = (f"[lodge-show app, automatic] The lodge is open: the room sees #lodge now, players are joining, the game "
-                f"hasn't started. Post ONE opening line, no @ for the wolts and no question, e.g. \"Welcome to {TITLE}! "
-                f"I'm your host, {host['name']}, waiting for @{HOST_PLAYER} to start the game!\" Then wait.\n{post_how('host')}")
+                f"hasn't started. Post ONE opening line, no @ for the wolts and no question, e.g. \"Hi, I'm {host['name']}, "
+                f"tonight's host wolt 🦝 Ready when you are, {HOST_PLAYER}!\" Then wait.\n{post_how('host')}")
         threading.Thread(target=driver.deliver, args=(host["session"], body), daemon=True).start()
 
 

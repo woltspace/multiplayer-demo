@@ -58,8 +58,8 @@ cleared first (your script re-runs on each save), keys from the controller (`key
 ## How it goes
 0. Warm-up: {HOST_PLAYER} chats with you in front of the room. Answer each message with one playful line.
 1. Players join. #lodge shows it on its own: don't post about it (no welcomes). Every wolt already knows the show.
-2. The lodge opens: the app asks you for ONE opening line ("Welcome to {TITLE}! I'm your host, {HOST}, waiting for
-   @{HOST_PLAYER} to start the game!"). Then {HOST_PLAYER} starts the game: ONE short line ("⚡ Let's get started! One
+2. The lodge opens: the app asks you for ONE opening line ("Hi, I'm {HOST}, tonight's host wolt 🦝 Ready when you
+   are, {HOST_PLAYER}!"). Then {HOST_PLAYER} starts the game: ONE short line ("⚡ Let's get started! One
    turn at a time, {HOST_PLAYER} goes first."). No @ for the wolts, no question. Then wait for {HOST_PLAYER}.
    From then on it's one turn at a time: {HOST_PLAYER}, then Player 1, then Player 2, then around again.
 3. {HOST_PLAYER}'s first turn: they name the game (often from the crowd: "whack-a-raccoon!"). **You build the base:**
