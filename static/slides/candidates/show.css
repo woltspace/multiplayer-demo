@@ -132,7 +132,7 @@
 /* Your turn: the site, and the onboardie card handed out at the door. */
 .tk.cta2{background:radial-gradient(ellipse at 30% 30%,#3a2a1c,#18100a 70%)}
 .cta2 .txt{width:760px;top:130px}.cta2 .txt h1{font-size:96px;color:var(--amber)}.cta2 .txt p{font:400 44px var(--display);color:var(--cream)}
-.cta2 .site{position:absolute;left:90px;top:540px}
+.cta2 .site{position:absolute;left:90px;top:470px}.cta2 .yt{position:absolute;left:90px;top:720px}
 .cta2 .card{position:absolute;left:930px;top:230px;width:590px;margin:0;background:none!important;border:0!important;padding:0!important}
 .cta2 .card img{display:block;width:100%;height:auto;border:5px solid var(--ink);box-shadow:12px 12px 0 var(--terra);rotate:2deg}
 .cta2 .card figcaption{background:none!important;padding:0!important;margin-top:34px;text-align:center;font:400 38px var(--display);color:var(--cream)}

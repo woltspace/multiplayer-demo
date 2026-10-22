@@ -11,16 +11,16 @@
       "when": "before"
     },
     {
-      "id": "hello",
+      "id": "idea",
       "number": 2,
-      "title": "Previously",
-      "url": "candidates/index.html#hello",
+      "title": "The idea",
+      "url": "candidates/index.html#idea",
       "when": "before"
     },
     {
       "id": "iwcl",
       "number": 3,
-      "title": "The idea",
+      "title": "IWCL",
       "url": "candidates/index.html#iwcl",
       "when": "before"
     },
@@ -32,17 +32,17 @@
       "when": "before"
     },
     {
-      "id": "demo",
+      "id": "hello",
       "number": 5,
-      "title": "Demo time",
-      "url": "candidates/index.html#demo",
+      "title": "Previously",
+      "url": "candidates/index.html#hello",
       "when": "before"
     },
     {
-      "id": "open",
+      "id": "demo",
       "number": 6,
-      "title": "Where next",
-      "url": "candidates/index.html#open",
+      "title": "Demo time",
+      "url": "candidates/index.html#demo",
       "when": "before"
     },
     {
