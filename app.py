@@ -627,11 +627,9 @@ def slot_for(token: str) -> tuple[str, dict]:
 
 
 def owner(request: Request, token: str) -> tuple[str, dict]:
-    """The first phone that opens a player link owns it; every other phone gets 'taken'."""
-    sid, s = slot_for(token)
-    if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
-        raise HTTPException(409, "this player spot is already taken")
-    return sid, s
+    """A player link is the key to its seat: whoever opens it gets that page, again and again, on any phone (the QR is
+    only ever shown to that player). Reset (new QR) in backstage is how a seat changes hands."""
+    return slot_for(token)
 
 
 def mock_t(request: Request) -> float | None:
@@ -699,11 +697,11 @@ def create_wolt(token: str, c: Create, request: Request, response: Response):
     taken = {x["wolt"]["name"].lower() for x in slots.values() if x["wolt"]}
     if name.lower() in taken:
         raise HTTPException(409, "that name is taken, pick another")
-    # Take the seat now (the first phone to press Create wins); give it back if creating the wolt fails.
+    # Take the seat now (two presses of Create at once: the first wins); give it back if creating the wolt fails.
     seat = None
     with lock:
         if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
-            raise HTTPException(409, "this player spot is already taken")
+            raise HTTPException(409, "this seat's wolt is being created: wait a few seconds")
         if not s["claimed"]:
             seat = s["claimed"] = secrets.token_urlsafe(12)
             save_slots()
