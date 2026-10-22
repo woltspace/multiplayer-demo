@@ -756,7 +756,9 @@ def draft(token: str, d: Draft, request: Request):
 
 def live_drafts() -> dict:
     now = time.time()
-    return {k: t for k, (t, at) in drafts.items() if t and now - at < 6}
+    # A draft stays on screen while the player pauses to think; it goes when they send or clear it (or after 90 s
+    # without a keystroke, a phone that walked away).
+    return {k: t for k, (t, at) in drafts.items() if t and now - at < 90}
 
 
 class Say(BaseModel):
