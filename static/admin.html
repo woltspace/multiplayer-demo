@@ -32,7 +32,7 @@ a.b{display:inline-block;font:600 15px DMSans;background:var(--org);color:#fff;b
 <body>
 <main>
   <h1>Lodge Show · backstage</h1>
-  <p class="sub">In show order, left to right. Show each QR only to its player: the link is their key (Reset gives a new one).</p>
+  <p class="sub">In show order, left to right. Create each player's wolt on the big screen. The QR is just their chat: show it only to them (Reset gives a new one).</p>
   <div class="show card-ish"><span class="ph" id="ph">…</span>
     <button class="danger" id="resetall">↺ Reset everything</button><button class="danger" id="kill">⛔ Kill switch</button>
     <span class="msg" id="msg" role="status"></span></div>
@@ -56,9 +56,9 @@ async function load() {
     const el = document.createElement("div"); el.className = "slot"; el.dataset.c = s.slot;
     el.innerHTML = `<h2>${s.label}</h2><div class=qr></div>
       <div class="st${s.claimed ? " on" : ""}">${s.claimed ? (s.wolt ? "taken" : "creating a wolt…") : "open"}${s.player ? " · player: " + esc(s.player) : ""}${s.wolt ? " · wolt: " + esc(s.wolt) : ""}${s.slot === "host" ? " · your slot" : ""}</div>
-      <a class=url href="${url}" target="_blank" rel="noopener">${url}</a><button>Reset (new QR)</button>`;
+      <a class=url href="${url}" target="_blank" rel="noopener">${url}</a><button>New QR</button>`;
     new QRCode(el.querySelector(".qr"), {text: url, width: 220, height: 220, correctLevel: QRCode.CorrectLevel.M});
-    el.querySelector("button").onclick = async () => { if (confirm("New QR for " + s.label + "? The old one stops working.")) { await fetch("api/admin/reset/" + s.slot, {method: "POST", headers: H}); load(); } };
+    el.querySelector("button").onclick = async () => { if (confirm("New QR for " + s.label + "?\n\nThe old link stops working (use it if a link got out). Their wolt stays.")) { await fetch("api/admin/reset/" + s.slot, {method: "POST", headers: H}); load(); } };
     grid.append(el);
   }
 }
@@ -81,8 +81,8 @@ document.getElementById("kill").onclick = () => {
   act("api/admin/kill", "stopping everything…");
 };
 document.getElementById("resetall").onclick = () => {
-  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 slots and starts a fresh hostie.")) return;
-  if (!confirm("Sure? The QR codes you printed or sent stop working.")) return;
+  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page and starts a fresh hostie. The players' QR codes stay the same.")) return;
+  if (!confirm("Sure? The game and the players' wolts are gone for good.")) return;
   act("api/admin/reset-all", "resetting… (hostie takes a few seconds to wake up)");
 };
 // Public / private: the game (/) and the seats. Backstage, the big screen and the slides stay owner-only either way.
