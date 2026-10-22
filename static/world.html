@@ -80,7 +80,8 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 .say input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:#fff3dc;font:14px JB}.say input::placeholder{color:#6a5a50}
 .say em{font:normal 13px JB;color:#ff8a6a;white-space:nowrap}
 .term{flex:1;position:relative}
-.term .turnarrow{position:absolute;left:-46px;top:50%;margin-top:-26px;font:normal 44px/52px Pixel;color:var(--m,var(--glow));text-shadow:0 0 12px var(--m,var(--glow)),3px 3px 0 #000;animation:turnflash .8s steps(1) infinite,turnnudge .8s ease-in-out infinite;z-index:3}
+.term .turnarrow{position:absolute;left:-132px;width:118px;top:50%;margin-top:-44px;display:flex;flex-direction:column;align-items:center;gap:6px;font:normal 52px/1 Pixel;color:var(--m,var(--glow));text-shadow:0 0 12px var(--m,var(--glow)),3px 3px 0 #000;animation:turnflash .8s steps(1) infinite,turnnudge .8s ease-in-out infinite;z-index:3}
+.term .turnarrow b{font:normal 20px Pixel;letter-spacing:2px}
 .term.now{box-shadow:0 0 0 4px var(--m,var(--glow)),0 0 50px var(--m,var(--glow))}
 @keyframes turnflash{50%{opacity:.25}}@keyframes turnnudge{50%{translate:8px 0}}
 .tb{flex:1;position:relative;background:#050307;overflow:hidden;min-height:0}
@@ -146,6 +147,6 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=21"></script>
+<script src="static/world.js?v=22"></script>
 </body>
 </html>

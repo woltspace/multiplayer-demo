@@ -77,7 +77,7 @@ function term(sid) {
   const typing = at < 0 && (d || mine) ? `\n<span class=draft>› <b>${esc(c.player)}:</b> ${esc(d)}<i class=caret></i></span>${err}` : at < 0 ? err : "";
   // Whose turn it is: a flashing arrow beside that terminal, and its frame glows.
   const now = state.turn === sid && state.game_at;
-  return `<section class="box term${mine ? " typing" : ""}${now ? " now" : ""}" data-c=${sid}>${now ? "<i class=turnarrow>▶</i>" : ""}<div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${esc(c.player || "the host")}'s wolt · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
+  return `<section class="box term${mine ? " typing" : ""}${now ? " now" : ""}" data-c=${sid}>${now ? "<i class=turnarrow><b>TURN</b>▶</i>" : ""}<div class=bh>${av(creature(c), 24)}<b>${esc(name)}</b> · ${esc(c.player || "the host")}'s wolt · ${esc(engine(c.harness || (c.wolt && c.wolt.harness), c.model || (c.wolt && c.wolt.model)))}<span class=r><i class="dot${busy ? " busy" : ""}"></i></span></div><div class=tb><pre>${lines}${typing}</pre></div></section>`;
 }
 
 function render() {
