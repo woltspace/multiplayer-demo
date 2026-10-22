@@ -69,10 +69,8 @@ function term(sid) {
   // stray "─" on the next line. Rule lines are clipped to the box instead (rl), everything else wraps.
   const rule = (l) => /─{8,}/.test(l.replace(/<[^>]*>/g, "")) && !/[A-Za-z]{3}/.test(l.replace(/<[^>]*>/g, "").replace(/\S*-\S*-\S*/g, ""));
   const shown = (state.mode === "mock" ? raw0(name) : raw0(name).map(ansi)).slice(-40);
-  // Typing: on the big screen it goes straight onto the wolt's own ❯ prompt line, like typing into Claude Code;
-  // a phone's draft too. No prompt line in view: the old draft line at the bottom.
-  const mine = typingIn === sid, d = mine ? local[sid] || "" : (state.drafts || {})[sid] || "";
-  const at = (mine || d) ? shown.findLastIndex((l) => /^\s*[❯›>]\s*$/.test(l.replace(/<[^>]*>/g, ""))) : -1;
+  // Typing (click a terminal on the big screen, or a phone's draft): a line right under the terminal, as the player.
+  const mine = typingIn === sid, d = mine ? local[sid] || "" : (state.drafts || {})[sid] || "", at = -1;
   const err = errs[sid] ? `<span class=terr>✗ ${esc(errs[sid])}</span>` : "";
   if (at >= 0) shown[at] = `<span class=pline>❯ ${esc(d)}${mine ? "<i class=caret></i>" : ""}</span>${err}`;
   const lines = shown.map((l) => rule(l) ? `<span class=rl>${l}</span>` : l + "\n").join("").replace(/\n$/, "");
