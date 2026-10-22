@@ -95,6 +95,7 @@ function render() {
   pb.hidden = !on; pb.disabled = false;
   pb.textContent = !state.game_at ? "⚡ start the game" : state.paused ? "▶ resume" : state.phase === "paused" ? "⛔ stopped" : "⏸ pause";
   pb.classList.toggle("go", !state.game_at);
+  document.getElementById("replay").hidden = !state.game_at;
   if (state.phase === "paused" && !state.paused) pb.disabled = true;
   pb.classList.toggle("on", !!state.paused);
   put(document.getElementById("turns"), turns());
@@ -222,4 +223,14 @@ document.getElementById("terms").addEventListener("click", (e) => {
   const t = e.target.closest("section.term"); if (!t || e.target.closest("form.say")) return;
   const f = document.querySelector(`form.say[data-c="${t.dataset.c}"]`);
   if (f && !f.hidden) f.querySelector("input").focus();
+});
+
+// ⏪ Instant replay: the woltPhone rebuilds the game save by save (about 10 s), then goes back to live.
+document.getElementById("replay").addEventListener("click", async (e) => {
+  const b = e.currentTarget; b.disabled = true;
+  const r = await fetch("api/admin/replay", {headers: {"X-Admin-Key": KEY}, cache: "no-store"}).catch(() => null);
+  const d = r && r.ok ? await r.json() : {frames: []};
+  const ms = Math.max(350, Math.min(900, Math.round(10000 / Math.max(1, d.frames.length))));
+  document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-replay", frames: d.frames, ms}, "*");
+  setTimeout(() => { b.disabled = false; }, d.frames.length * ms + 3000);
 });

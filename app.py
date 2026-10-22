@@ -896,6 +896,15 @@ def admin_resume(request: Request):
     return {"ok": True, "phase": phase}
 
 
+@app.get("/api/admin/replay")
+def replay_frames(request: Request):
+    """The woltPhone's build, save by save, from this show's log: the big screen's ⏪ instant replay."""
+    admin(request)
+    rows = [json.loads(l) for l in SHOW_LOG.read_text().splitlines() if l.strip()] if SHOW_LOG.exists() else []
+    frames = [{k: r.get(k) for k in ("slot", "html", "wolt", "player")} for r in rows if r.get("kind") == "part"]
+    return JSONResponse({"frames": frames}, headers={"Cache-Control": "no-store"})
+
+
 @app.post("/api/admin/turn/skip")
 def admin_skip(request: Request):
     admin(request)

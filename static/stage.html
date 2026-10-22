@@ -24,6 +24,7 @@ section[data-part]{position:relative;background:#fff;border:4px solid var(--ink)
 .presence .caret{position:absolute;right:6px;bottom:6px;width:3px;height:20px;background:var(--m);animation:blink .5s infinite}
 .top .presence .who{background:var(--ink)}
 @media (max-width:760px){.grid{grid-template-columns:1fr;padding:14px 12px}.top{padding:14px 16px}.top h1{font-size:28px}section[data-part]{min-height:auto}}
+.replaytag{position:fixed;left:50%;top:54px;translate:-50% 0;z-index:50;font:400 13px Pixel,monospace;color:#fff;background:#c4531e;border:3px solid #18100a;box-shadow:4px 4px 0 #18100a;padding:8px 12px;white-space:nowrap;animation:replayblink 1s steps(1) infinite}@keyframes replayblink{50%{opacity:.55}}
 </style>
 <link rel="stylesheet" href="static/arcade.css?v=9" id="arcade"><script>if(/[?&]classic/.test(location.search))document.getElementById("arcade").remove();
 (()=>{const F=["jb","vt","pixel"],q=new URLSearchParams(location.search).get("font");let f=q;try{f=f||localStorage.getItem("show-font")}catch(e){}
@@ -146,7 +147,27 @@ for (const t of ["keydown", "keyup"]) document.addEventListener(t, (e) => {
 // Polls the parts once a second; a box changes only when its file's version does. Presence outlines the edit.
 const seen = {};
 const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", opencode: "OpenCode"}[h] || h || ""; const s = String(m || "").split("/").pop(); return s && h !== "claude" ? `${n} · ${s}` : n; };
+// ⏪ Instant replay (sent by the big screen): the empty phone, then every save of the build in order, then live again.
+let replaying = false;
+const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+addEventListener("message", (m) => { const d = m.data || {}; if (d.type === "lodge-replay" && Array.isArray(d.frames)) replay(d.frames, d.ms || 650); });
+async function replay(frames, ms) {
+  if (replaying || !frames.length) return; replaying = true;
+  const tag = document.createElement("div"); tag.className = "replaytag"; tag.textContent = "⏪ INSTANT REPLAY"; document.body.append(tag);
+  document.querySelectorAll("[data-part]").forEach((el) => { const body = el.querySelector(".part-body");
+    if ("orig" in el.dataset) body.innerHTML = el.dataset.orig; el.classList.toggle("empty", el.dataset.part !== "host"); });
+  requestAnimationFrame(fitScreen); await nap(700);
+  for (const f of frames) {
+    const el = document.querySelector(`[data-part="${f.slot}"]`); if (!el || !f.html) continue;
+    el.classList.remove("empty"); Presence.apply(el, f.html, {name: f.wolt || "", slot: f.slot});
+    requestAnimationFrame(fitScreen); await nap(ms);
+  }
+  // Each saved version started its own game loop, and old loops keep running: a clean reload brings the live game
+  // back with just one.
+  await nap(1800); location.reload();
+}
 async function poll() {
+  if (replaying) return;
   let d; try { const r = await fetch("api/parts", {cache: "no-store"}); if (!r.ok) return; d = await r.json(); } catch { return; }
   // The splash (before the host's first save) follows the game: waiting, then on as soon as the host starts it.
   const w = document.querySelector(".splash .wait"), wt = d.game ? "⚡ GAME ON · BUILDING" : "WAITING FOR THE GAME";
