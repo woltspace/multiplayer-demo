@@ -151,6 +151,15 @@ const engine = (h, m) => { const n = {claude: "Claude Code", codex: "Codex", ope
 let replaying = false;
 const nap = (ms) => new Promise((r) => setTimeout(r, ms));
 addEventListener("message", (m) => { const d = m.data || {}; if (d.type === "lodge-replay" && Array.isArray(d.frames)) replay(d.frames, d.ms || 650); });
+// Driven step by step by the replay screen (/replay): start (empty phone, no live polling), one save at a time.
+addEventListener("message", (m) => { const d = m.data || {};
+  if (d.type === "lodge-replay-start") { replaying = true;
+    document.querySelectorAll("[data-part]").forEach((el) => { const body = el.querySelector(".part-body");
+      if ("orig" in el.dataset) body.innerHTML = el.dataset.orig; el.classList.toggle("empty", el.dataset.part !== "host"); });
+    requestAnimationFrame(fitScreen); }
+  if (d.type === "lodge-replay-step") { const el = document.querySelector(`[data-part="${d.slot}"]`); if (!el || !d.html) return;
+    el.classList.remove("empty"); Presence.apply(el, d.html, {name: d.wolt || "", slot: d.slot}); requestAnimationFrame(fitScreen); }
+});
 async function replay(frames, ms) {
   if (replaying || !frames.length) return; replaying = true;
   const tag = document.createElement("div"); tag.className = "replaytag"; tag.textContent = "⏪ INSTANT REPLAY"; document.body.append(tag);
@@ -168,7 +177,7 @@ async function replay(frames, ms) {
   if (ON_REPLAY) { tag.textContent = "⏪ PLAY IT AGAIN"; tag.classList.add("again"); tag.onclick = () => location.reload(); return; }
   location.reload();
 }
-const ON_REPLAY = /\/replay\/?$/.test(location.pathname);
+const ON_REPLAY = false;  // /replay is its own page now (replay.html), driving this one
 if (ON_REPLAY) addEventListener("load", async () => {
   const r = await fetch("api/replay", {cache: "no-store"}).catch(() => null); const d = r && r.ok ? await r.json() : {frames: []};
   replay(d.frames, Math.max(350, Math.min(900, Math.round(10000 / Math.max(1, d.frames.length)))));

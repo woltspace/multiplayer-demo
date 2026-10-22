@@ -898,8 +898,8 @@ def admin_resume(request: Request):
 
 @app.get("/replay")
 def replay_page():
-    """⏪ The build, replayed save by save, on its own screen (the big screen's ⏪ opens it in a new window)."""
-    return FileResponse(HERE / "static" / "stage.html")
+    """⏪ Instant replay on its own screen: #lodge on the left, the woltPhone on the right, in the order it happened."""
+    return FileResponse(HERE / "static" / "replay.html")
 
 
 @app.get("/api/replay")
@@ -916,9 +916,19 @@ def replay_frames(request: Request):
 
 
 def replay_frames_body():
+    """The woltPhone's saves (frames, for the in-place replay) and the whole build in order (steps: the chat's lines
+    and the saves), with the cast for names, creatures and seat colors."""
     rows = [json.loads(l) for l in SHOW_LOG.read_text().splitlines() if l.strip()] if SHOW_LOG.exists() else []
     frames = [{k: r.get(k) for k in ("slot", "html", "wolt", "player")} for r in rows if r.get("kind") == "part"]
-    return JSONResponse({"frames": frames}, headers={"Cache-Control": "no-store"})
+    CHAT = ("say", "post", "reply", "iwcl", "join", "open", "game", "timeup", "ship")
+    steps = []
+    for r in rows:
+        if r.get("kind") == "part":
+            steps.append({"kind": "part", "ts": r["ts"], **{k: r.get(k) for k in ("slot", "html", "wolt", "player")}})
+        elif r.get("kind") == "event" and (r.get("event") or {}).get("type") in CHAT:
+            steps.append({"kind": "chat", "ts": r["ts"], **r["event"]})
+    cast = next((r["cast"] for r in reversed(rows) if r.get("kind") == "cast"), [])
+    return JSONResponse({"frames": frames, "steps": steps, "cast": cast, "title": TITLE}, headers={"Cache-Control": "no-store"})
 
 
 @app.post("/api/admin/turn/skip")

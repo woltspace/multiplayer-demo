@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lodge Show · instant replay</title>
+<link rel="stylesheet" href="static/show.css">
+<style>
+/* ⏪ Instant replay: the build as it happened, sped up. #lodge on the left (as on the big screen), the woltPhone on
+   the right, both from the show's log, in order. */
+@font-face{font-family:Pixel;src:url(static/PressStart2P.woff2)}@font-face{font-family:VT;src:url(static/VT323.woff2)}
+@font-face{font-family:JB;src:url(static/JetBrainsMono.woff2)}
+:root{--glow:#ff8a3d;--neon:#ffc23d;--cream2:#fff3dc;--tan:#c9b59a;--panel:#16101a;--p1:#5cb85c;--p2:#4a90d9;--host:#ff8a3d}
+html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#22121c 0,#0b0710 70%),#0b0710;color:var(--cream2)}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 420px;grid-template-rows:auto 1fr;gap:16px;height:100%;padding:16px;box-sizing:border-box}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:16px}
+.top .k{font:400 18px Pixel;color:#fff;background:#c4531e;border:3px solid #18100a;box-shadow:4px 4px 0 #18100a;padding:8px 12px}
+.top h1{margin:0;font:400 22px Pixel;color:var(--glow);text-shadow:3px 3px 0 #3a1a08}
+.top .sp{flex:1}.top .n{font:400 22px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
+.top button{font:400 14px Pixel;color:#fff;background:#3a2a20;border:3px solid #ffca4e;padding:10px 14px;cursor:pointer;box-shadow:4px 4px 0 #000}
+.box{border:4px solid #000;box-shadow:0 0 0 4px var(--glow),0 0 30px #ff8a3d55;background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.bh{font:400 22px VT;color:var(--glow);padding:8px 12px;border-bottom:3px solid var(--glow);text-transform:uppercase;letter-spacing:1px}
+.chat{flex:1;display:flex;flex-direction:column;gap:10px;padding:14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--glow) transparent;background:color-mix(in srgb,var(--glow) 8%,#140e10)}
+.chat>:first-child{margin-top:auto}
+.cm{display:grid;grid-template-columns:36px 1fr;column-gap:12px;row-gap:2px;flex:none;padding:6px 8px 6px 6px;border-left:4px solid transparent;animation:pop .25s ease-out}
+.cm .ic{grid-row:1/3;display:flex;align-items:flex-start;justify-content:center;padding-top:2px;font-size:26px;line-height:1}
+.cm .hd{display:flex;align-items:baseline;gap:8px;line-height:1.1}
+.cm .who{font:400 21px VT;color:var(--m);text-transform:uppercase;letter-spacing:1px;white-space:nowrap}
+.cm .tag{font:400 14px VT;text-transform:uppercase;letter-spacing:1px;padding:0 5px;border:1px solid currentColor;align-self:center}
+.cm.h .tag{color:#120a06;background:var(--m);border-color:var(--m)}.cm.w .tag{color:var(--m)}
+.cm .tm{font:400 15px VT;color:#7a6a5c;letter-spacing:1px}
+.cm .bb{font:16px/1.42 JB;color:var(--cream2);overflow-wrap:anywhere}
+.cm.h{background:color-mix(in srgb,var(--m) 10%,transparent);border-left-color:var(--m)}.cm.h .bb{color:#fff3dc;font-weight:600}
+.cm .bb b{color:var(--neon)}
+.sys{align-self:center;flex:none;font:400 18px VT;color:var(--tan);border:2px dashed #5a3a22;padding:3px 12px;text-transform:uppercase;letter-spacing:1px;animation:pop .25s ease-out}
+.sys.go{color:#000;background:var(--neon);border-color:var(--neon)}
+@keyframes pop{from{opacity:0;translate:0 8px}}
+.phone{position:relative;width:399px;height:850px;max-height:100%;justify-self:center;background:#111;border-radius:52px;padding:12px 12px 58px;box-sizing:border-box;box-shadow:0 0 0 4px var(--glow),0 0 40px #ff8a3d66}
+.phone .screen{position:relative;width:375px;height:780px;border-radius:40px;overflow:hidden;background:#fff8ec}
+.phone iframe{position:absolute;left:0;top:0;width:375px;height:780px;border:0}
+.bar{grid-column:1/-1;height:6px;background:#2a1a14}.bar i{display:block;height:100%;width:0;background:var(--neon);transition:width .3s linear}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><span class="k">⏪ INSTANT REPLAY</span><h1 id="title">Dam Builders</h1><span class="sp"></span><span class="n" id="n"></span>
+    <button id="again" hidden>⏪ play it again</button></div>
+  <section class="box"><div class="bh">#lodge</div><div class="chat" id="chat"></div></section>
+  <div class="phone"><div class="screen"><iframe id="stage" sandbox="allow-scripts" title="the woltPhone" src="stage?phone=1"></iframe></div></div>
+</div>
+<script src="static/sprites.js?v=2"></script>
+<script>
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+const at = (t) => esc(t).replace(/@([a-z0-9_-]+)/gi, "<b>@$1</b>");
+const av = (c, s) => c === "human" ? `<span style="font-size:${s * .8}px">👤</span>` : (window.woltSpriteAvatar && woltSpriteAvatar(c, s)) || "🦝";
+const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+let D = null, cast = [];
+const bySlot = (sid) => cast.find((c) => c.slot === sid) || {};
+const slotOfWolt = (n) => (cast.find((c) => (c.wolt || "").toLowerCase() === String(n || "").toLowerCase()) || {}).slot || "host";
+function line(e) {
+  const tm = e.ts ? new Date(e.ts * 1000).toLocaleTimeString([], {hour: "numeric", minute: "2-digit"}) : "";
+  const row = (k, sid, icon, from, body) => `<div class="cm ${k}" data-c=${sid}><span class=ic>${icon}</span><div class=hd><span class=who>${esc(from)}</span><span class=tag>${k === "h" ? "human" : "wolt"}</span><span class=tm>${tm}</span></div><div class=bb>${body}</div></div>`;
+  if (e.type === "say") return row("h", e.slot, av("human", 28), e.from, at(e.text));
+  if (e.type === "post" || e.type === "reply") { const sid = e.slot || slotOfWolt(e.from); return row("w", sid, av(bySlot(sid).creature || "raccoon", 30), e.from, at(e.text)); }
+  if (e.type === "iwcl") { const sid = slotOfWolt(e.from); return row("w", sid, av(bySlot(sid).creature || "raccoon", 30), e.from, `<b>@${esc(e.to)}</b> ${at(e.text)}`); }
+  if (e.type === "join") return `<div class=sys>👤 ${esc(e.player)} joined with ${esc(e.wolt)}</div>`;
+  if (e.type === "open") return `<div class=sys>▶ the lodge is open</div>`;
+  if (e.type === "game") return `<div class="sys go">⚡ the game is on</div>`;
+  if (e.type === "timeup") return `<div class="sys go">⏱ time's up</div>`;
+  if (e.type === "ship") return `<div class="sys go">✓ shipped</div>`;
+  return "";
+}
+async function play() {
+  const chat = document.getElementById("chat"), st = document.getElementById("stage").contentWindow;
+  document.getElementById("again").hidden = true; chat.innerHTML = "";
+  const steps = D.steps || [], ms = Math.max(250, Math.min(700, Math.round(18000 / Math.max(1, steps.length))));
+  st.postMessage({type: "lodge-replay-start"}, "*"); await nap(600);
+  let i = 0;
+  for (const s of steps) {
+    i++; document.getElementById("n").textContent = `${i} / ${steps.length}`;
+    if (s.kind === "part") st.postMessage({type: "lodge-replay-step", slot: s.slot, html: s.html, wolt: s.wolt}, "*");
+    else { const h = line(s); if (h) { chat.insertAdjacentHTML("beforeend", h); chat.scrollTop = chat.scrollHeight; } else continue; }
+    await nap(ms);
+  }
+  document.getElementById("again").hidden = false;
+}
+document.getElementById("again").onclick = () => { document.getElementById("stage").src = "stage?phone=1"; };
+document.getElementById("stage").addEventListener("load", async () => {
+  if (!D) { const r = await fetch("api/replay", {cache: "no-store"}).catch(() => null); D = r && r.ok ? await r.json() : {steps: []}; cast = D.cast || [];
+    document.getElementById("title").textContent = D.title || "Dam Builders"; }
+  await nap(800); play();
+});
+</script>
+</body>
+</html>
