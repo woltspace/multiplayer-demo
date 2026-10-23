@@ -97,6 +97,8 @@ function render() {
   pb.hidden = !on; pb.disabled = false;
   pb.textContent = !state.game_at ? "⚡ start the game" : state.paused ? "▶ resume" : state.phase === "paused" ? "⛔ stopped" : "⏸ pause";
   pb.classList.toggle("go", !state.game_at);
+  // The same ⚡ start the game, big, on the woltPhone (the big screen only: the room's phones never see it).
+  document.getElementById("pstart").hidden = !(on && !state.game_at && state.phase === "live");
   document.getElementById("replay").hidden = !state.game_at;
   if (state.phase === "paused" && !state.paused) pb.disabled = true;
   pb.classList.toggle("on", !!state.paused);
@@ -114,7 +116,7 @@ function render() {
     if (!el) { el = document.createElement("div"); el.style.display = "contents"; el.innerHTML = `<div style="display:contents"></div>`; el.append(sayBox(sid)); tw.append(el); }
     const f = el.lastChild, c = bySlot(sid); if (f._sync) f._sync();  // the player's newest text first
     put(el.firstChild, term(sid));
-    f.hidden = !joined(sid);
+    f.hidden = !joined(sid) || !state.game_at;  // no typing before ⚡ start the game
     if (c) f.querySelector("input").placeholder = `type as ${c.player || "the host"} → ${wname(c)}…`;
   });
 }
@@ -275,4 +277,10 @@ document.getElementById("terms").addEventListener("click", (e) => {
     err.style.color = ""; err.textContent = d.detail || "that didn't work, try again"; go.disabled = false;
   };
   mkd.showModal(); document.getElementById("mkp").focus();
+});
+
+document.getElementById("pstart").addEventListener("click", async (e) => {
+  e.currentTarget.hidden = true;
+  await fetch("api/admin/game/start", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
+  poll();
 });
