@@ -44,7 +44,7 @@ function line(e) {
   if (e.type === "join") return `<div class=sys>👤 ${esc(e.player)} joined with ${esc(e.wolt)}</div>`;
   if (e.type === "game") return `<div class="sys go">⚡ the game is on · one turn at a time</div>`;
   if (e.type === "timeup") return `<div class="sys go">⏱ time's up</div>`;
-  if (e.type === "open") return `<div class=sys>▶ the lodge is open · scan to join</div>`;
+  if (e.type === "open") return `<div class=sys>▶ the lodge is open</div>`;
   if (e.type === "ship") return `<div class="sys go">✓ shipped</div>`;
   return "";
 }
@@ -64,7 +64,8 @@ function term(sid) {
   const c = bySlot(sid);
   if (!joined(sid)) {
     const n = sid === "p1" ? "Player 1" : "Player 2";
-    return `<section class="box term empty" data-c=${sid}><div class=big>${claimed(sid) ? n : "waiting for<br>" + n}</div><span>${claimed(sid) ? "📱 is creating their wolt…" : "scan your QR to join"}</span></section>`;
+    return claimed(sid) ? `<section class="box term empty" data-c=${sid}><div class=big>${n}</div><span>waking up their wolt…</span></section>`
+      : `<section class="box term empty" data-c=${sid}><div class=big>waiting for<br>${n}</div><button class=mk type=button data-c=${sid}>＋ create ${n}'s wolt</button></section>`;
   }
   const name = wname(c), busy = (state.busy || state.typing || []).includes(name);
   // The prompt's horizontal rules are as wide as the wolt's terminal, wider than this box: they'd wrap and leave a
@@ -184,7 +185,7 @@ poll(); if (!T) setInterval(poll, 700);
 // Game keys go to the woltPhone (the page inside listens for them), so the big screen plays from the keyboard.
 const GAME_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "Enter", "w", "a", "s", "d", "W", "A", "S", "D"]);
 for (const kind of ["keydown", "keyup"]) addEventListener(kind, (e) => {
-  if (!GAME_KEYS.has(e.key) || e.shiftKey && e.key === "G" || e.target.closest && e.target.closest("input,textarea")) return;
+  if (!GAME_KEYS.has(e.key) || e.shiftKey && e.key === "G" || e.target.closest && e.target.closest("input,textarea,dialog")) return;
   e.preventDefault();
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-key", key: e.key, code: e.code, up: kind === "keyup"}, "*");
 });
@@ -216,20 +217,24 @@ function drawBoard(shipped) {
   document.getElementById("bsub").textContent = shipped ? "built live by 3 humans · 3 wolts" : "3 humans · 3 wolts · 1 game";
 }
 
-// ↺ Reset everything, also from here (same as backstage): a fresh show, new wolts, new seat QRs.
+// ↺ Reset everything, also from here (same as backstage): a fresh show and new wolts; the seat QRs stay.
 document.getElementById("resetall").addEventListener("click", async (e) => {
-  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page, makes new QR codes for all 3 seats and starts a fresh hostie.")) return;
-  if (!confirm("Sure? The seat QR codes stop working.")) return;
+  if (!confirm("Reset everything?\n\nStops every session, deletes the players' wolts, clears the chat and the page and starts a fresh hostie. The players' QR codes stay the same.")) return;
+  if (!confirm("Sure? The game and the players' wolts are gone for good.")) return;
   const b = e.currentTarget; b.disabled = true; b.textContent = "…";
   await fetch("api/admin/reset-all", {method: "POST", headers: {"X-Admin-Key": KEY}}).catch(() => null);
   b.disabled = false; b.textContent = "↺"; poll();
 });
 
-// Click a terminal to type into it: focuses that seat's box (the draft shows on the terminal's prompt as you type).
-document.getElementById("terms").addEventListener("click", (e) => {
+// Click a terminal to type into it. Taken on press (pointerdown), before the browser moves focus: a click that
+// first blurs the box redraws the terminal, and the click itself would then land on nothing (the 2nd-click bug).
+document.getElementById("terms").addEventListener("pointerdown", (e) => {
   const t = e.target.closest("section.term"); if (!t || e.target.closest("form.say")) return;
   const f = document.querySelector(`form.say[data-c="${t.dataset.c}"]`);
-  if (f && !f.hidden) f.querySelector("input").focus();
+  if (!f || f.hidden) return;
+  e.preventDefault();  // keep focus where we put it
+  const i = f.querySelector("input"); if (document.activeElement !== i) i.focus();
+  i.setSelectionRange(i.value.length, i.value.length);  // the cursor at the end, like any text box
 });
 
 // ⏪ Instant replay: the woltPhone rebuilds the game save by save (about 10 s), then goes back to live.
@@ -242,4 +247,32 @@ document.getElementById("replay").addEventListener("click", async (e) => {
   const ms = Math.max(350, Math.min(900, Math.round(10000 / Math.max(1, d.frames.length))));
   document.querySelector(".phone iframe").contentWindow.postMessage({type: "lodge-replay", frames: d.frames, ms}, "*");
   setTimeout(() => { b.disabled = false; }, d.frames.length * ms + 3000);
+});
+
+// Seats are set up from here (jerpint, 2026-10-22): "＋ create Player N's wolt" opens the same form the phones had
+// (their name, their wolt's name, a creature). The player's QR is only their chat.
+const mkd = document.createElement("dialog"); mkd.className = "mkd"; document.body.append(mkd);
+let mkCreature = "beaver";
+document.getElementById("terms").addEventListener("click", (e) => {
+  const b = e.target.closest("button.mk"); if (!b) return;
+  const sid = b.dataset.c, n = sid === "p1" ? "Player 1" : "Player 2";
+  mkd.style.setProperty("--m", `var(--${sid})`);
+  mkd.innerHTML = `<form method=dialog autocomplete=off><h2>＋ ${n}'s wolt</h2>
+    <label for=mkp>Their name</label><input id=mkp maxlength=24 required placeholder="Maya">
+    <label for=mkw>Their wolt's name</label><input id=mkw maxlength=24 required placeholder="flint">
+    <label>Creature</label><div class=pick>${["otter", "beaver", "raccoon"].map((c) => `<button type=button data-k=${c} class="${c === mkCreature ? "on" : ""}">${av(c, 48)}${c}</button>`).join("")}</div>
+    <div class=row><span class=err id=mke role=status></span><button type=button class=no>cancel</button><button class=go>Create</button></div></form>`;
+  mkd.querySelectorAll(".pick button").forEach((x) => x.onclick = () => { mkCreature = x.dataset.k; mkd.querySelectorAll(".pick button").forEach((y) => y.classList.toggle("on", y === x)); });
+  mkd.querySelector(".no").onclick = () => mkd.close();
+  mkd.querySelector("form").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const go = mkd.querySelector(".go"), err = document.getElementById("mke");
+    go.disabled = true; err.style.color = "var(--tan)"; err.textContent = "waking it up…";
+    const r = await fetch(`api/admin/create/${sid}`, {method: "POST", headers: {"content-type": "application/json", "X-Admin-Key": KEY},
+      body: JSON.stringify({player: document.getElementById("mkp").value, wolt: document.getElementById("mkw").value, creature: mkCreature})}).catch(() => null);
+    if (r && r.ok) { mkd.close(); return; }
+    const d = r ? await r.json().catch(() => ({})) : {};
+    err.style.color = ""; err.textContent = d.detail || "that didn't work, try again"; go.disabled = false;
+  };
+  mkd.showModal(); document.getElementById("mkp").focus();
 });

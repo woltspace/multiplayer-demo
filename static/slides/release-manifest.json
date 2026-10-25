@@ -11,24 +11,24 @@
       "when": "before"
     },
     {
-      "id": "hello",
-      "number": 2,
-      "title": "Previously",
-      "url": "candidates/index.html#hello",
-      "when": "before"
-    },
-    {
       "id": "iwcl",
-      "number": 3,
+      "number": 2,
       "title": "The idea",
       "url": "candidates/index.html#iwcl",
       "when": "before"
     },
     {
       "id": "scaffold",
-      "number": 4,
+      "number": 3,
       "title": "Scaffold",
       "url": "candidates/index.html#scaffold",
+      "when": "before"
+    },
+    {
+      "id": "hello",
+      "number": 4,
+      "title": "Previously",
+      "url": "candidates/index.html#hello",
       "when": "before"
     },
     {
@@ -39,15 +39,8 @@
       "when": "before"
     },
     {
-      "id": "open",
-      "number": 6,
-      "title": "Where next",
-      "url": "candidates/index.html#open",
-      "when": "before"
-    },
-    {
       "id": "thanks",
-      "number": 7,
+      "number": 6,
       "title": "Your turn",
       "url": "candidates/index.html#thanks",
       "when": "before"

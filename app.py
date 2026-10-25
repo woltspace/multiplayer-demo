@@ -499,6 +499,9 @@ driver = MockDriver() if MODE == "mock" else ReplayDriver(Path(os.environ["SHOW_
 
 # The lodge's IWCL log (woltspace 0.5.20+): one line per wolt-to-wolt message or spawn.
 _wolts_dir = os.environ.get("WOLTSPACE_WOLTS_DIR") or str(Path.home() / ".woltspace" / "wolts")
+# Wolts that live in the show lodge but are not in the game (the guide you talk to about woltspace): reset leaves
+# them and their sessions alone. The kill switch still stops everything.
+KEEP = set(os.environ.get("SHOW_KEEP", "guide").split(","))
 
 
 def is_throwaway() -> bool:
@@ -670,14 +673,14 @@ def player_state(token: str, request: Request):
         if sid == "host" and MODE == "mock":
             wolt = {"name": HOST, "creature": "raccoon", "harness": "Claude Code · Sonnet"}
         player = s["player"] or (joined and joined[0]["player"]) or None
-        return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "phase": phase, "game": game_on, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+        return {"slot": sid, "label": s["label"], "player": player, "wolt": wolt, "phase": phase, "game": game_on, "host_player": HOST_PLAYER, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
     if WORLD:  # the phone shows the whole #lodge chat
         msgs = [e for e in events if e["type"] in ("say", "post", "join", "game", "turn", "timeup", "ship")][-50:]
         cast = [{k: c[k] for k in ("slot", "player", "wolt", "creature")} for c in public_slots() if c["wolt"]]
         return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on,
-                "world": True, **turn_state(), "messages": msgs, "cast": cast}
+                "world": True, "host_player": HOST_PLAYER, **turn_state(), "messages": msgs, "cast": cast}
     mine = [e for e in events if e.get("slot") == sid or e.get("to_slot") == sid]
-    return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
+    return {"slot": sid, "label": s["label"], "player": s["player"], "wolt": s["wolt"], "phase": phase, "game": game_on, "host_player": HOST_PLAYER, "messages": [e for e in mine if e["type"] in ("say", "reply")]}
 
 
 class Create(BaseModel):
@@ -687,35 +690,43 @@ class Create(BaseModel):
 
 
 @app.post("/api/p/{token}/create")
-def create_wolt(token: str, c: Create, request: Request, response: Response):
-    sid, s = owner(request, token)
+def create_wolt(token: str, c: Create, request: Request):
+    """Phones no longer create wolts: the host sets each seat up from the big screen (jerpint, 2026-10-22: one person
+    can't stall the show thinking of a name). A seat's QR is just that player's chat."""
+    owner(request, token)
+    raise HTTPException(403, "the host sets up your wolt on the big screen")
+
+
+@app.post("/api/admin/create/{sid}")
+def host_create_wolt(sid: str, c: Create, request: Request):
+    """The big screen's "create Player N's wolt" dialog: the host names the player and their wolt, picks the creature."""
+    admin(request)
+    if sid not in ("p1", "p2") or sid not in slots:
+        raise HTTPException(404, "no such seat")
+    s = slots[sid]
     if s["wolt"]:
-        raise HTTPException(409, "you already have a wolt")
+        raise HTTPException(409, "this seat already has a wolt")
     if c.creature not in ("beaver", "otter", "raccoon"):
         raise HTTPException(400, "pick a beaver, an otter or a raccoon")
     player, name = " ".join(c.player.split())[:24], " ".join(c.wolt.split())[:24]
     taken = {x["wolt"]["name"].lower() for x in slots.values() if x["wolt"]}
-    if name.lower() in taken:
+    from show_scaffold import slug
+    if name.lower() in taken or slug(name) in KEEP:
         raise HTTPException(409, "that name is taken, pick another")
-    # Take the seat now (two presses of Create at once: the first wins); give it back if creating the wolt fails.
-    seat = None
+    # Take the seat now (a double click on Create: the first wins); give it back if creating the wolt fails.
     with lock:
-        if s["claimed"] and request.cookies.get(f"seat_{sid}") != s["claimed"]:
+        if s["claimed"]:
             raise HTTPException(409, "this seat's wolt is being created: wait a few seconds")
-        if not s["claimed"]:
-            seat = s["claimed"] = secrets.token_urlsafe(12)
-            save_slots()
-    if seat:
-        record({"type": "claim", "slot": sid})
-        response.set_cookie(f"seat_{sid}", seat, max_age=2 * 86400, httponly=True, samesite="lax")
+        seat = s["claimed"] = secrets.token_urlsafe(12)
+        save_slots()
+    record({"type": "claim", "slot": sid})
 
     def give_back():
-        if seat:
-            with lock:
-                if s["claimed"] == seat and not s["wolt"]:
-                    s["claimed"] = None
-                    save_slots()
-            record({"type": "reset", "slot": sid})
+        with lock:
+            if s["claimed"] == seat and not s["wolt"]:
+                s["claimed"] = None
+                save_slots()
+        record({"type": "reset", "slot": sid})
     harness, model = engine_for(sid)
     if MODE == "lodge":
         try:
@@ -1157,6 +1168,13 @@ def crowd(request: Request, after: int = 0):
         typing = driver.typing(t)
         build = driver.build(t)
         cast = driver.scn["cast"]
+        # The players' seats are the host's to fill (big screen "create"): the recording's own joins give way to them.
+        real = [e for e in events if e["type"] in ("claim", "join", "reset") and e.get("slot") in ("p1", "p2")]
+        evs = [e for e in evs if not (e["type"] in ("claim", "join") and e.get("slot") in ("p1", "p2"))]
+        evs += [dict(e, seq=len(evs) + i + 1) for i, e in enumerate(real)]
+        cast = [c for c in cast if c["slot"] not in ("p1", "p2")] + [
+            {"slot": sid, "player": slots[sid]["player"], "wolt": slots[sid]["wolt"]["name"], "creature": slots[sid]["wolt"]["creature"],
+             "harness": slots[sid]["wolt"]["harness"]} for sid in ("p1", "p2") if slots[sid]["wolt"]]
     else:
         build = check_ship()
         evs = sorted([dict(e, seq=f"a{e['seq']}") for e in events] + feed.poll(), key=lambda e: e["ts"])
@@ -1189,6 +1207,11 @@ def room(request: Request):
         return JSONResponse(_room["body"], headers={"Cache-Control": "no-store"})
     if MODE == "mock":
         evs, build, cast, typing = driver.events(t), driver.build(t), driver.scn["cast"], driver.typing(t)
+        # The players' seats are the host's to fill (big screen "create"): the recording's own joins give way to them.
+        real = [e for e in events if e["type"] in ("claim", "join", "reset") and e.get("slot") in ("p1", "p2")]
+        evs = [e for e in evs if not (e["type"] in ("claim", "join") and e.get("slot") in ("p1", "p2"))] + real
+        cast = [c for c in cast if c["slot"] not in ("p1", "p2")] + [
+            {"slot": sid, "player": slots[sid]["player"], "wolt": slots[sid]["wolt"]} for sid in ("p1", "p2") if slots[sid]["wolt"]]
         joined = {e["slot"] for e in evs if e["type"] == "join"} | ({"host"} if any(e["type"] == "host" for e in evs) else set())
         cast = [{"slot": c["slot"], "player": c["player"], "wolt": c["wolt"]["name"] if isinstance(c["wolt"], dict) else c["wolt"],
                  "creature": c.get("creature") or c["wolt"].get("creature"), "harness": c.get("harness") or c["wolt"].get("harness")}
@@ -1261,17 +1284,14 @@ def admin_state(request: Request):
 
 @app.post("/api/admin/reset/{sid}")
 def reset_slot(sid: str, request: Request):
-    """New token for a slot (a photographed QR stops working). Keeps an existing wolt unless the slot is a player's."""
+    """New QR for a seat: the old link stops working (it leaked, or a rehearsal guest still has it). Only the link
+    changes: the seat keeps its player and wolt."""
     admin(request)
     if sid not in slots:
         raise HTTPException(404, "no such slot")
     with lock:
-        s = slots[sid]
-        s["token"], s["claimed"] = secrets.token_urlsafe(9), None
-        if sid != "host":
-            s["player"], s["wolt"] = None, None
+        slots[sid]["token"] = secrets.token_urlsafe(9)
         save_slots()
-    record({"type": "reset", "slot": sid})
     return {"ok": True}
 
 
@@ -1330,7 +1350,7 @@ def _reset_all(host_player: str = ""):
         if not (wolts.parent / ".lodge-show-throwaway").exists() or wolts == (Path.home() / ".woltspace" / "wolts").resolve():
             raise HTTPException(409, f"{wolts} is not a throwaway lodge, reset refused")
         with urllib.request.urlopen(LODGE + "/sessions", timeout=10) as r:
-            running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running"]
+            running = [x["name"] for x in json.loads(r.read()) if x.get("status") == "running" and x.get("wolt") not in KEEP]
         for name in running:
             try:
                 driver.post(f"/sessions/{name}/stop", {})
@@ -1342,7 +1362,7 @@ def _reset_all(host_player: str = ""):
         # Only wolt folders go (a folder with wolt/ inside). Never apps/ (this app runs from there in the show
         # container), dot-folders (.space, .state, .codex), .env or the lodge's own settings.
         wolt_dirs = [c for c in wolts.iterdir() if c.is_dir() and not c.is_symlink() and not c.name.startswith(".")
-                     and c.name != "apps" and (c / "wolt").is_dir()]
+                     and c.name != "apps" and c.name not in KEEP and (c / "wolt").is_dir()]
         for child in wolt_dirs:
             try:
                 driver.post("/auto-grants/revoke", {"wolt": child.name})
@@ -1377,8 +1397,13 @@ def _reset_all(host_player: str = ""):
         if _clock["timer"]:
             _clock["timer"].cancel()
         _screens.clear()
+        # The seats' QR codes survive a reset (jerpint, 2026-10-22): new ones only from backstage's "new QR".
+        kept = {sid: x["token"] for sid, x in slots.items()}
         slots.clear()
         slots.update(default_slots())
+        for sid, tok in kept.items():
+            if sid in slots:
+                slots[sid]["token"] = tok
         save_slots()
     _room["body"] = None
     if LIVE.exists() and MODE == "lodge":

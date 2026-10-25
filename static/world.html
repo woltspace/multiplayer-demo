@@ -129,6 +129,18 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 .cq{display:flex;flex-direction:column;align-items:center;gap:14px;font:400 24px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
 .cq b{font:400 18px Pixel;color:var(--cream2)}
 #cqr{background:#fff;padding:14px;border:4px solid var(--neon);line-height:0}
+.term.empty .mk{font:400 16px Pixel;color:#000;background:var(--m);border:3px solid #000;box-shadow:4px 4px 0 #000;padding:12px 16px;cursor:pointer}
+.term.empty .mk:hover{filter:brightness(1.15)}
+dialog.mkd{border:4px solid var(--m,var(--glow));background:var(--panel);color:var(--cream2);padding:26px 30px;width:520px;box-shadow:10px 10px 0 #000}
+dialog.mkd::backdrop{background:rgba(0,0,0,.7)}
+.mkd h2{margin:0 0 16px;font:400 20px Pixel;color:var(--m,var(--glow));line-height:1.5}
+.mkd label{display:block;margin:14px 0 6px;font:400 24px VT;color:var(--tan);text-transform:uppercase;letter-spacing:1px}
+.mkd input{width:100%;box-sizing:border-box;font:400 30px VT;padding:8px 12px;background:#000;color:var(--cream2);border:2px solid #5a3a22;outline:none}
+.mkd input:focus{border-color:var(--m,var(--glow))}
+.mkd .pick{display:flex;gap:10px}.mkd .pick button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px;background:#000;color:var(--tan);border:2px solid #5a3a22;font:400 22px VT;cursor:pointer}
+.mkd .pick button.on{border-color:var(--m,var(--glow));color:var(--cream2);background:#241a14}
+.mkd .row{display:flex;gap:12px;margin-top:22px;align-items:center}.mkd .err{flex:1;font:400 22px VT;color:#ff8080}
+.mkd .row button{font:400 14px Pixel;padding:12px 16px;border:3px solid #000;cursor:pointer}.mkd .go{background:var(--m,var(--glow));color:#000;box-shadow:4px 4px 0 #000}.mkd .no{background:transparent;color:var(--tan);border-color:#5a3a22}
 </style>
 </head>
 <body>
@@ -156,6 +168,6 @@ section.term:focus-within,section.term.typing{outline:3px solid #fff3dc}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="static/sprites.js?v=2"></script>
 <script src="static/term.js?v=2"></script>
-<script src="static/world.js?v=40"></script>
+<script src="static/world.js?v=43"></script>
 </body>
 </html>

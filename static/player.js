@@ -1,11 +1,11 @@
-// Player phone: claim the spot, name + create your wolt, then type to it. Polls the app, no websockets.
+// Player phone: wait while the host creates your wolt on the big screen, then chat with it. Polls the app, no websockets.
 const TOKEN = location.pathname.split("/").pop();
 const T = new URLSearchParams(location.search).get("t"); // mock clock (screenshots)
 const API = `../api/p/${TOKEN}`;
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
 const av = (c, s) => `<span class=av>${woltSpriteAvatar(c, s) || ""}</span>`;
-let st = null, creature = "beaver", drawn = "";
+let st = null, drawn = "";
 
 function view() {
   const app = $("app");
@@ -23,22 +23,13 @@ function view() {
     : !myTurn ? `<div class=paused>${st.turn === st.slot ? "🛠 The wolts are on it…" : `⏳ ${esc(st.turn_player || "someone")}'s turn. You're next soon!`}</div>`
     : st.world && st.game && st.slot !== "host" ? `<div class="paused go">▸ Your turn! Tell the wolts what to add.</div>`
     : "";
-  if (!st.wolt) {
+  if (!st.wolt) {  // the host sets this seat up on the big screen; the phone is the player's chat once it's there
     $("bar").hidden = true;
-    if (drawn === "form" + wait) { const g = $("go"); if (g && !g.dataset.busy) g.disabled = false; const n = $("pnote"); if (n) n.innerHTML = note; return; }
-    drawn = "form" + wait;
-    app.innerHTML = `<div id=pnote>${note}</div><span class=tag>${esc(st.label)}</span><h1>You're on stage 🎤</h1>
-      <p class=sub>Name your wolt and it wakes up in tonight's lodge. Then tell it what to build. The whole room watches.</p>
-      <form id=cf class=card autocomplete=off>
-        <label for=pn>Your name</label><input id=pn maxlength=24 required placeholder="Maya">
-        <label for=wn>Name your wolt</label><input id=wn maxlength=24 required placeholder="flint">
-        <label>Pick a creature</label>
-        <div class=pick>${["otter", "beaver", "raccoon"].map((c) => `<button type=button data-k=${c} class="${c === creature ? "on" : ""}">${av(c, 56)}${c}</button>`).join("")}</div>
-        <div class=err id=err role=status></div>
-        <button id=go>Create my wolt</button>
-      </form>`;
-    app.querySelectorAll(".pick button").forEach((b) => b.onclick = () => { creature = b.dataset.k; app.querySelectorAll(".pick button").forEach((x) => x.classList.toggle("on", x === b)); });
-    $("cf").onsubmit = create;
+    if (drawn === "wait") return;
+    drawn = "wait";
+    app.innerHTML = `<span class=tag>${esc(st.label)}</span><h1>You're on stage 🎤</h1>
+      <div class="card waitme"><div class=waking>${av("beaver", 64)}<br>${esc(st.host_player || "The host")} is setting up your wolt on the big screen…</div>
+      <p class=sub>Tell them your name, your wolt's name and your creature. Your chat opens here as soon as it wakes up.</p></div>`;
     return;
   }
   $("bar").hidden = false; $("send").disabled = wait;
@@ -105,14 +96,6 @@ async function load() {
     if (!r.ok) return;
     st = await r.json(); view();
   } catch {}
-}
-
-async function create(e) {
-  e.preventDefault(); $("go").disabled = true; $("go").dataset.busy = 1; $("err").textContent = "waking it up…";
-  const r = await fetch(API + "/create", {method: "POST", headers: {"content-type": "application/json"},
-    body: JSON.stringify({player: $("pn").value, wolt: $("wn").value, creature})});
-  if (!r.ok) { const d = await r.json().catch(() => ({})); $("err").textContent = d.detail || "that didn't work, try again"; $("go").disabled = false; delete $("go").dataset.busy; return; }
-  drawn = ""; load();
 }
 
 $("sayf").onsubmit = async (e) => {
