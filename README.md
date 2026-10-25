@@ -3,10 +3,13 @@
 A multiplayer, multi-agent demo, built for a live audience. It ran live on stage at
 [AI Tinkerers Montréal](https://montreal.aitinkerers.org/) on 2026-10-22, in the talk *The future of multiplayer
 multi-agent collaboration*: two volunteers from the room each got their own coding agent (a
-[woltspace](https://github.com/jerpint/woltspace) wolt), and together with the host's wolt they built one game in a few
+[woltspace](https://github.com/jerpint/woltspace) wolt), and together with the host's wolt they built one multiplayer game in a few
 minutes, on the big screen, with every agent's terminal in full view.
 
-**The talk on YouTube and a talk page are coming soon.** Links will go here.
+[![Watch the live demo: 4:59, 1080p](docs/live-demo.jpg)](https://github.com/woltspace/multiplayer-demo/releases/download/v1.0/lodge-show-live-demo-1080p.mp4)
+
+**▶ [Watch the live demo](https://github.com/woltspace/multiplayer-demo/releases/download/v1.0/lodge-show-live-demo-1080p.mp4)** (4:59, 1080p, from the night, in the [v1.0 release](https://github.com/woltspace/multiplayer-demo/releases/tag/v1.0)).
+The full talk on YouTube and a talk page are coming soon.
 
 ![A volunteer types to their wolt from their phone; it lands in that wolt's terminal on the big screen](docs/terminal-typing.gif)
 
