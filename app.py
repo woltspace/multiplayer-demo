@@ -798,6 +798,8 @@ def admin_say(sid: str, m: Say, request: Request):
     admin(request)
     if sid not in slots:
         raise HTTPException(404, "no such seat")
+    if not game_on:  # nobody types before ⚡ start the game, the host included (jerpint, 2026-10-22)
+        raise HTTPException(423, "press ⚡ start the game first")
     open_for(sid)
     return say_as(sid, slots[sid], m.text)
 

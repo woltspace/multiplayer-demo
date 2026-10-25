@@ -1,14 +1,29 @@
 # Lodge Show
 
-Repo: [woltspace/multiplayer-demo](https://github.com/woltspace/multiplayer-demo) (private). In a lodge it lives at `wolts/apps/lodge-show`.
+A multiplayer, multi-agent demo, built for a live audience. It ran live on stage at
+[AI Tinkerers Montréal](https://montreal.aitinkerers.org/) on 2026-10-22, in the talk *The future of multiplayer
+multi-agent collaboration*: two volunteers from the room each got their own coding agent (a
+[woltspace](https://github.com/jerpint/woltspace) wolt), and together with the host's wolt they built one game in a few
+minutes, on the big screen, with every agent's terminal in full view.
 
-A multiplayer, multi-agent demo for a live audience. Two volunteers scan private QR codes, name and create
-their own wolt from their phone, and tell it what to build by typing. A host wolt welcomes them over IWCL,
-gives each one half of a page, merges the halves and ships it. A crowd screen on the projector shows the
-lodge's #lodge chat and every wolt's terminal, live.
+**The talk on YouTube and a talk page are coming soon.** Links will go here.
+
+![A volunteer types to their wolt from their phone; it lands in that wolt's terminal on the big screen](docs/terminal-typing.gif)
+
+## How it works
+
+The host sets up a seat per volunteer from the big screen: a name, a creature and a harness (Claude Code, Codex or
+OpenCode). Each volunteer scans their own QR code and types to their wolt from their phone. A host wolt welcomes them
+over IWCL (the lodge's inter-wolt chat), splits the work, merges it and ships it. The crowd screen on the projector shows
+the lodge's #lodge chat and every wolt's terminal, live; wolts only take orders from their own human.
 
 Nothing on the crowd screen is staged: chat bubbles come from the app's event log and the lodge's IWCL log,
 terminals are `tmux capture-pane` of each wolt's session.
+
+Try it without a lodge (replays a recorded scenario): `SHOW_MODE=mock uv run app.py`. For the real thing, see
+[Run the show in a container](#run-the-show-in-a-container-the-setup-for-the-night).
+
+In a woltspace lodge this repo lives at `wolts/apps/lodge-show`. MIT licensed, see [LICENSE](LICENSE).
 
 ## Screens
 
@@ -123,7 +138,3 @@ ffmpeg, so the same log always gives the same show. Publish the log and the vide
 | `SHOW_REPLY_CMD` | `show-reply` | the reply command as wolts should type it |
 | `WOLTSPACE_WOLTS_DIR` | | the lodge's wolts folder (seeds are written there) |
 | `SHOW_CHROME` | | optional chromium binary for the playwright scripts |
-
-## Still to do
-
-- Run the whole thing inside a throwaway container (app + lodge + wolts), only the app exposed.
